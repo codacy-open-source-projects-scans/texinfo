@@ -28,6 +28,8 @@ use Getopt::Long qw(GetOptions);
 use File::Basename;
 use File::Spec;
 
+#use Carp qw(cluck);
+
 #use Pod::Simple::SimpleTree;
 #use Data::Dumper;
 
@@ -43,7 +45,6 @@ BEGIN
   my $datadir = '@datadir@';
   my $converter = '@CONVERTER@';
   my $libdir = '@libdir@';
-  my $xsdir;
 
   my $in_source = 0;
   # set if we detect that the command comes from a Perl build with Makefile.PL.
@@ -91,7 +92,8 @@ BEGIN
 
     require Texinfo::ModulePath;
     # NOTE updirs argument cannot point to the right place, as it is only
-    # valid in texi2any directory.  t2a_srcdir and t2a_builddir should be used.
+    # valid in texi2any directory.  t2a_srcdir and t2a_builddir are set and
+    # should be used instead.
     Texinfo::ModulePath::init(undef, undef, undef);
 
     # To find Pod::Simple::Texinfo
@@ -105,37 +107,34 @@ BEGIN
     # Look for modules in their installed locations.
     my $modules_dir = join('/', ($datadir, $converter));
     # look for package data in the installed location.
-    my $modules_converterdatadir = $modules_dir;
+    my $converter_libdir = join('/', ($libdir, $converter));
 
     # try to make package relocatable, will only work if
     # standard relative paths are used
     if (! -f join('/', ($modules_dir, 'Texinfo', 'Parser.pm'))
         and -f join('/', ($command_directory, $updir, 'share',
-                                   $converter, 'Texinfo', 'Parser.pm'))) {
-      $modules_dir = join('/', ($command_directory, $updir,
-                                          'share', $converter));
-      $modules_converterdatadir = join('/', ($command_directory, $updir,
-                                          'share', $converter));
-      $xsdir = join('/', ($command_directory, $updir, 'lib', $converter));
+                          $converter, 'Texinfo', 'Parser.pm'))) {
+      $datadir = join('/', ($command_directory, $updir, 'share'));
+      $modules_dir = join('/', ($datadir, $converter));
+      $converter_libdir = join('/', ($command_directory, $updir,
+                                          'lib', $converter));
     }
 
     unshift @INC, $modules_dir;
     require Texinfo::ModulePath;
-    Texinfo::ModulePath::init($modules_dir, $xsdir, $modules_converterdatadir,
-                              'installed' => 1);
+    Texinfo::ModulePath::init($modules_dir, $converter_libdir,
+                              $datadir, 'installed' => 1);
 
     # To find Pod::Simple::Texinfo
-    unshift @INC, join('/', ($modules_converterdatadir, 'Pod-Simple-Texinfo'));
+    unshift @INC, join('/', ($modules_dir, 'Pod-Simple-Texinfo'));
   }
 }
 
 use Pod::Simple::Texinfo;
-use Texinfo::CommandsValues;
-use Texinfo::Common;
+# methods are used through the document objects
+use Texinfo::Document;
 use Texinfo::Parser;
 use Texinfo::Convert::Texinfo;
-use Texinfo::Convert::NodeNameNormalization;
-use Texinfo::Document;
 use Texinfo::Structuring;
 use Texinfo::Transformations;
 
@@ -145,24 +144,25 @@ use Texinfo::Transformations;
 package Pod::Simple::PullParserRun;
 
 our @ISA = qw(Pod::Simple::PullParser);
-sub new
-{
+
+sub new {
   return shift->SUPER::new(@_);
 }
+
 sub run(){};
+
 }
 
 my ($real_command_name, $directories, $suffix) = fileparse($0);
 
-sub pod2texi_help()
-{
+sub pod2texi_help() {
   my $pod2texi_help = __("Usage: pod2texi [OPTION]... POD...");
   $pod2texi_help .= "\n\n";
-  $pod2texi_help .= __("Translate Perl Pod documentation file(s) to Texinfo.  There are two
-basic modes of operation.  First, by default, each Pod is translated to
-a standalone Texinfo manual.
+  $pod2texi_help .= __("Convert Perl Pod documentation file(s) to Texinfo.  There are two
+basic modes of operation.  First, by default, each Pod is converted to
+a standalone Texinfo document.
 
-Second, if --base-level is set higher than 0, each Pod is translated
+Second, if --base-level is set higher than 0, each Pod is converted
 to a file suitable for \@include, and one more file with a main menu
 and all the \@include is generated.");
   $pod2texi_help .= "\n\n";
@@ -171,7 +171,7 @@ and all the \@include is generated.");
   $pod2texi_help .= __("    --base-level=NUM|NAME   level of the head1 commands; default 0")."\n";
   $pod2texi_help .= __("    --debug=NUM             set debugging level")."\n";
   $pod2texi_help .= __("    --generate-setfilename  generate \@setfilename for standalone
-                              manuals")."\n";
+                              Texinfo documents")."\n";
   $pod2texi_help .= __("    --headings-as-sections  no structuring command for sections")."\n";
   $pod2texi_help .= __("    --help                  display this help and exit")."\n";
   $pod2texi_help .= __("    --no-fill-section-gaps  do not fill sectioning gaps")."\n";
@@ -179,13 +179,13 @@ and all the \@include is generated.");
   $pod2texi_help .= __("    --menus                 generate node menus")."\n";
   $pod2texi_help .= __("    --outdir=NAME           output included files in NAME;
                               defaults to --subdir")."\n";
-  $pod2texi_help .= __("    --output=NAME           output to NAME for the first or main manual
+  $pod2texi_help .= __("    --output=NAME           output to NAME for the first or main document
                               instead of standard output")."\n";
   $pod2texi_help .= __("    --preamble=STR          insert STR as beginning boilerplate;
                               defaults to a minimal Texinfo document beginning")."\n";
-  $pod2texi_help .= __("    --setfilename           \@setfilename for the main manual")."\n";
-  $pod2texi_help .= __("    --subdir=NAME           include files from NAME in the main manual")."\n";
-  $pod2texi_help .= __("    --top                   top for the main manual")."\n";
+  $pod2texi_help .= __("    --setfilename           \@setfilename for the main document")."\n";
+  $pod2texi_help .= __("    --subdir=NAME           include files from NAME in the main document")."\n";
+  $pod2texi_help .= __("    --top                   top for the main document")."\n";
   $pod2texi_help .= __("    --unnumbered-sections   do not number sections")."\n";
   $pod2texi_help .= __("    --version               display version information and exit");
   $pod2texi_help .= "\n\n";
@@ -213,19 +213,46 @@ my $section_nodes = 1;
 my $fill_sectioning_gaps = 1;
 my $debug = 0;
 
+# NOTE originally taken from Texinfo::CommandsValues
+my %command_structuring_level = (
+    'top'    => '0',
+    'part'    => '0',
+    'chapter'    => '1',
+    'majorheading'    => '1',
+    'unnumbered'    => '1',
+    'centerchap'    => '1',
+    'chapheading'    => '1',
+    'appendix'    => '1',
+    'section'    => '2',
+    'unnumberedsec'    => '2',
+    'heading'    => '2',
+    'appendixsec'    => '2',
+    'appendixsection'    => '2',
+    'subsection'    => '3',
+    'unnumberedsubsec'    => '3',
+    'subheading'    => '3',
+    'appendixsubsec'    => '3',
+    'subsubsection'    => '4',
+    'unnumberedsubsubsec'    => '4',
+    'subsubheading'    => '4',
+    'appendixsubsubsec'    => '4',
+);
+
 my $result_options = Getopt::Long::GetOptions (
   'help|h' => sub { print pod2texi_help(); exit 0; },
-  'version|V' => sub {print "$real_command_name $Pod::Simple::Texinfo::VERSION\n\n";
-    printf __("Copyright (C) %s Free Software Foundation, Inc.
+  'version|V' => sub {
+     print "$real_command_name $Pod::Simple::Texinfo::VERSION\n\n";
+     printf __("Copyright (C) %s Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.")."\n", "2024";
-      exit 0;},
+     exit 0;
+   },
   'base-level=s' => sub {
      if ($_[1] =~ /^[0-4]$/) {
        $base_level = $_[1];
-     } elsif (defined($Texinfo::CommandsValues::command_structuring_level{$_[1]})) {
-       $base_level = $Texinfo::CommandsValues::command_structuring_level{$_[1]};
+     } elsif (exists($command_structuring_level{$_[1]})) {
+       $base_level = $command_structuring_level{$_[1]};
      } else {
        die sprintf(__("%s: wrong argument for --base-level")."\n",
                    $real_command_name);
@@ -271,7 +298,8 @@ my @input_files = @ARGV;
 # use STDIN if not a tty, like makeinfo does
 @input_files = ('-') if (!scalar(@input_files) and !-t STDIN);
 die sprintf(__("%s: missing file argument")."\n", $real_command_name)
-   .sprintf(__("Try `%s --help' for more information.")."\n", $real_command_name)
+ . sprintf(__("Try `%s --help' for more information.")."\n",
+           $real_command_name)
      unless (scalar(@input_files) >= 1);
 
 my %file_manual_title;
@@ -296,7 +324,7 @@ if ($base_level > 0) {
         $manual_name = $short_title;
         #print STDERR "NEW MANUAL: $manual_name\n";
       } else {
-        if (!$parser->content_seen) {
+        if (!$parser->content_seen()) {
           warn sprintf(__("%s: warning: %s without content")."\n",
                        $real_command_name, $file);
         }
@@ -312,7 +340,8 @@ if ($base_level > 0) {
     }
     if (exists($manual_name_file{$manual_name})
         and $manual_name_file{$manual_name} ne $file) {
-      warn sprintf(__("%s: same manual name `%s' for different files: %s and %s"),
+      warn sprintf(
+           __("%s: same manual name `%s' for different files: %s and %s"),
                   $real_command_name, $manual_name, $file,
                   $manual_name_file{$manual_name})."\n";
     } else {
@@ -323,20 +352,17 @@ if ($base_level > 0) {
 }
 
 # return a parser and parsed tree
-sub _parsed_manual_tree($$$$$)
-{
-  my $self = shift;
-  my $manual_texi = shift;
-  my $section_nodes = shift;
-  my $fill_gaps_in_sectioning = shift;
-  my $do_node_menus = shift;
+# $DO_MASTER_MENU is ignored if $DO_NODE_MENUS is not set.
+sub _parsed_manual_tree($$$$$;$) {
+  my ($self, $manual_texi, $section_nodes, $fill_gaps_in_sectioning,
+      $do_node_menus, $do_master_menu) = @_;
 
   my $parser_options = {};
   if ($debug > 3) {
     $parser_options->{'DEBUG'} = $debug - 3;
   }
   my $texi_parser = Texinfo::Parser::parser($parser_options);
-  my $document = $texi_parser->parse_texi_text($manual_texi);
+  my $document = $texi_parser->parse_text($manual_texi);
 
   if ($debug > 1) {
     my ($error_messages, $error_count) = $document->parser_errors();
@@ -359,17 +385,15 @@ sub _parsed_manual_tree($$$$$)
   }
 
   if ($fill_gaps_in_sectioning) {
-    my $commands_heading_content;
+    my $commands_heading_texi;
     if ($self->texinfo_sectioning_base_level() > 0) {
-      my $manual_title_texi = Pod::Simple::Texinfo::protect_text(
+      $commands_heading_texi = Pod::Simple::Texinfo::protect_text(
              $self->texinfo_short_title(), 1, 1);
-      my $parser = Texinfo::Parser::parser();
-      $commands_heading_content = $parser->parse_texi_line($manual_title_texi);
     }
     Texinfo::Transformations::fill_gaps_in_sectioning_in_document($document,
-                                                  $commands_heading_content);
+                                                      $commands_heading_texi);
     if ($section_nodes) {
-      Texinfo::Transformations::insert_nodes_for_sectioning_commands(
+      Texinfo::ManipulateTree::insert_nodes_for_sectioning_commands(
                                                                $document);
     }
   }
@@ -381,6 +405,11 @@ sub _parsed_manual_tree($$$$$)
   Texinfo::Transformations::complete_tree_nodes_menus_in_document($document)
     if ($section_nodes and $do_node_menus);
 
+  if ($do_node_menus and $do_master_menu) {
+    Texinfo::Transformations::regenerate_master_menu($document,
+                                                     $texi_parser);
+  }
+
   if ($debug > 1) {
     my ($error_messages, $error_count) = $document->errors();
     Pod::Simple::Texinfo::print_texinfo_errors($error_messages,
@@ -390,96 +419,21 @@ sub _parsed_manual_tree($$$$$)
   return ($texi_parser, $document, $identifier_target);
 }
 
-sub _fix_texinfo_tree($$$$;$$)
-{
-  my $self = shift;
-  my $manual_texi = shift;
-  my $section_nodes = shift;
-  my $fill_gaps_in_sectioning = shift;
-  my $do_node_menus = shift;
-  my $do_master_menu = shift;
-
-  my ($texi_parser, $document, $updated_labels)
-    = _parsed_manual_tree($self, $manual_texi, $section_nodes,
-                          $fill_gaps_in_sectioning,
-                          $do_node_menus);
-  if ($do_master_menu) {
-    if ($do_node_menus) {
-      # It could be possible to show document errors if debug > 1
-      # for example, but there should not be any error emitted,
-      # except maybe for errors in translations code, which are very
-      # unlikely.
-      Texinfo::Transformations::regenerate_master_menu($document,
-                                                       $texi_parser);
-    } else {
-      # note that that situation cannot happen with the code as it
-      # is now.  When _fix_texinfo_tree is called from _do_top_node_menu
-      # both $do_master_menu and $do_node_menus are set.
-      # _fix_texinfo_tree can also be called from _fix_texinfo_manual, but
-      # _fix_texinfo_manual is never called with a $do_master_menu argument,
-      # so when _fix_texinfo_tree is called from _fix_texinfo_manual,
-      # $do_master_menu cannot be set.
-
-      # setup another tree with menus to do the master menu as menus are
-      # not done for the main tree
-      my ($texi_parser_menus, $document_menus, $updated_labels_menus)
-       = _parsed_manual_tree($self, $manual_texi, $section_nodes,
-                             $fill_gaps_in_sectioning, 1);
-      my $top_node_menus = $updated_labels_menus->{'Top'};
-      if ($top_node_menus) {
-        my $menus_nodes_list = $document_menus->nodes_list();
-        my $top_node_menus_relations
-        = $menus_nodes_list->[$top_node_menus->{'extra'}->{'node_number'} -1];
-        if ($top_node_menus_relations->{'menus'}
-            and scalar(@{$top_node_menus_relations->{'menus'}})) {
-          my $top_node_menus_menu = $top_node_menus_relations->{'menus'}->[0];
-          my $top_node = $updated_labels->{'Top'};
-          $top_node_menus_menu->{'parent'} = $top_node;
-          push @{$top_node->{'contents'}}, $top_node_menus_menu;
-          my $nodes_list = $document->nodes_list();
-          my $top_node_relations
-            = $nodes_list->[$top_node->{'extra'}->{'node_number'} -1];
-          push @{$top_node_relations->{'menus'}}, $top_node_menus_menu;
-        }
-      }
-    }
-  }
-  return ($texi_parser, $document);
-}
-
-sub _fix_texinfo_manual($$$$;$$)
-{
-  my $self = shift;
-  my $manual_texi = shift;
-  my $section_nodes = shift;
-  my $fill_gaps_in_sectioning = shift;
-  my $do_node_menus = shift;
-  my $do_master_menu = shift;
-
-  my ($texi_parser, $document)
-      = _fix_texinfo_tree($self, $manual_texi, $section_nodes,
-                          $fill_gaps_in_sectioning, $do_node_menus,
-                          $do_master_menu);
-  my $tree = $document->tree();
-  return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
-}
-
-sub _do_top_node_menu($)
-{
+# return the Top node menu with detailmenu of $MANUAL_TEXI Texinfo
+# code.
+sub _do_top_node_menu($) {
   my $manual_texi = shift;
 
-  my ($texi_parser, $document)
-             = _fix_texinfo_tree(undef, $manual_texi, 1, 0, 1, 1);
-  my $identifier_target = $document->labels_information();
+  my ($texi_parser, $document, $identifier_target)
+             = _parsed_manual_tree(undef, $manual_texi, 1, 0, 1, 1);
   my $top_node = $identifier_target->{'Top'};
   my $nodes_list = $document->nodes_list();
   my $top_node_relations
     = $nodes_list->[$top_node->{'extra'}->{'node_number'} -1];
-  if ($top_node_relations->{'menus'}) {
+  if (exists($top_node_relations->{'menus'})
+      and scalar(@{$top_node_relations->{'menus'}}) > 0) {
     my $top_node_menu = $top_node_relations->{'menus'}->[0];
-    if ($top_node_menu) {
-      return Texinfo::Convert::Texinfo::convert_to_texinfo($top_node_menu);
-    }
+    return Texinfo::Convert::Texinfo::convert_to_texinfo($top_node_menu);
   }
   return '';
 }
@@ -503,7 +457,8 @@ foreach my $file (@input_files) {
   } else {
     $manual_name = $file_manual_name{$file};
     if (defined($manual_title)) {
-      $outfile_name = Pod::Simple::Texinfo::pod_title_to_file_name($manual_title);
+      $outfile_name
+        = Pod::Simple::Texinfo::pod_title_to_file_name($manual_title);
     } else {
       $outfile_name = $manual_name;
     }
@@ -560,7 +515,7 @@ foreach my $file (@input_files) {
   } elsif ($headings_as_sections) {
     $new->texinfo_sectioning_style('heading');
   }
-  if ($base_level > 0 and @manuals) {
+  if ($base_level > 0 and scalar(@manuals) > 0) {
     # names without formatting from Pod::Simple::PullParser->get_short_title
     $new->texinfo_internal_pod_manuals(\@manuals);
   }
@@ -579,14 +534,20 @@ foreach my $file (@input_files) {
     if ($debug > 4) {
       # print the manual obtained before fixing the Texinfo code to a file
       open(DBGFILE, ">$outfile-dbg")
-                             or die sprintf(__("%s: could not open %s: %s")."\n",
-                                      $real_command_name, "$outfile-dbg", $!);
+            or die sprintf(__("%s: could not open %s: %s")."\n",
+                           $real_command_name, "$outfile-dbg", $!);
       binmode(DBGFILE, ':encoding(utf-8)');
       print DBGFILE $manual_texi;
     }
-    $manual_texi = _fix_texinfo_manual($new, $manual_texi, $section_nodes,
-                                       $fill_sectioning_gaps,
-                                       $generate_node_menus);
+
+    # Fix Texinfo code by parsing Texinfo and outputting Texinfo,
+    # also applying transformations.
+    my ($texi_parser, $document)
+      = _parsed_manual_tree($new, $manual_texi, $section_nodes,
+                            $fill_sectioning_gaps, $generate_node_menus);
+    my $tree = $document->tree();
+    $manual_texi = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+
     $full_manual .= $manual_texi if ($section_nodes);
   }
   print $fh $manual_texi;
@@ -626,7 +587,7 @@ foreach my $file (@input_files) {
         }
 
         if ($new_outfile ne $outfile) {
-          unless (rename ($outfile, $new_outfile)) {
+          unless (rename($outfile, $new_outfile)) {
             die sprintf(__("%s: rename %s failed: %s")."\n",
                         $real_command_name, $outfile, $!);
           }
@@ -641,8 +602,8 @@ if ($base_level > 0) {
   my $fh;
   if ($output ne '-') {
     open(OUT, ">$output")
-              or die sprintf(__("%s: could not open %s for writing: %s")."\n",
-                                          $real_command_name, $output, $!);
+      or die sprintf(__("%s: could not open %s for writing: %s")."\n",
+                                    $real_command_name, $output, $!);
     $fh = *OUT;
   } else {
     $fh = *STDOUT;
@@ -660,7 +621,7 @@ if ($base_level > 0) {
 
   my $preamble_result;
 
-  if (! defined ($preamble)) {
+  if (! defined($preamble)) {
     $preamble_result = '\input texinfo
 ' . $setfilename_string
 . "\@settitle $top
@@ -716,7 +677,7 @@ pod2texi - convert Pod to Texinfo
 
 Translate Pod file(s) to Texinfo.  There are two basic modes of
 operation.  First, by default, each Pod is translated to a standalone
-Texinfo manual.
+Texinfo document.
 
 Second, if C<--base-level> is set higher than 0, each Pod is translated
 to a file suitable for C<@include>, and one more file with a main menu
@@ -743,22 +704,23 @@ C<@section>, ...).
 
 =item B<--base-level>=I<NUM|NAME>
 
-Sets the level of the C<head1> commands.  It may be an integer or a
-Texinfo sectioning command (without the C<@>): 1 corresponds to the
-C<@chapter>/C<@unnumbered> level, 2 to the C<@section> level, and so on.
-The default is 0, meaning that C<head1> commands are still output as
-chapters, but the output is arranged as a standalone manual.
+The default is 0, meaning that C<head1> commands are output as chapters and the
+output is arranged as a standalone Texinfo document.
 
 If the level is not 0, the Pod file is rendered as a fragment of a
-Texinfo manual suitable for C<@include>.  In this case, each Pod file
-has an additional sectioning command covering the entire file, one level
-above the C<--base-level> value.  Therefore, to make each Pod file a
-chapter in a large manual, you should use C<section> as the base level.
+Texinfo document suitable for C<@include>.  In that case, the
+option argument sets the level of the C<head1> commands.  It may be an
+integer or a Texinfo sectioning command (without the C<@>): 1 corresponds to
+the C<@chapter>/C<@unnumbered> level, 2 to the C<@section> level, and so on.
+Each included Pod file has an additional sectioning command covering the
+entire file, one level above the C<--base-level> value.  Therefore, to make
+each Pod file a chapter in a large document, you should use C<section> as the
+base level.
+
+=begin comment
 
 For an example of making Texinfo out of the Perl documentation itself,
 see C<contrib/perldoc-all> in the Texinfo source distribution.
-
-=begin comment
 
 with output available at L<http://www.gnu.org/software/perl/manual>.
 
@@ -770,15 +732,16 @@ Set debugging level to I<NUM>.
 
 =item B<--generate-setfilename>
 
-Generate a C<@setfilename> line for standalone manuals.  Can be negated
-with C<--no-generate-setfilename>.  Ignored if C<--base-level> is not 0.
+Generate a C<@setfilename> line for standalone Texinfo documents.  Can be
+negated with C<--no-generate-setfilename>.  Ignored unless C<--base-level> is
+0.
 
 =item B<--headings-as-sections>
 
 Use headings commands (C<@heading>, ...) instead of the
 default numbered sectioning Texinfo @-commands (C<@chapter>,
 C<@section>, ...). The sectioning command covering the entire
-file output for each Pod file if B<--base-level> is not 0 is a
+file output for each Pod file if C<--base-level> is not 0 is a
 numbered command.
 
 =item B<--help>
@@ -787,19 +750,20 @@ Display help and exit.
 
 =item B<--menus>
 
-Output node menus. If there is a main manual, its Top node menu
+Output node menus. If there is a main Texinfo document, its Top node menu
 is always output, since a master menu is generated. Other nodes
 menus are not output in the default case.
 
 =item B<--outdir>=I<NAME>
 
-If there is a main manual with include files (each corresponding to
+If there is a main Texinfo document with include files (each corresponding to
 an input Pod file), then the generated Texinfo files are put in
 directory I<NAME>.  Default is based on C<--subdir>.
 
 =item B<--output>=I<NAME>
 
-Name for the first manual, or the main manual if there is a main manual.
+Name for the first Texinfo document output, or for the main Texinfo
+document if there is a main Texinfo document.
 Default is to write to standard output.
 
 =item B<--no-section-nodes>
@@ -808,7 +772,7 @@ Use anchors for sections instead of nodes.
 
 =item B<--no-fill-section-gaps>
 
-Do not fill sectioning gaps with empty C<@unnumbered> files.
+Do not fill sectioning gaps with empty C<@unnumbered>.
 Ordinarily, it's good to keep the sectioning hierarchy intact.
 
 =item B<--preamble>=I<STR>
@@ -820,17 +784,17 @@ boilerplate is a minimal beginning for a Texinfo document.
 =item B<--setfilename>=I<STR>
 
 Use I<STR> in top boilerplate before menu and includes for C<@setfilename>
-for the main manual, if C<--base-level> is not set to 0.  Ignored if
+for the main Texinfo document, if C<--base-level> is not set to 0.  Ignored if
 C<--base-level> is 0.  No C<@setfilename> is output in the default case
-for the main manual.
+for the main Texinfo document.
 
 =item B<--subdir>=I<NAME>
 
-If there is a main manual with include files (each corresponding to
+If there is a main Texinfo document with include files (each corresponding to
 an input Pod file), then those include files are included from I<NAME>.
 
 If C<--outdir> is set, I<NAME> should in general be set to the relative
-directory between the main manual and C<--outdir> argument.
+directory between the main Texinfo document and C<--outdir> argument.
 
 =item B<--unnumbered-sections>
 
@@ -840,7 +804,8 @@ C<@section>, ...).
 
 =item B<--top>=I<TOP>
 
-Name of the C<@top> element for the main manual.  May contain Texinfo code.
+Name of the C<@top> element for the main Texinfo document.  Also used for
+the title.  May contain Texinfo code.  Ignored if C<--base-level> is 0.
 
 =item B<--version>
 

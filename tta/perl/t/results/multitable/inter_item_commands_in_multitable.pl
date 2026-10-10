@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'inter_item_commands_in_multitable'} = '*document_root C1
- *before_node_section C6
+ *before_node_section C7
+  *preamble_before_content
   *@multitable C4 l1
   |EXTRA
   |max_columns:{1}
@@ -277,6 +281,12 @@ lone mu-ltitable item
 Title
 thing
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'inter_item_commands_in_multitable'} = 'cp:
+ cindex
+ index entry between empty lines
+ index entry within multitable
 ';
 
 

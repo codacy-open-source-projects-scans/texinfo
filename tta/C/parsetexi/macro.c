@@ -17,7 +17,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdio.h>
 
 #include "text.h"
@@ -170,7 +169,7 @@ parse_macro_command_line (enum command_id cmd, const char **line_inout,
       return macro;
     }
 
-  debug ("MACRO @%s %s", command_name (cmd), name);
+  debug ("C|MACRO @%s %s", command_name (cmd), name);
 
   add_extra_string (macro, AI_key_macro_name, name);
 
@@ -219,14 +218,14 @@ parse_macro_command_line (enum command_id cmd, const char **line_inout,
             {
               line_error ("bad or empty @%s formal argument: ",
                           command_name(cmd));
-              add_string ("", formal_args);
+              add_string (formal_args, "");
               macro->flags |= EF_invalid_syntax;
             }
         }
       else
         {
           char *args_string = strndup (args_ptr, q2 - args_ptr);
-          add_string (args_string, formal_args);
+          add_string (formal_args, args_string);
           free (args_string);
 
           /* Check the argument name. */
@@ -342,7 +341,7 @@ expand_macro_arguments (const ELEMENT *macro, const char **line_inout,
       sep = pline + strcspn (pline, "\\,{}");
       if (!*sep)
         {
-          debug ("MACRO ARG end of line");
+          debug ("C|MACRO ARG end of line");
           text_append (arg, pline);
           free (alloc_line);
           line = alloc_line = next_text (argument);
@@ -423,7 +422,7 @@ expand_macro_arguments (const ELEMENT *macro, const char **line_inout,
                       add_to_contents_as_array (argument, spaces_element);
                     }
                   add_to_contents_as_array (argument, argument_content);
-                  debug ("MACRO NEW ARG");
+                  debug ("C|MACRO NEW ARG");
                 }
               else
                 /* too many args */
@@ -448,7 +447,7 @@ expand_macro_arguments (const ELEMENT *macro, const char **line_inout,
         ("macro `%s' declared without argument called with an argument",
          command_name(cmd));
     }
-  debug ("END MACRO ARGS EXPANSION");
+  debug ("C|END MACRO ARGS EXPANSION");
 
 funexit:
   *line_inout = line;
@@ -498,7 +497,7 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
       sep = pline + strcspn (pline, linecommand_expansion_delimiters);
       if (!*sep)
         {
-          debug_nonl ("LINEMACRO ARGS no separator %d '", braces_level);
+          debug_nonl ("C|LINEMACRO ARGS no separator %d '", braces_level);
           debug_print_protected_string (pline); debug ("'");
           if (braces_level > 0)
             {
@@ -526,7 +525,7 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
                   line = alloc_line = next_text (argument);
                   if (!line)
                     {
-                      debug ("LINEMACRO ARGS end no EOL");
+                      debug ("C|LINEMACRO ARGS end no EOL");
                       line = "";
                       goto funexit;
                     }
@@ -563,9 +562,9 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
                 }
               text_append_n (arg, sep, 1);
               text_append (arg, command);
-              if (cmd && (command_data(cmd).flags & CF_brace)
+              if (cmd && (parsed_command_data(cmd).flags & CF_brace)
                   && strchr (whitespace_chars, *pline)
-                  && ((command_flags(current) & CF_accent)
+                  && (parsed_command_data(cmd).data == BRACE_accent
                 || global_parser_conf->ignore_space_after_braced_command_name))
                 {
                   int whitespaces_len = strspn (pline, whitespace_chars);
@@ -618,7 +617,7 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
                              whitespaces_len);
               add_to_contents_as_array (argument, spaces_element);
               add_to_contents_as_array (argument, argument_content);
-              debug ("LINEMACRO NEW ARG");
+              debug ("C|LINEMACRO NEW ARG");
             }
           pline += whitespaces_len;
           break;
@@ -629,7 +628,15 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
   for (i = 0; i < current->e.c->contents.number; i++)
     {
       const ELEMENT *argument = current->e.c->contents.list[i];
-      ELEMENT *argument_content;
+      /* If argument_content is not explicitly initialized,
+         compiler may warn that argument_content may be used uninitialized,
+         but we know that it is not possible, as there is textual
+         content in argument.
+         clang proposes to remove the "j < argument->e.c->contents.number"
+         if always true.  It is safer and clearer to keep this condition,
+         so initialize to remove the unknown for the compiler. 
+       */
+      ELEMENT *argument_content = 0;
       size_t j;
       for (j = 0; j < argument->e.c->contents.number; j++)
         {
@@ -648,7 +655,7 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
               && argument_content->e.text->text[text_len -1] == '}')
             {
               char *braced_text = strdup (argument_content->e.text->text);
-              debug_nonl ("TURN to bracketed %d ", i);
+              debug_nonl ("C|TURN to bracketed %d ", i);
               debug_parser_print_element (argument_content, 0); debug ("");
 
               text_reset (argument_content->e.text);
@@ -660,7 +667,7 @@ expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
         }
     }
   counter_reset (&argument_brace_groups, 0);
-  debug ("END LINEMACRO ARGS EXPANSION");
+  debug ("C|END LINEMACRO ARGS EXPANSION");
 
   *line_inout = line;
 }
@@ -730,7 +737,7 @@ expand_macro_body (const MACRO *macro_record, const ELEMENT *arguments,
               if (index < arguments->e.c->contents.number)
                 {
                   const ELEMENT *argument
-                    = contents_child_by_index (arguments, index);
+                    = arguments->e.c->contents.list[index];
                   int surplus_arg;
                   const TEXT *arg_text = simple_arg_text (argument,
                                                           &surplus_arg);
@@ -826,7 +833,8 @@ handle_macro (ELEMENT *current, const char **line_inout,
   */
 
   macro_expansion_nr++;
-  debug ("MACRO EXPANSION NUMBER %d %s", macro_expansion_nr, command_name(cmd));
+  debug ("C|MACRO EXPANSION NUMBER %d %s", macro_expansion_nr,
+                                           command_name(cmd));
 
   if (macro->e.c->cmd != CM_rmacro)
     {
@@ -965,7 +973,7 @@ handle_macro (ELEMENT *current, const char **line_inout,
   if (error)
     {
       macro_expansion_nr--;
-      debug ("DROPPING CALL OF MACRO %s", command_name(cmd));
+      debug ("C|DROPPING CALL OF MACRO %s", command_name(cmd));
       macro_call_element = 0;
       goto funexit;
     }
@@ -988,7 +996,7 @@ handle_macro (ELEMENT *current, const char **line_inout,
       expanded_macro_text = strdup ("");
     }
 
-  debug ("MACROBODY: %s||||||", expanded_macro_text);
+  debug ("C|MACROBODY: %s||||||", expanded_macro_text);
 
   /* first put the line that was interrupted by the macro call
      on the input pending text stack */

@@ -29,21 +29,6 @@ Uses pTHX_
 
 #include <stdio.h>
 
-/* could also be in other libraries */
-void
-call_eval_use_module (const char *module_name)
-{
-  SV *sv_str;
-  char *str;
-
-  dTHX;
-
-  sv_str = newSVpvf("use %s;", module_name);
-  str = SvPV_nolen(sv_str);
-
-  eval_pv (str, TRUE);
-}
-
 /* following is used to embed a Perl interpreter */
 static PerlInterpreter *my_perl;
 
@@ -72,6 +57,8 @@ xs_init (pTHX)
    LOAD_TXI_MODULES_PATH script run when starting the embedded interpreter,
    to allow for a version check of VERSION_CHECKED against a version coming
    from a Perl module.
+
+   Return status of 0 means success.
  */
 int
 call_init_perl (int *argc_ref, char ***argv_ref, char ***env_ref,

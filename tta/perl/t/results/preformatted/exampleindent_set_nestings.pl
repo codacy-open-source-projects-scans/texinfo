@@ -1,20 +1,24 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'exampleindent_set_nestings'} = '*document_root C1
  *before_node_section C15
-  *@exampleindent C1 l1
-  |EXTRA
-  |global_command_number:{1}
-  |misc_args:A{2}
-   *line_arg C3
-    {spaces_before_argument: }
-    {2}
-    {spaces_after_argument:\\n}
+  *preamble_before_content C1
+   *@exampleindent C1 l1
+   |EXTRA
+   |global_command_number:{1}
+   |misc_args:A{2}
+    *line_arg C3
+     {spaces_before_argument: }
+     {2}
+     {spaces_after_argument:\\n}
   *@example C3 l2
    *arguments_line C1
     *block_line_arg C1
@@ -123,10 +127,6 @@ $result_tree_text{'exampleindent_set_nestings'} = '*document_root C1
     *def_line C1 l27
     |EXTRA
     |def_command:{deffn}
-    |def_index_element:
-     |* C1
-      |*def_line_arg C1
-       |{arg}
     |index_entry:I{fn,1}
     |original_def_cmdname:{deffn}
      *block_line_arg C5
@@ -345,6 +345,10 @@ exdented first
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'exampleindent_set_nestings'} = 'fn:
+ arg
+';
+
 
 $result_converted{'html'}->{'exampleindent_set_nestings'} = '<!DOCTYPE html>
 <html>
@@ -427,6 +431,10 @@ strong.def-name {font-family: monospace; font-weight: bold}
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'exampleindent_set_nestings'} = 'fn:
+ arg
+';
+
 $result_converted_errors{'html'}->{'exampleindent_set_nestings'} = '* W |must specify a title with a title command or @top
  warning: must specify a title with a title command or @top
 
@@ -507,7 +515,8 @@ $result_converted{'xml'}->{'exampleindent_set_nestings'} = '<exampleindent value
 ';
 
 
-$result_converted{'latex_text'}->{'exampleindent_set_nestings'} = '\\begin{Texinfoindented}
+$result_converted{'latex_text'}->{'exampleindent_set_nestings'} = '\\begin{document}
+\\begin{Texinfoindented}
 \\begin{quote}
 \\begin{Texinfopreformatted}%
 \\ttfamily EXAMPLE INDENT in quotation
@@ -539,6 +548,7 @@ EXAMPLE INDENT in format
 
 \\begin{Texinfoindented}
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{arg}& [name]

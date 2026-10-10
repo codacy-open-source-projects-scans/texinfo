@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'custom_heading_with_include_in_command'} = '*document_root C25
  *before_node_section C1
@@ -349,6 +352,8 @@ $result_tree_text{'custom_heading_with_include_in_command'} = '*document_root C2
   {empty_line:\\n}
  *@chapter C2 section_file_no_node_include.texi:l2 {Chapter in included file Include}
  |EXTRA
+ |identifier:{Chapter-in-included-file-Include}
+ |is_target:{1}
  |section_heading_number:{4}
  |section_level:{1}
  |section_number:{9}
@@ -360,6 +365,8 @@ $result_tree_text{'custom_heading_with_include_in_command'} = '*document_root C2
   {empty_line:\\n}
  *@section C2 section_file_no_node_include.texi:l4 {Section Include}
  |EXTRA
+ |identifier:{Section-Include}
+ |is_target:{1}
  |section_heading_number:{4.1}
  |section_level:{2}
  |section_number:{10}
@@ -371,6 +378,8 @@ $result_tree_text{'custom_heading_with_include_in_command'} = '*document_root C2
   {empty_line:\\n}
  *@subsection C6 section_file_no_node_include.texi:l6 {Subsection Include}
  |EXTRA
+ |identifier:{Subsection-Include}
+ |is_target:{1}
  |section_heading_number:{4.1.1}
  |section_level:{3}
  |section_number:{11}
@@ -939,10 +948,13 @@ $result_converted{'latex_text'}->{'custom_heading_with_include_in_command'} = '\
 
 
 \\Texinfochapter{{Chapter in included file Include}}
+\\label{anchor:Chapter-in-included-file-Include}%
 
 \\section{{Section Include}}
+\\label{anchor:Section-Include}%
 
 \\subsection{{Subsection Include}}
+\\label{anchor:Subsection-Include}%
 
 
 Now include file

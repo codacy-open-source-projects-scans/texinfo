@@ -8,9 +8,10 @@ use strict;
 use Texinfo::Common;
 use Texinfo::Convert::NodeNameNormalization;
 
-# a translation of the Next button for which there is a translation
-# by the parser of index of @def* commands like '{name} of {class}'.
-# also test commands in parser restricted mode.
+# a translation of the Next button with @-commands needing translation.
+# also test commands in 'parser restricted mode' with NO_INDEX and similar set.
+# Also the parsing of translation is done in line context, therefore there
+# are no paragraphs, such that the quotation title is never collected.
 my %translations = (
   'fr' => {
            'Next' => {'NodeNext direction string'
@@ -25,6 +26,13 @@ AA
 BB
 @end deftypemethod
 
+@error{}
+
+@quotation qtitle
+a quotation
+@author someone
+@end quotation
+
 @defcodeindex xx
 @xxindex entry
 
@@ -33,17 +41,21 @@ BB
 @printindex fn
 @printindex xx
 '},
-            # this is not used, as it is translated in the parser.
-            # To be used, should be in po/gmo file
+# translations are parsed with NO_INDEX and similar set, therefore printindex
+# argument is not set in misc_args and therefore there is no conversion,
+# and no actual test of translation of '{name} on {class}'.
+# We use {name} and {class} as otherwise the elements do not appear in the
+# resulting tree and are not destroyed.  The memory leak is not an issue,
+# but it obscures the determination of memory leaks.
             '{name} on {class}' => {''
                => '@deftypeop m n o p q r
-CC
+CC {name}
 @end deftypeop
 
-@documentlanguage fr
+@documentlanguage de
 
 @deftypemethod s t u v w x
-DD
+DD {class}
 @end deftypemethod
 
 @defcodeindex xx
@@ -54,14 +66,18 @@ DD
 @printindex fn
 @printindex xx
 '},
+            '@center --- @emph{{author}}' => {''
+               => '@center --- Toto et @code{{author}}'
+},
 });
 
 sub _texi2any_test_translation_in_parser_format_translate_message($$$;$) {
   my ($converter, $string, $lang_info, $translation_context) = @_;
 
-  my $lang = Texinfo::Translations::get_lang_info_xdg_locale($lang_info);
+  my $lang = $lang_info->xpg_locale();
   return $string if (!defined($lang) or $lang eq '');
   $translation_context = '' if (!defined($translation_context));
+  #print STDERR "translatable ($lang): '$string'\n";
 
   if (exists($translations{$lang})
       and exists($translations{$lang}->{$string})

@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'non_empty_part_no_top_node_output'} = '*document_root C16
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@part C4 l1 {part before}
  |EXTRA
  |global_command_number:{1}
@@ -91,6 +95,8 @@ $result_tree_text{'non_empty_part_no_top_node_output'} = '*document_root C16
   {empty_line:\\n}
  *@chapter C2 l17 {chap in Top node}
  |EXTRA
+ |identifier:{chap-in-Top-node}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{4}
@@ -179,6 +185,8 @@ $result_tree_text{'non_empty_part_no_top_node_output'} = '*document_root C16
   {empty_line:\\n}
  *@chapter C2 l38 {with part no node}
  |EXTRA
+ |identifier:{with-part-no-node}
+ |is_target:{1}
  |section_heading_number:{3}
  |section_level:{1}
  |section_number:{10}

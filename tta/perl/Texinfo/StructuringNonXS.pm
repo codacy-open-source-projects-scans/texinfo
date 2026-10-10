@@ -34,6 +34,7 @@ use if $] >= 5.012, feature => 'unicode_strings';
 use if $] >= 5.014, re => '/a';
 
 use strict;
+use warnings;
 
 # Can be used to check that there is no incorrect autovivfication
 #no autovivification qw(fetch delete exists store strict);
@@ -51,7 +52,6 @@ use Texinfo::ManipulateTree qw(normalized_entry_associated_internal_node);
 # for error messages
 use Texinfo::Convert::Texinfo qw(target_element_to_texi_label
                                  link_element_to_texi);
-our $VERSION = '7.3dev';
 
 my %command_structuring_level = %Texinfo::CommandsValues::command_structuring_level;
 
@@ -293,6 +293,69 @@ sub sectioning_structure($) {
   }
 }
 
+sub sectioning_targets($) {
+  my $document = shift;
+
+  my $sections_list = $document->sections_list();
+  my $identifier_target = $document->labels_information();
+
+  foreach my $section_relations (@{$sections_list}) {
+    next if (exists($section_relations->{'associated_node'}));
+
+    my $content = $section_relations->{'element'};
+    next if ($content->{'cmdname'} eq 'part');
+
+    my $arguments_line = $content->{'contents'}->[0];
+    my $line_arg = $arguments_line->{'contents'}->[0];
+
+    my $node_tree = Texinfo::ManipulateTree::copy_contents($line_arg);
+
+    next if (!exists($node_tree->{'contents'}));
+
+    # No @xref in target
+    $node_tree
+      = Texinfo::ManipulateTree::reference_to_arg_in_tree($node_tree,
+                                                          $document);
+
+    my $normalized
+       = Texinfo::Convert::NodeNameNormalization::convert_to_node_identifier(
+          $node_tree);
+
+    if ($normalized !~ /[^-]/) {
+      next;
+    }
+
+    if (defined($identifier_target)
+        and $identifier_target->{$normalized}) {
+      my $existing_target = $identifier_target->{$normalized};
+      if (exists($Texinfo::Commands::sectioning_heading_commands{
+                                        $existing_target->{'cmdname'}})) {
+        my $debug = $document->get_conf('DEBUG');
+        my $error_messages = $document->{'error_messages'};
+
+        my $section_texinfo
+          = Texinfo::Convert::Texinfo::convert_contents_to_texinfo($line_arg);
+        push @$error_messages, Texinfo::Report::line_warn(
+                        sprintf(__("\@%s `%s' already added target"),
+                           $content->{'cmdname'}, $section_texinfo),
+                           $content->{'source_info'}, 0, $debug);
+        push @$error_messages, Texinfo::Report::line_warn(
+                               sprintf(__("added for \@%s"),
+                                  $existing_target->{'cmdname'}),
+                          $existing_target->{'source_info'}, 1, $debug);
+      }
+
+      next;
+    }
+
+    $content->{'extra'}->{'identifier'} = $normalized;
+
+    Texinfo::Document::register_label_element($document, $content,
+                                              $document->{'error_messages'},
+                                              $document->get_conf('DEBUG'));
+  }
+}
+
 # for debugging
 sub _print_sectioning_tree($);
 sub _print_sectioning_tree($) {
@@ -400,8 +463,14 @@ sub check_nodes_are_referenced($) {
 
   return unless (defined($nodes_list) and scalar(@{$nodes_list}));
 
-  my $top_node = $identifier_target->{'Top'};
-  $top_node = $nodes_list->[0]->{'element'} if (!defined($top_node));
+  my $top_node;
+  my $top_target_element = $identifier_target->{'Top'};
+  if (defined($top_target_element)
+      and $top_target_element->{'cmdname'} eq 'node') {
+    $top_node = $top_target_element;
+  } else {
+    $top_node = $nodes_list->[0]->{'element'};
+  }
 
   my %referenced_nodes = ($top_node => 1);
   my %referenced_in_menus = ();
@@ -495,7 +564,7 @@ sub complete_node_tree_with_menus($) {
   my $check_menu_entries = (!$customization_information->get_conf('novalidate')
       and (!defined($format_menu) or $format_menu eq 'menu'
            or $format_menu eq 'menu_no_detailmenu'));
-  my $top_node = $identifier_target->{'Top'};
+  my $top_target_element = $identifier_target->{'Top'};
 
   # First go through all the menus and set menu up, menu next and menu prev,
   # and warn for unknown nodes.
@@ -537,7 +606,8 @@ sub complete_node_tree_with_menus($) {
                           and $menu_node->{'cmdname'} eq 'node') {
                         $menu_node_relations
                           = $nodes_list->[$menu_node->{'extra'}->{'node_number'} -1];
-                        if ((!defined($top_node) or $menu_node ne $top_node)
+                        if ((!defined($top_target_element)
+                             or $menu_node ne $top_target_element)
                             and _node_automatic_directions($menu_node)) {
                           $menu_node_relations->{'node_directions'} = {}
                            if (!exists($menu_node_relations->{'node_directions'}));
@@ -560,7 +630,8 @@ sub complete_node_tree_with_menus($) {
             if (defined($menu_node) and defined($previous_node_relations)
                 and !exists($previous_node_relations->{'element'}
                                     ->{'extra'}->{'manual_content'})) {
-              if ((!defined($top_node) or $previous_node ne $top_node)
+              if ((!defined($top_target_element)
+                   or $previous_node ne $top_target_element)
                   and _node_automatic_directions($previous_node)) {
                 $previous_node_relations->{'node_directions'} = {}
                   if (!exists($previous_node_relations->{'node_directions'}));
@@ -573,7 +644,8 @@ sub complete_node_tree_with_menus($) {
             }
             if (defined($menu_node_relations) and defined($previous_node)
                 and !exists($menu_node->{'extra'}->{'manual_content'})) {
-              if ((!defined($top_node) or $menu_node ne $top_node)
+              if ((!defined($top_target_element)
+                   or $menu_node ne $top_target_element)
                   and _node_automatic_directions($menu_node)) {
                 $menu_node_relations->{'node_directions'} = {}
                   if (!exists($menu_node_relations->{'node_directions'}));
@@ -741,7 +813,7 @@ sub check_node_tree_menu_structure($) {
           next if (!exists($menu_content->{'type'})
                    or $menu_content->{'type'} ne 'menu_entry');
           my $menu_node
-            = Texinfo::ManipulateTree::normalized_entry_associated_internal_node
+            = normalized_entry_associated_internal_node
                 ($menu_content, $identifier_target);
           # no node_number happens for @anchor and @namedanchor labels in
           # menu entry nodes
@@ -989,7 +1061,8 @@ sub _set_top_node_next($$) {
 
   my $top_node = $identifier_target->{'Top'};
 
-  return undef if (!defined($top_node));
+  return undef if (!defined($top_node)
+                   or $top_node->{'cmdname'} ne 'node');
 
   if (_node_automatic_directions($top_node)) {
     my $top_node_next;
@@ -1075,7 +1148,7 @@ sub construct_nodes_tree($) {
   my $customization_information = $document;
   my $identifier_target = $document->labels_information();
 
-  my $top_node = $identifier_target->{'Top'};
+  my $top_target_element = $identifier_target->{'Top'};
   # Go through all the nodes and set directions.
   my $nodes_list = $document->nodes_list();
 
@@ -1085,7 +1158,7 @@ sub construct_nodes_tree($) {
     my $node = $node_relations->{'element'};
 
     if (_node_automatic_directions($node)) {
-      if (!defined($top_node) or $node ne $top_node) {
+      if (!defined($top_target_element) or $node ne $top_target_element) {
         foreach my $direction (@node_directions_names) {
           if (exists($node_relations->{'associated_section'})) {
             my $direction_relation = $node_relations->{'associated_section'};
@@ -1534,4 +1607,3 @@ sub print_document_listoffloats($) {
 }
 
 1;
-__END__

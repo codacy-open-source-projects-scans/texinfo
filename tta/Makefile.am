@@ -68,6 +68,7 @@ maintenance_files = \
   maintain/generate_code_convert_data.pl \
   maintain/generate_code_commands_values.pl \
   maintain/generate_css_data.pl \
+  maintain/generate_many_input_files_native_tests.sh \
   maintain/regenerate_cmd_tests.sh \
   maintain/regenerate_converters_documentation.sh \
   maintain/regenerate_docstr.sh \
@@ -76,6 +77,7 @@ maintenance_files = \
   maintain/regenerate_file_lists.pl \
   maintain/regenerate_commands_perl_info.pl \
   maintain/regenerate_perl_options_info.pl \
+  maintain/regenerate_tap_tests_lists.pl \
   maintain/regenerate_C_options_info.pl \
   maintain/setup_accent_tables.pl \
   maintain/catalog.xml.in

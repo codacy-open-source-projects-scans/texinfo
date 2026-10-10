@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'contain_plain_text_nestings'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -294,6 +298,11 @@ Text ‘code in w’ text.  <‘code in key’ text>
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'contain_plain_text_nestings'} = 'cp:
+  text
+  text
+';
+
 
 $result_converted{'html_text'}->{'contain_plain_text_nestings'} = '<div class="top-level-extent" id="Top">
 <p class="nav-panel">
@@ -331,7 +340,8 @@ $result_converted{'html_text'}->{'contain_plain_text_nestings'} = '<div class="t
 ';
 
 
-$result_converted{'latex_text'}->{'contain_plain_text_nestings'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'contain_plain_text_nestings'} = '\\begin{document}
+\\label{anchor:Top}%
 \\Texinfochapter{{Chap}}
 \\label{anchor:chap}%
 

@@ -1,21 +1,22 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'def'} = '*document_root C1
- *before_node_section C6
-  {empty_line:\\n}
+ *before_node_section C7
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *@deffn C3 l2
    *def_line C1 l2
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--effn_name}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
     *block_line_arg C7
@@ -47,10 +48,6 @@ $result_tree_text{'def'} = '*document_root C1
    *def_line C1 l6
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{de--ffn_name}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffn}
     *block_line_arg C19
@@ -108,12 +105,6 @@ $result_tree_text{'def'} = '*document_root C1
    *def_line C1 l11
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@var C1
-       |*brace_container C1
-        |{i}
    |index_entry:I{fn,3}
    |original_def_cmdname:{deffn}
     *block_line_arg C9
@@ -139,10 +130,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l12
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{truc}
    |index_entry:I{fn,4}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -161,10 +148,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l13
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C1
-      |{log trap}
    |index_entry:I{fn,5}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -183,11 +166,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l14
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C2
-      |{spaces_before_argument: }
-      |{log trap1}
    |index_entry:I{fn,6}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -207,11 +185,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l15
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C2
-      |{log trap2}
-      |{spaces_after_argument: }
    |index_entry:I{fn,7}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -231,12 +204,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l16
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@b C1
-       |*brace_container C1
-        |{id ule}
    |index_entry:I{fn,8}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -258,16 +225,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l17
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@b C1
-       |*brace_container C3
-        |{id }
-        |*@samp C1
-         |*brace_container C1
-          |{i}
-        |{ ule}
    |index_entry:I{fn,9}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -293,10 +250,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l18
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,10}
    |original_def_cmdname:{deffnx}
     *line_arg C4
@@ -310,10 +263,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l19
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C1
-      |{bidule machin}
    |index_entry:I{fn,11}
    |original_def_cmdname:{deffnx}
     *line_arg C4
@@ -327,10 +276,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l20
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,12}
    |original_def_cmdname:{deffnx}
     *line_arg C4
@@ -345,10 +290,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l21
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{followed}
    |index_entry:I{fn,13}
    |original_def_cmdname:{deffnx}
     *line_arg C11
@@ -382,10 +323,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l23
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{after}
    |index_entry:I{fn,14}
    |original_def_cmdname:{deffnx}
     *line_arg C11
@@ -419,10 +356,6 @@ $result_tree_text{'def'} = '*document_root C1
    *@deffnx C1 l25
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{deffnx}
    |index_entry:I{fn,15}
    |original_def_cmdname:{deffnx}
     *line_arg C11
@@ -489,8 +422,7 @@ Various deff lines
 ';
 
 
-$result_texts{'def'} = '
-c--ategory: d--effn_name a--rguments...
+$result_texts{'def'} = 'c--ategory: d--effn_name a--rguments...
 d-effn
 
 cate--gory: de--ffn_name ar--guments    more args 
@@ -610,9 +542,26 @@ $result_converted{'plaintext'}->{'def'} = ' -- c-ategory: d--effn_name a--rgumen
      Various deff lines
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'def'} = 'fn:
+ after
+ bidule machin
+ d--effn_name
+ de--ffn_name
+ deffnx
+ followed
+ i
+ id i ule
+ id ule
+ log trap
+ log trap1
+ log trap2
+ machin
+ machin
+ truc
+';
 
-$result_converted{'html_text'}->{'def'} = '
-<dl class="first-deffn def-block">
+
+$result_converted{'html_text'}->{'def'} = '<dl class="first-deffn def-block">
 <dt class="deffn def-line" id="index-d_002d_002deffn_005fname"><span class="category-def">c&ndash;ategory: </span><span><strong class="def-name">d--effn_name</strong> <var class="def-var-arguments">a&ndash;rguments...</var><a class="copiable-link" href="#index-d_002d_002deffn_005fname"> &para;</a></span></dt>
 <dd><p>d&ndash;effn
 </p></dd></dl>
@@ -641,8 +590,8 @@ $result_converted{'html_text'}->{'def'} = '
 ';
 
 
-$result_converted{'xml'}->{'def'} = '
-<deffn endspaces=" "><definitionterm><indexterm index="fn" number="1">d--effn_name</indexterm> <defcategory bracketed="on">c--ategory</defcategory> <deffunction>d--effn_name</deffunction> <defparam>a--rguments...</defparam></definitionterm>
+$result_converted{'xml'}->{'def'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><deffn endspaces=" "><definitionterm><indexterm index="fn" number="1">d--effn_name</indexterm> <defcategory bracketed="on">c--ategory</defcategory> <deffunction>d--effn_name</deffunction> <defparam>a--rguments...</defparam></definitionterm>
 <definitionitem><para>d&textndash;effn
 </para></definitionitem></deffn>
 
@@ -670,8 +619,9 @@ $result_converted{'xml'}->{'def'} = '
 ';
 
 
-$result_converted{'latex_text'}->{'def'} = '
+$result_converted{'latex_text'}->{'def'} = '\\begin{document}
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{d{-}{-}effn\\_name \\EmbracOn{}\\textnormal{\\textsl{a--rguments...}}\\EmbracOff{}}& [c--ategory]
@@ -684,6 +634,7 @@ d--effn
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{de{-}{-}ffn\\_name \\EmbracOn{}\\textnormal{\\textsl{ar--guments    more args   even more so}}\\EmbracOff{}}& [cate--gory]
@@ -696,6 +647,7 @@ def--fn
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{\\Texinfocommandstyletextvar{i} \\EmbracOn{}\\textnormal{\\textsl{a g}}\\EmbracOff{}}& [fset]
@@ -703,6 +655,7 @@ def--fn
 
 \\index[fn]{i@\\texttt{\\Texinfocommandstyletextvar{i}}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{truc \\EmbracOn{}\\textnormal{\\textsl{}}\\EmbracOff{}}& [cmde]
@@ -710,6 +663,7 @@ def--fn
 
 \\index[fn]{truc@\\texttt{truc}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{log trap \\EmbracOn{}\\textnormal{\\textsl{}}\\EmbracOff{}}& [Command]
@@ -717,6 +671,7 @@ def--fn
 
 \\index[fn]{log trap@\\texttt{log trap}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{log trap1 \\EmbracOn{}\\textnormal{\\textsl{}}\\EmbracOff{}}& [Command]
@@ -724,6 +679,7 @@ def--fn
 
 \\index[fn]{log trap1@\\texttt{log trap1}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{log trap2 \\EmbracOn{}\\textnormal{\\textsl{}}\\EmbracOff{}}& [Command]
@@ -731,6 +687,7 @@ def--fn
 
 \\index[fn]{log trap2@\\texttt{log trap2}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{\\textbf{id ule} \\EmbracOn{}\\textnormal{\\textsl{truc}}\\EmbracOff{}}& [cmde]
@@ -738,6 +695,7 @@ def--fn
 
 \\index[fn]{id ule@\\texttt{\\textbf{id ule}}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{\\textbf{id `\\texttt{i}\'\\ ule} \\EmbracOn{}\\textnormal{\\textsl{truc}}\\EmbracOff{}}& [cmde2]
@@ -745,6 +703,7 @@ def--fn
 
 \\index[fn]{id i ule@\\texttt{\\textbf{id `\\texttt{i}\'\\ ule}}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{machin}& []
@@ -752,6 +711,7 @@ def--fn
 
 \\index[fn]{machin@\\texttt{machin}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{bidule machin}& []
@@ -759,6 +719,7 @@ def--fn
 
 \\index[fn]{bidule machin@\\texttt{bidule machin}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{machin}& [truc]
@@ -766,6 +727,7 @@ def--fn
 
 \\index[fn]{machin@\\texttt{machin}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{followed \\EmbracOn{}\\textnormal{\\textsl{by a comment}}\\EmbracOff{}}& [truc]
@@ -773,6 +735,7 @@ def--fn
 
 \\index[fn]{followed@\\texttt{followed}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{after \\EmbracOn{}\\textnormal{\\textsl{a deff item}}\\EmbracOff{}}& [truc]
@@ -780,6 +743,7 @@ def--fn
 
 \\index[fn]{after@\\texttt{after}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{deffnx \\EmbracOn{}\\textnormal{\\textsl{before end deffn}}\\EmbracOff{}}& [truc]
@@ -793,8 +757,7 @@ Various deff lines
 ';
 
 
-$result_converted{'docbook'}->{'def'} = '
-<synopsis><indexterm role="fn"><primary>d--effn_name</primary></indexterm><phrase role="category"><emphasis role="bold">c--ategory</emphasis>:</phrase> <function>d--effn_name</function> <emphasis role="arg">a--rguments...</emphasis></synopsis>
+$result_converted{'docbook'}->{'def'} = '<synopsis><indexterm role="fn"><primary>d--effn_name</primary></indexterm><phrase role="category"><emphasis role="bold">c--ategory</emphasis>:</phrase> <function>d--effn_name</function> <emphasis role="arg">a--rguments...</emphasis></synopsis>
 <blockquote><para>d&#8211;effn
 </para></blockquote>
 <synopsis><indexterm role="fn"><primary>de--ffn_name</primary></indexterm><phrase role="category"><emphasis role="bold">cate--gory</emphasis>:</phrase> <function>de--ffn_name</function> <emphasis role="arg">ar--guments</emphasis>    <emphasis role="arg">more</emphasis> <emphasis role="arg">args</emphasis> <emphasis role="arg">

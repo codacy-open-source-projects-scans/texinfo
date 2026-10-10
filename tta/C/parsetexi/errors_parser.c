@@ -13,20 +13,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
-/* ALTIMP perl/Texinfo/Report.pm */
+/* wrapper around errors.c function pre-setting parser global variables */
 
 #include <config.h>
-
-#ifdef ENABLE_NLS
-#include <locale.h>
-#include <gettext.h>
-#include <libintl.h>
-#endif
 
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "tree_types.h"
 #include "document_types.h"

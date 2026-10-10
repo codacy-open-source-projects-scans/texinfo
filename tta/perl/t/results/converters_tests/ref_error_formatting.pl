@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'ref_error_formatting'} = '*document_root C1
- *before_node_section C8
-  {empty_line:\\n}
+ *before_node_section C9
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *paragraph C4
    *@code C1 l2
     *brace_container C5
@@ -712,8 +717,7 @@ $result_texis{'ref_error_formatting'} = '
 ';
 
 
-$result_texts{'ref_error_formatting'} = '
-@ref{node} node
+$result_texts{'ref_error_formatting'} = '@ref{node} node
 
 @ref{,cross ref name} 
 @ref{,,title} 
@@ -859,8 +863,7 @@ cross ref name: node ‘@inforef{node,,file name}’ See (file name)node
 ';
 
 
-$result_converted{'html_text'}->{'ref_error_formatting'} = '
-<p><code class="code">@ref{node}</code> &lsquo;node&rsquo;
+$result_converted{'html_text'}->{'ref_error_formatting'} = '<p><code class="code">@ref{node}</code> &lsquo;node&rsquo;
 </p>
 <p><code class="code">@ref{,cross ref name}</code> &lsquo;cross ref name&rsquo;
 <code class="code">@ref{,,title}</code> &lsquo;title&rsquo;
@@ -903,8 +906,8 @@ $result_converted{'html_text'}->{'ref_error_formatting'} = '
 </p>';
 
 
-$result_converted{'xml'}->{'ref_error_formatting'} = '
-<para><code>&arobase;ref&lbrace;node&rbrace;</code> <ref label="node"><xrefnodename>node</xrefnodename></ref>
+$result_converted{'xml'}->{'ref_error_formatting'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><para><code>&arobase;ref&lbrace;node&rbrace;</code> <ref label="node"><xrefnodename>node</xrefnodename></ref>
 </para>
 <para><code>&arobase;ref&lbrace;,cross ref name&rbrace;</code> <ref><xrefinfoname>cross ref name</xrefinfoname></ref>
 <code>&arobase;ref&lbrace;,,title&rbrace;</code> <ref><xrefprinteddesc>title</xrefprinteddesc></ref>
@@ -947,8 +950,7 @@ $result_converted{'xml'}->{'ref_error_formatting'} = '
 </para>';
 
 
-$result_converted{'docbook'}->{'ref_error_formatting'} = '
-<para><literal>@ref{node}</literal> <link linkend="node">node</link>
+$result_converted{'docbook'}->{'ref_error_formatting'} = '<para><literal>@ref{node}</literal> <link linkend="node">node</link>
 </para>
 <para><literal>@ref{,cross ref name}</literal> <link>cross ref name</link>
 <literal>@ref{,,title}</literal> <link>title</link>
@@ -991,7 +993,7 @@ $result_converted{'docbook'}->{'ref_error_formatting'} = '
 </para>';
 
 
-$result_converted{'latex_text'}->{'ref_error_formatting'} = '
+$result_converted{'latex_text'}->{'ref_error_formatting'} = '\\begin{document}
 \\texttt{@ref\\{node\\}} node
 
 \\texttt{@ref\\{,cross ref name\\}} 
@@ -1035,7 +1037,7 @@ $result_converted{'latex_text'}->{'ref_error_formatting'} = '
 ';
 
 
-$result_converted{'info'}->{'ref_error_formatting'} = 'This is , produced from .
+$result_converted{'info'}->{'ref_error_formatting'} = Encode::encode('utf-8', 'This is , produced from .
 
 ‘@ref{node}’ *note node::
 
@@ -1082,7 +1084,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'ref_error_formatting'} = '* W |document without nodes
  warning: document without nodes

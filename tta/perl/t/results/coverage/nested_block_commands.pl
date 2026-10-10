@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'nested_block_commands'} = '*document_root C1
- *before_node_section C23
+ *before_node_section C24
+  *preamble_before_content
   *@group C4 l1
    *arguments_line C1
     *block_line_arg C1
@@ -697,7 +701,8 @@ $result_converted{'xml'}->{'nested_block_commands'} = '<group endspaces=" ">
 ';
 
 
-$result_converted{'latex_text'}->{'nested_block_commands'} = 'In group
+$result_converted{'latex_text'}->{'nested_block_commands'} = '\\begin{document}
+In group
 \\begin{quote}
 in quotation
 \\end{quote}

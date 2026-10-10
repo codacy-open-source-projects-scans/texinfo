@@ -1,38 +1,42 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'kbdinputstyle'} = '*document_root C1
- *before_node_section C28
-  *@macro C14 l1
-  |EXTRA
-  |formal_args:A{}
-  |macro_name:{codekbdmacro}
-   *arguments_line C1
-    {macro_line: codekbdmacro\\n}
-   {raw:@code{in code out of example @code{in nested code}}.\\n}
-   {raw:@kbd{kbd out of example}.\\n}
-   {raw:@code{kbd @kbd{in code}}.\\n}
-   {raw:@code{for nesting @r{r in code @kbd{in r in code}}}\\n}
-   {raw:\\n}
-   {raw:in example\\n}
-   {raw:@example\\n}
-   {raw:@code{in code in example @code{in nested code}}.\\n}
-   {raw:@kbd{kbd in example}.\\n}
-   {raw:@code{kbd @kbd{in code} in example}.\\n}
-   {raw:@code{for nesting in example @r{r in code in example @kbd{in r in code in example}}}\\n}
-   {raw:@end example\\n}
-   *@end C1 l14
+ *before_node_section C27
+  *preamble_before_content C2
+   *@macro C14 l1
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
+   |formal_args:A{}
+   |macro_name:{codekbdmacro}
+    *arguments_line C1
+     {macro_line: codekbdmacro\\n}
+    {raw:@code{in code out of example @code{in nested code}}.\\n}
+    {raw:@kbd{kbd out of example}.\\n}
+    {raw:@code{kbd @kbd{in code}}.\\n}
+    {raw:@code{for nesting @r{r in code @kbd{in r in code}}}\\n}
+    {raw:\\n}
+    {raw:in example\\n}
+    {raw:@example\\n}
+    {raw:@code{in code in example @code{in nested code}}.\\n}
+    {raw:@kbd{kbd in example}.\\n}
+    {raw:@code{kbd @kbd{in code} in example}.\\n}
+    {raw:@code{for nesting in example @r{r in code in example @kbd{in r in code in example}}}\\n}
+    {raw:@end example\\n}
+    *@end C1 l14
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C2
    *@@
    {kbdinputstyle code\\n}
@@ -546,6 +550,13 @@ $result_converted{'latex'}->{'kbdinputstyle'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -620,6 +631,7 @@ $result_converted{'latex'}->{'kbdinputstyle'} = '\\documentclass{book}
 \\pagestyle{single}%
 
 
+\\begin{document}
 @kbdinputstyle code
 
 

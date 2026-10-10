@@ -19,13 +19,13 @@
 #include <string.h>
 #include <stddef.h>
 
-#include "text.h"
+#include "element_types.h"
 #include "command_ids.h"
+#include "text.h"
 #include "tree_types.h"
 #include "document_types.h"
 #include "base_utils.h"
 #include "tree.h"
-#include "extra.h"
 #include "builtin_commands.h"
 /* xasprintf */
 #include "utils.h"
@@ -92,38 +92,6 @@ new_heading_relations (ELEMENT *element)
   return heading;
 }
 
-/* Make sure there is space for at least one more element. */
-#define setup_reallocate_relations_list(name, type) \
-static void \
-reallocate_##name##_relations_list (type##_RELATIONS_LIST *list) \
-{ \
-  if (list->number + 1 >= list->space) \
-    { \
-      list->space += 10; \
-      list->list = realloc (list->list, \
-                            list->space * sizeof (type##_RELATIONS *)); \
-      if (!list->list) \
-        fatal ("realloc failed"); \
-    } \
-}
-
-setup_reallocate_relations_list(node,NODE)
-setup_reallocate_relations_list(section,SECTION)
-setup_reallocate_relations_list(heading,HEADING)
-
-static void
-reallocate_const_node_relations_list (CONST_NODE_RELATIONS_LIST *list)
-{
-  if (list->number + 1 >= list->space)
-    {
-      list->space += 10;
-      list->list = realloc (list->list,
-                            list->space * sizeof (const NODE_RELATIONS *));
-      if (!list->list)
-        fatal ("realloc failed");
-    }
-}
-
 void
 reallocate_node_relations_for (size_t n, NODE_RELATIONS_LIST *list)
 {
@@ -147,57 +115,30 @@ new_section_directions (void)
   return result;
 }
 
-void
-add_to_node_relations_list (NODE_RELATIONS_LIST *list,
-                            NODE_RELATIONS *node_relations)
-{
-  /* NOTE there could be theoretically an overflow if
-     list->number + 1 > SIZE_MAX.  The numbers are big, this is unlikely
-     to happen */
-  reallocate_node_relations_list (list);
-
-  list->list[list->number++] = node_relations;
-}
-
-void
-add_to_const_node_relations_list (CONST_NODE_RELATIONS_LIST *list,
-                                  const NODE_RELATIONS *node_relations)
-{
-  /* NOTE there could be theoretically an overflow if
-     list->number + 1 > SIZE_MAX.  The numbers are big, this is unlikely
-     to happen */
-  reallocate_const_node_relations_list (list);
-
-  list->list[list->number++] = node_relations;
-}
+def_list_fns(NODE_RELATIONS_LIST, node_relations, NODE_RELATIONS *, 10);
+def_list_fns(CONST_NODE_RELATIONS_LIST, const_node_relations,
+              const NODE_RELATIONS *, 10);
 
 NODE_RELATIONS *
 add_node_to_node_relations_list (NODE_RELATIONS_LIST *list, ELEMENT *e)
 {
   NODE_RELATIONS *node_relations = new_node_relations (e);
-
-  add_to_node_relations_list (list, node_relations);
-
+  add_(node_relations) (list, node_relations);
   return node_relations;
 }
 
-void
-add_to_section_relations_list (SECTION_RELATIONS_LIST *list,
-                               SECTION_RELATIONS *section_relations)
-{
-  reallocate_section_relations_list (list);
+def_list_fns(SECTION_RELATIONS_LIST, section_relations,
+             SECTION_RELATIONS *, 10);
 
-  list->list[list->number++] = section_relations;
-}
+def_list_fns(HEADING_RELATIONS_LIST, heading_relations,
+             HEADING_RELATIONS *, 10);
 
 SECTION_RELATIONS *
 add_section_to_section_relations_list (SECTION_RELATIONS_LIST *list,
                                        ELEMENT *e)
 {
   SECTION_RELATIONS *section = new_section_relations (e);
-
-  add_to_section_relations_list (list, section);
-
+  add_(section_relations) (list, section);
   return section;
 }
 
@@ -206,10 +147,7 @@ add_heading_to_heading_relations_list (HEADING_RELATIONS_LIST *list,
                                        ELEMENT *e)
 {
   HEADING_RELATIONS *heading = new_heading_relations (e);
-  reallocate_heading_relations_list (list);
-
-  list->list[list->number++] = heading;
-
+  add_(heading_relations) (list, heading);
   return heading;
 }
 
@@ -475,7 +413,7 @@ print_sectioning_root (const DOCUMENT *document)
 static char *
 print_line_command (const ELEMENT *element)
 {
-  if (builtin_command_data[element->e.c->cmd].flags & CF_root)
+  if (command_data[element->e.c->cmd].flags & CF_root)
     return root_command_element_string (element);
   else
     {

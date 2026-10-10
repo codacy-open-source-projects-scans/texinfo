@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'thispart'} = '*document_root C11
  *before_node_section C1
@@ -125,6 +128,8 @@ $result_tree_text{'thispart'} = '*document_root C11
   {empty_line:\\n}
  *@appendix C3 l20 {Appendix}
  |EXTRA
+ |identifier:{Appendix}
+ |is_target:{1}
  |section_heading_number:{A}
  |section_level:{1}
  |section_number:{7}
@@ -310,6 +315,7 @@ In chap2
 \\appendix
 \\renewcommand{\\Texinfoheadingchaptername}{\\appendixname}
 \\Texinfochapter{{Appendix}}
+\\label{anchor:Appendix}%
 
 In appendix
 ';

@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'some_at_commands_in_ref_nodes'} = '*document_root C5
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C1 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -294,8 +299,7 @@ see @ref{a @strong{strong} ref with @sc{sc}@comma{} a i trema @"i@comma{} a dotl
 ';
 
 
-$result_texts{'some_at_commands_in_ref_nodes'} = '
-Top
+$result_texts{'some_at_commands_in_ref_nodes'} = 'Top
 ***
 
 * A SC N~ AA TeX node i" i" E=` /l C\', !::
@@ -363,8 +367,7 @@ and exclamdown ¡.
 ';
 
 
-$result_converted{'html_text'}->{'some_at_commands_in_ref_nodes'} = '
-<div class="top-level-extent" id="Top">
+$result_converted{'html_text'}->{'some_at_commands_in_ref_nodes'} = '<div class="top-level-extent" id="Top">
 <h1 class="top" id="Top-1"><span>Top<a class="copiable-link" href="#Top-1"> &para;</a></span></h1>
 
 
@@ -383,8 +386,8 @@ $result_converted{'html_text'}->{'some_at_commands_in_ref_nodes'} = '
 ';
 
 
-$result_converted{'xml'}->{'some_at_commands_in_ref_nodes'} = '
-<node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> A <sc>sc <accent type="tilde" bracketed="off">n</accent> &aring; &tex;</sc> node <accent type="uml" bracketed="off">i</accent> <accent type="uml"><dotless>i</dotless></accent> <accent type="grave"><accent type="macr" bracketed="off">E</accent></accent> &lslash; <accent type="cedil"><accent type="acute" bracketed="off">C</accent></accent> &iexcl;</nodenext></node>
+$result_converted{'xml'}->{'some_at_commands_in_ref_nodes'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> A <sc>sc <accent type="tilde" bracketed="off">n</accent> &aring; &tex;</sc> node <accent type="uml" bracketed="off">i</accent> <accent type="uml"><dotless>i</dotless></accent> <accent type="grave"><accent type="macr" bracketed="off">E</accent></accent> &lslash; <accent type="cedil"><accent type="acute" bracketed="off">C</accent></accent> &iexcl;</nodenext></node>
 <top><sectiontitle> Top</sectiontitle>
 
 <menu endspaces=" ">
@@ -412,7 +415,7 @@ $result_converted{'docbook'}->{'some_at_commands_in_ref_nodes'} = '<chapter labe
 ';
 
 
-$result_converted{'latex_text'}->{'some_at_commands_in_ref_nodes'} = '
+$result_converted{'latex_text'}->{'some_at_commands_in_ref_nodes'} = '\\begin{document}
 \\label{anchor:Top}%
 \\Texinfochapter{{A \\textsc{sc} node \\"{i} \\"{\\i{}} \\`{\\={E}} \\l{} \\c{\\\'{C}} \\textexclamdown{}}}
 \\label{anchor:A-sc-_00f1-_00e5-TeX-node-_00ef-_00ef-_1e14-_0142-_1e08-_00a1}%
@@ -423,7 +426,7 @@ See \\hyperref[anchor:A-sc-_00f1-_00e5-TeX-node-_00ef-_00ef-_1e14-_0142-_1e08-_0
 ';
 
 
-$result_converted{'info'}->{'some_at_commands_in_ref_nodes'} = 'This is , produced from .
+$result_converted{'info'}->{'some_at_commands_in_ref_nodes'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: A SC Ñ Å TeX node ï ï Ḕ ł Ḉ ¡,  Up: (dir)
@@ -449,7 +452,7 @@ see *note (manual)a *strong* ref with SC, a i trema ï, a dotless i trema
 
 Tag Table:
 Node: Top27
-Node: A SC Ñ Å TeX node ï ï Ḕ ł Ḉ ¡152
+Node: A SC Ñ Å TeX node ï ï Ḕ ł Ḉ ¡172
 
 End Tag Table
 
@@ -457,6 +460,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

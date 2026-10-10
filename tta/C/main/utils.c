@@ -16,18 +16,25 @@
 /* code that does not fit anywhere else */
 
 /* includes config.h */
-#include <system.h>
+#include "system.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+/* for strcasecmp */
+#include <strings.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 #include <iconv.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "unistr.h"
 #include "unicase.h"
 #include "uniwidth.h"
+#include <unitypes.h>
 #include <unictype.h>
 /* for euidaccess.  Not portable, use gnulib */
 #include <unistd.h>
@@ -52,6 +59,7 @@
 /* for CL_* */
 #include "document_types.h"
 #include "converter_types.h"
+#include "html_converter_state.h"
 /* isascii_alnum isascii_alpha isascii_upper */
 #include "base_utils.h"
 #include "hashmap.h"
@@ -59,10 +67,10 @@
 #include "extra.h"
 #include "builtin_commands.h"
 #include "debug.h"
-#include "api_to_perl.h"
-/* push_stack_element */
+/* add_(const_element) */
 #include "command_stack.h"
 #include "unicode.h"
+#include "list_macros.h"
 #include "utils.h"
 
 #define min_level command_structuring_level[CM_chapter]
@@ -86,7 +94,7 @@
     command line options.
   This means that _WIN32 may be defined on Cygwin while the null device
   name seems to always be different from MS-Windows null device name, so
-  we exclude explicitely __CYGWIN__.
+  we exclude explicitly __CYGWIN__.
   In similar code used for the info reader, the logic is different, as
   O_BINARY is used first and cygwin is tested afterwards.  We also use
   O_BINARY in the C texi2any code for paths related defines.
@@ -100,6 +108,9 @@ const char *null_device_names[] = {
  0};
 
 const char *whitespace_chars = " \t\v\f\r\n";
+/* in the perl parser, comments including whitespace_chars_except_newline
+   show where code should be changed if the list of characters changes here */
+const char *whitespace_chars_except_newline = " \t\v\f";
 const char *digit_chars = "0123456789";
 
 const DEF_ALIAS def_aliases[] = {
@@ -288,7 +299,7 @@ setup_structuring_data (void)
           * SECTION_LEVEL_NR * sizeof (enum command_id));
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
-      if (builtin_command_data[i].flags & CF_sectioning_heading)
+      if (command_data[i].flags & CF_sectioning_heading)
         {
           enum structuring_commands_categories category;
 
@@ -369,20 +380,47 @@ to_upper_or_lower_multibyte (const char *text, int lower_or_upper)
   return result;
 }
 
+/* NOTE beware of a difference with the Perl function string_width,
+   newline is a zero width character here, not one. */
 int
-width_multibyte (const char *text)
+width_multibyte (const char *text, size_t n)
 {
   int result;
-  uint8_t *u8_text = utf8_from_string (text);
+  const uint8_t *u8_text = (const uint8_t *)text;
   /* NOTE the libunistring documentation described encoding as
      The encoding argument identifies the encoding (e.g. "ISO-8859-2"
      for Polish).  Looking at the code, it seems that it is only
      used to determine if it is a CJK encoding in a list of upper-case
      encodings.  We probably do not want to have this dependency to
      encoding, so use UTF-8. */
-  result = u8_strwidth (u8_text, "UTF-8");
-  free (u8_text);
+  result = u8_width (u8_text, n, "UTF-8");
   return result;
+}
+
+/* u8_width stops at the first NUL.  To allow for embedded NUL
+   and get the width, copy and replace by another character (one that
+   has a zero length) if there is a NUL. */
+/* Currently unused */
+int
+width_multibyte_with_nul (const char *text, size_t n)
+{
+  size_t i;
+  for (i = 0; i < n; i++)
+    {
+      if (text[i] == '\0')
+        {
+          char copy[n];
+          memcpy (copy, text, n);
+          size_t j = i;
+          for (j = i; j < n; j++)
+            {
+              if (copy[j] == '\0')
+                copy[j] = '\x08';
+            }
+          return width_multibyte (copy, n);
+        }
+    }
+  return width_multibyte (text, n);
 }
 
 /* length of next word in multibyte setting.  Should correspond to \w or
@@ -428,24 +466,124 @@ word_bytes_len_multibyte (const char *text)
 
 /* encoding and decoding. Use iconv. */
 
+/* Map ENCODING name to output encoding name usually used in HTML and
+   other formats.
+
+   No equivalent function in Perl, but a similar code is
+   inlined in Parser and in Texinfo::Common::processing_output_encoding.
+   In Perl Encode::find_encoding is called, so knows about more encodings
+   aliases than what we know about here.
+   In Perl, lc(Encode::find_encoding()->mime_name()) is used for the final
+   encoding name.
+ */
+const char *
+map_encoding_name (const char *encoding)
+{
+  const char *result_encoding = 0;
+  size_t i;
+
+  struct encoding_map {
+      const char *from; const char *to;
+  };
+
+  static const struct encoding_map map[] = {
+        {"utf-8", "utf-8"},
+        {"utf8", "utf-8"},
+        {"ascii",  "us-ascii"},
+        {"shiftjis", "shift_jis"},
+        {"latin1", "iso-8859-1"},
+        {"latin-1", "iso-8859-1"},
+        {"iso-8859-1",  "iso-8859-1"},
+        {"iso-8859-2",  "iso-8859-2"},
+        {"iso-8859-15", "iso-8859-15"},
+        {"koi8-r",      "koi8-r"},
+        {"koi8-u",      "koi8-u"},
+    /* For some reason Encode mime_name() for GB2312, a simplified
+       chinese character set encoded as EUC-CN is EUC-CN, while in the
+       IANA character sets assignments, there is no EUC-CN and
+       the Preferred MIME Name of GB2312 is GB2312, see:
+      https://www.iana.org/assignments/character-sets/character-sets.xhtml
+
+       Set it the same as Perl here, to have the same output.
+     */
+        {"gb2312",      "euc-cn"},
+  };
+  for (i = 0; i < sizeof map / sizeof *map; i++)
+    {
+     /* Elements in first column map to elements in
+        second column.  Elements in second column map
+        to themselves. */
+      if (!strcasecmp (encoding, map[i].from)
+           || !strcasecmp (encoding, map[i].to))
+        {
+          result_encoding = map[i].to;
+          break;
+        }
+    }
+  return result_encoding;
+}
+
+/* same as %Texinfo::Common::encoding_name_conversion_map{lc(..)} in Perl.
+   Thoughts on this mapping are available near
+   Texinfo::Common::encoding_name_conversion_map definition
+ */
+static const char *
+encoding_name_conversion_map (const char *encoding)
+{
+  if (!strcasecmp (encoding, "utf8"))
+    return "utf-8";
+  if (!strcasecmp (encoding, "us-ascii"))
+    return "iso-8859-1";
+  return 0;
+}
+
+/* Corresponds to Texinfo::Common::processing_output_encoding, but only
+   for the encoding name determination, we let get_encoding_conversion/iconv
+   do the aliasing of encoding name for conversions between encodings.
+
+   Return the encoding name, possibly different from the argument
+   if a compatible encoding extending the original encoding is used.
+ */
+const char *
+processing_output_encoding (const char *encoding)
+{
+  const char *encoding_name;
+
+  if (!encoding || !strcmp (encoding, ""))
+    return encoding;
+
+  encoding_name = encoding_name_conversion_map (encoding);
+  if (encoding_name)
+    return encoding_name;
+  else
+    {
+      const char *preferred_encoding_name = map_encoding_name (encoding);
+      if (preferred_encoding_name)
+        {
+          encoding_name
+            = encoding_name_conversion_map (preferred_encoding_name);
+          if (encoding_name)
+            return encoding_name;
+        }
+    }
+
+  return encoding;
+}
+
 /* conversion to or from utf-8 should always be set before other
    conversion */
 ENCODING_CONVERSION *
 get_encoding_conversion (const char *encoding,
                          ENCODING_CONVERSION_LIST *encodings_list)
 {
-  const char *conversion_encoding = encoding;
+  const char *conversion_encoding;
   size_t encoding_nr = 0;
   size_t encoding_index = 0;
   int utf8_missing = 0;
 
-  /* should correspond to
-     Texinfo::Common::encoding_name_conversion_map.
-     Thoughts on this mapping are available near
-     Texinfo::Common::encoding_name_conversion_map definition
-  */
-  if (!strcasecmp (encoding, "us-ascii"))
-    conversion_encoding = "iso-8859-1";
+  conversion_encoding = encoding_name_conversion_map (encoding);
+  if (!conversion_encoding)
+    conversion_encoding = encoding;
 
   if (!strcasecmp (encoding, "utf-8"))
     {
@@ -527,7 +665,7 @@ reset_encoding_list (ENCODING_CONVERSION_LIST *encodings_list)
 }
 
 /* Run iconv using text buffer as output buffer. */
-size_t
+static size_t
 text_buffer_iconv (TEXT *buf, iconv_t iconv_state,
                    ICONV_CONST char **inbuf, size_t *inbytesleft)
 {
@@ -552,20 +690,21 @@ text_buffer_iconv (TEXT *buf, iconv_t iconv_state,
 
 /* If SILENT_STATUS is set, no message is output and the argument is used
    to pass a status as reference, set to 0 if there was no error */
-char *
-encode_with_iconv (iconv_t our_iconv, char *s, const SOURCE_INFO *source_info,
+TEXT
+encode_with_iconv (iconv_t our_iconv, char *s, size_t len,
+                   const SOURCE_INFO *source_info,
                    enum iconv_error_handling error_handling, int *iconv_status)
 {
-  static TEXT t;
+  TEXT t;
   ICONV_CONST char *inptr; size_t bytes_left;
   size_t iconv_ret;
 
   if (iconv_status)
     *iconv_status = 0;
 
-  t.end = 0; /* reset internal TEXT buffer */
+  text_init (&t);
   inptr = s;
-  bytes_left = strlen (s);
+  bytes_left = len;
   text_alloc (&t, 10);
 
   while (1)
@@ -615,7 +754,7 @@ encode_with_iconv (iconv_t our_iconv, char *s, const SOURCE_INFO *source_info,
     }
 
   t.text[t.end] = '\0';
-  return strdup (t.text);
+  return t;
 }
 
 /* NOTE INPUT_STRING should not be modified by iconv, but it cannot be marked
@@ -625,7 +764,7 @@ char *
 decode_string (char *input_string, const char *encoding, int *status,
                const SOURCE_INFO *source_info)
 {
-  char *result;
+  TEXT result;
   *status = 0;
   /* not sure this can happen */
   if (!encoding)
@@ -640,8 +779,9 @@ decode_string (char *input_string, const char *encoding, int *status,
   *status = 1;
 
   result = encode_with_iconv (conversion->iconv, input_string,
+                              strlen (input_string),
                               source_info, ieh_error, 0);
-  return result;
+  return result.text;
 }
 
 char *
@@ -649,7 +789,7 @@ encode_string (char *input_string, const char *encoding, int *status,
                const SOURCE_INFO *source_info,
                enum iconv_error_handling error_handling, int *iconv_status)
 {
-  char *result;
+  TEXT result;
   *status = 0;
   /* could happen in specific cases, such as, for file names,
      DOC_ENCODING_FOR_INPUT_FILE_NAME set to 0 and no locales encoding
@@ -665,9 +805,10 @@ encode_string (char *input_string, const char *encoding, int *status,
 
   *status = 1;
 
-  result = encode_with_iconv (conversion->iconv, input_string, source_info,
+  result = encode_with_iconv (conversion->iconv, input_string,
+                              strlen (input_string), source_info,
                               error_handling, iconv_status);
-  return result;
+  return result.text;
 }
 
 
@@ -994,16 +1135,15 @@ new_element_from_names (const char *type_name, const char *command_name,
       /* determines the type of the command */
       if (e_type == ET_NONE)
         {
-          if (builtin_command_data[cmd].flags & CF_nobrace)
+          if (command_data[cmd].flags & CF_nobrace)
             e_type = ET_nobrace_command;
-          else if (builtin_command_data[cmd].flags & CF_line)
+          else if (command_data[cmd].flags & CF_line)
             e_type = ET_line_command;
-          else if (builtin_command_data[cmd].flags & CF_block)
+          else if (command_data[cmd].flags & CF_block)
             e_type = ET_block_command;
-          else if (builtin_command_data[cmd].flags &
-                                            (CF_brace | CF_accent))
+          else if (command_data[cmd].flags & CF_brace)
             {
-              if (builtin_command_data[cmd].data == BRACE_context)
+              if (command_data[cmd].data == BRACE_context)
                 e_type = ET_context_brace_command;
               else
                 e_type = ET_brace_command;
@@ -1041,7 +1181,7 @@ item_line_parent (ELEMENT *current)
 ELEMENT *
 get_label_element (const ELEMENT *e)
 {
-  if (e->e.c->cmd == CM_node)
+  if (command_data[e->e.c->cmd].flags & CF_root)
     /* first content of arguments_line type element */
     return e->e.c->contents.list[0]->e.c->contents.list[0];
   else if ((e->e.c->cmd == CM_anchor || e->e.c->cmd == CM_namedanchor)
@@ -1052,6 +1192,39 @@ get_label_element (const ELEMENT *e)
     /* second content of arguments_line, ie second argument on line */
     return e->e.c->contents.list[0]->e.c->contents.list[1];
   return 0;
+}
+
+static const char *lower_top_name = "top";
+
+/* ALTIMP perl/Texinfo/Common.pm */
+char *
+normalize_top_node_name (char *node_name)
+{
+  if (strlen (node_name) == strlen (lower_top_name))
+    {
+      size_t i;
+      for (i = 0; i < strlen (lower_top_name); i++)
+        if (!isascii_alnum(node_name[i])
+            || tolower (node_name[i]) != lower_top_name[i])
+          return node_name;
+      free (node_name);
+      return strdup ("Top");
+    }
+  return node_name;
+}
+
+/* variant changing TEXT in-place */
+void
+normalize_top_node_name_text (TEXT *node_name)
+{
+  size_t i;
+  if (node_name->end != strlen (lower_top_name))
+    return;
+  for (i = 0; i < strlen (lower_top_name); i++)
+    if (!isascii_alnum(node_name->text[i])
+        || tolower (node_name->text[i]) != lower_top_name[i])
+      return;
+  memcpy (node_name->text, "Top", 3 * sizeof (char));
 }
 
 /* ALTIMP perl/Texinfo/Common.pm */
@@ -1081,6 +1254,7 @@ empty_spaces_argument (const ELEMENT *element)
 
 static const TEXT empty_text = {"", 1, 0};
 
+/* ALTIMP perl/Texinfo/Common.pm */
 const TEXT *
 simple_arg_text (const ELEMENT *element, int *surplus_arg)
 {
@@ -1143,6 +1317,15 @@ indices_info_index_by_name (const INDEX_LIST *indices_information,
 
 INDEX *
 ultimate_index (INDEX *index)
+{
+  while (index->merged_in)
+    index = index->merged_in;
+  return index;
+}
+
+/* Duplicate of ultimate_index, used when result should be const. */
+const INDEX *
+ultimate_index_const (const INDEX *index)
 {
   while (index->merged_in)
     index = index->merged_in;
@@ -1261,7 +1444,8 @@ remove_extension (const char *input_string)
 /* ALTIMP perl/Texinfo/Common.pm file_separator_canonpath
           using File::Spec->canonpath */
 /* try to do at least part of what File::Spec->canonpath does for
-   file_separator_canonpath to have tests passing.
+   file_separator_canonpath to have tests passing and have . removed
+   for canonicalized path names.
    Replace backslashes by forward slashes.
  */
 char *
@@ -1283,10 +1467,21 @@ file_separator_canonpath (const char *input_file)
           /* omit a / at the end of the path */
           if (!*p)
             return (result.text);
+
+          if (*p == '.' && IS_SLASH(*(p+1)))
+            {/* remove /./ */
+              p += 1;
+              /* omit a / at the end of the path */
+              if (!*(p+1))
+                return (result.text);
+              continue;
+            }
+
         /* This variant keeps the original separator
           text_append_n (&result, q, 1);
          */
           text_append_n (&result, "/", 1);
+
           q = strpbrk (p, FILE_SLASH);
           if (q)
             {
@@ -1510,7 +1705,7 @@ splitpath (const char *input_file_path, char **result)
   result[1] = file_name_and_directory[1];
 }
 
-/* Done in Texinfo::Common warn_unknown_language */
+/* ALTIMP perl/Texinfo/Common.pm */
 /* Check validity of TEXT as @documentlanguage argument.
 
    Return the language code part of the argument or NULL it TEXT
@@ -1581,6 +1776,7 @@ analyze_documentlanguage_argument (const char *text,
   return lang;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 const char *
 analyze_documentscript_argument (const char *text, int *valid_script)
 {
@@ -1641,6 +1837,7 @@ analyze_documentscript_argument (const char *text, int *valid_script)
   return 0;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 const char *
 analyze_documentlanguagevariant_argument_e (const ELEMENT *element,
                                             int *valid_variant,
@@ -1682,6 +1879,7 @@ analyze_documentlanguagevariant_argument_e (const ELEMENT *element,
   return "";
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 STRING_LIST *
 documentlanguagevariant_variants (const ELEMENT *element)
 {
@@ -1697,7 +1895,7 @@ documentlanguagevariant_variants (const ELEMENT *element)
        = analyze_documentlanguagevariant_argument_e (content, &valid_variant,
                                                      &surplus_arg);
       if (variant && strcmp (variant, ""))
-        add_string (variant, language_variants);
+        add_string (language_variants, variant);
     }
   return language_variants;
 }
@@ -1808,28 +2006,19 @@ void
 add_include_directory (const char *input_filename,
                        STRING_LIST *include_dirs_list)
 {
-  int len;
-  char *filename = strdup (input_filename);
-  len = strlen (filename);
-  if (len > 0 && IS_SLASH(filename[len - 1]))
-    filename[len - 1] = '\0';
-  add_string (filename, include_dirs_list);
+  char *filename = file_separator_canonpath (input_filename);
+  add_string (include_dirs_list, filename);
   free (filename);
 }
 
+def_list_fns(STRING_LIST, string, char *, 5)
+
 char *
-add_string (const char *string, STRING_LIST *strings_list)
+add_string (STRING_LIST *strings_list, const char *string)
 {
-  char *result;
-  if (strings_list->number == strings_list->space)
-    {
-      strings_list->list = realloc (strings_list->list,
-                   sizeof (char *) * (strings_list->space += 5));
-    }
-  strings_list->list[strings_list->number] = strdup (string);
-  result = strings_list->list[strings_list->number];
-  strings_list->number++;
-  return result;
+  char *new_string = strdup (string);
+  add_(string) (strings_list, new_string);
+  return new_string;
 }
 
 void
@@ -1875,7 +2064,7 @@ copy_strings (STRING_LIST *dest_list, const STRING_LIST *source_list)
     }
   for (i = 0; i < source_list->number; i++)
     {
-      add_string (source_list->list[i], dest_list);
+      add_string (dest_list, source_list->list[i]);
     }
 }
 
@@ -1981,6 +2170,7 @@ join_strings_list (const STRING_LIST *strings, const char *delimiter)
 
 
 
+/* implementation of File::Spec->file_name_is_absolute in Perl */
 int
 file_name_is_absolute (const char *filename)
 {
@@ -2075,6 +2265,7 @@ free_deprecated_dirs_list (DEPRECATED_DIRS_LIST *deprecated_dirs)
   free (deprecated_dirs->list);
 }
 
+/* Implementation of File::Spec->splitdir in Perl */
 STRING_LIST *
 splitdir (char *directories_str)
 {
@@ -2084,27 +2275,30 @@ splitdir (char *directories_str)
   while (directory)
     {
       if (strlen (directory))
-        add_string (directory, directories);
+        add_string (directories, directory);
       directory = strtok (NULL, FILE_SLASH);
     }
   return directories;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 /* Return value to be freed by caller. */
 /* try to locate a file called FILENAME, looking for it in the list of include
    directories. */
 char *
-locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
+locate_include_file (const char *filename, const STRING_LIST *include_dirs_list,
+                     int *use_include_directories)
 {
   char *fullpath;
   struct stat dummy;
   int status;
   size_t i;
-  int ignore_include_directories = 0;
+
+  *use_include_directories = 1;
 
   /* Checks if filename is absolute or relative to current directory. */
   if (file_name_is_absolute (filename))
-    ignore_include_directories = 1;
+    *use_include_directories = 0;
   else
     {
       char *file_name_and_directories[3];
@@ -2123,7 +2317,7 @@ locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
               if ((strlen (directory) == 2 && !memcmp (directory, "..", 2))
                   || (strlen (directory) == 1 && !memcmp (directory, ".", 1)))
                 {
-                  ignore_include_directories = 1;
+                  *use_include_directories = 1;
                   break;
                 }
             }
@@ -2131,7 +2325,7 @@ locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
         }
     }
 
-  if (ignore_include_directories)
+  if (! *use_include_directories)
     {
       status = stat (filename, &dummy);
       if (status == 0)
@@ -2139,6 +2333,7 @@ locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
     }
   else if (!include_dirs_list)
     {
+      *use_include_directories = 0;
       return 0;
     }
   else
@@ -2152,9 +2347,11 @@ locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
           free (fullpath);
         }
     }
+  *use_include_directories = 0;
   return 0;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 /* Return value to be freed by caller. */
 /* Used in main program, tests and HTML Converter.
 
@@ -2184,7 +2381,7 @@ locate_file_in_dirs (const char *filename,
       if (euidaccess (filename, R_OK) == 0)
         {
           if (all_files)
-            add_string (filename, all_files);
+            add_string (all_files, filename);
           else
             return strdup (filename);
         }
@@ -2214,7 +2411,7 @@ locate_file_in_dirs (const char *filename,
           if (euidaccess (filename, R_OK) == 0)
             {
               if (all_files)
-                add_string (filename, all_files);
+                add_string (all_files, filename);
               else
                 return strdup (filename);
             }
@@ -2238,7 +2435,7 @@ locate_file_in_dirs (const char *filename,
                                                  deprecated_dir_info);
                     }
                   if (all_files)
-                    add_string (fullpath, all_files);
+                    add_string (all_files, fullpath);
                   else
                     return fullpath;
                 }
@@ -2251,6 +2448,7 @@ locate_file_in_dirs (const char *filename,
 
 
 
+/* ALTIMP perl/Texinfo/Common.pm */
 const ELEMENT *
 block_line_argument_command (const ELEMENT *block_line_arg)
 {
@@ -2270,8 +2468,8 @@ block_line_argument_command (const ELEMENT *block_line_arg)
                   && arg->e.c->contents.list[0]->e.c->contents.number == 0)))
         {
           enum command_id cmd = element_builtin_cmd (arg);
-          if (builtin_command_data[cmd].flags & CF_brace
-              && !(builtin_command_data[cmd].flags & CF_accent))
+          if (command_data[cmd].flags & CF_brace
+              && command_data[cmd].data != BRACE_accent)
             {
               return arg;
             }
@@ -2280,9 +2478,10 @@ block_line_argument_command (const ELEMENT *block_line_arg)
   return 0;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 /* the caller should allocate a two element table for results */
 void
-find_float_caption_shortcaption(const ELEMENT *float_e, const ELEMENT **result)
+find_float_caption_shortcaption (const ELEMENT *float_e, const ELEMENT **result)
 {
   size_t i;
 
@@ -2315,6 +2514,7 @@ find_float_caption_shortcaption(const ELEMENT *float_e, const ELEMENT **result)
     }
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 int
 non_leading_trailing_indices (const ELEMENT *tree, ARG_INDICES *out_indices)
 {
@@ -2361,6 +2561,7 @@ non_leading_trailing_indices (const ELEMENT *tree, ARG_INDICES *out_indices)
   return 1;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 ELEMENT *
 multitable_columnfractions (const ELEMENT *multitable)
 {
@@ -2385,6 +2586,7 @@ multitable_columnfractions (const ELEMENT *multitable)
   return columnfractions;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 void
 collect_subentries (const ELEMENT *current, CONST_ELEMENT_LIST *e_list)
 {
@@ -2403,6 +2605,7 @@ collect_subentries (const ELEMENT *current, CONST_ELEMENT_LIST *e_list)
     }
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 const ELEMENT *
 index_entry_referred_entry (const ELEMENT *element, enum command_id cmd)
 {
@@ -2460,6 +2663,8 @@ store_value (VALUE_LIST *values, const char *name, const char *value)
         {
           values->list = realloc (values->list,
                                   (values->space += 5) * sizeof (VALUE));
+          if (!values->list)
+            fatal ("realloc failed");
         }
       v = &values->list[values->number++];
     }
@@ -2669,10 +2874,10 @@ informative_command_value (const ELEMENT *element, enum command_id *cmd_out)
     cmd = CM_shortcontents;
 
   *cmd_out = cmd;
-  if (builtin_command_data[cmd].flags & CF_line
-      && builtin_command_data[cmd].data == LINE_lineraw)
+  if (command_data[cmd].flags & CF_line
+      && command_data[cmd].data == LINE_lineraw)
     {
-      if (builtin_command_data[cmd].args_number <= 0)
+      if (command_data[cmd].args_number <= 0)
         return "1";
       /* NOTE only @set, which is not an informative command associated
          to a customization variable can have args.number > 1.
@@ -2699,9 +2904,19 @@ informative_command_value (const ELEMENT *element, enum command_id *cmd_out)
     return text_arg;
   misc_args = lookup_extra_string_list (element, AI_key_misc_args);
   if (misc_args && misc_args->number > 0)
-    return misc_args->list[0];
-  if (builtin_command_data[cmd].flags & CF_line
-      && builtin_command_data[cmd].data == LINE_line)
+    {
+      const char *arg = misc_args->list[0];
+      if (cmd == CM_paragraphindent)
+        {
+          if (!strcmp (arg, "asis"))
+            arg = "-2";
+          else if (!strcmp (arg, "none"))
+            arg = "0";
+        }
+      return arg;
+    }
+  if (command_data[cmd].flags & CF_line
+      && command_data[cmd].data == LINE_line)
    {
       int surplus_arg;
       const TEXT *arg_text = simple_arg_text (element->e.c->contents.list[0],
@@ -2713,6 +2928,7 @@ informative_command_value (const ELEMENT *element, enum command_id *cmd_out)
   return 0;
 }
 
+/* ALTIMP perl/Texinfo/Common.pm */
 int
 in_preamble (const ELEMENT *element)
 {
@@ -2748,7 +2964,7 @@ get_global_document_command (const GLOBAL_COMMANDS *global_commands,
     fprintf (stderr, "BUG: get_global_document_command: unknown CL: %d\n",
                      command_location);
 
-  if (builtin_command_data[cmd].flags & CF_global)
+  if (command_data[cmd].flags & CF_global)
     {
       const ELEMENT_LIST *command_list
         = get_cmd_global_multi_command (global_commands, cmd);
@@ -2795,6 +3011,7 @@ get_global_document_command (const GLOBAL_COMMANDS *global_commands,
 
 
 
+/* ALTIMP perl/Texinfo/Common.pm */
 ACCENTS_STACK *
 find_innermost_accent_contents (const ELEMENT *element)
 {
@@ -2809,19 +3026,19 @@ find_innermost_accent_contents (const ELEMENT *element)
       const ELEMENT *arg;
       size_t i;
       enum command_id data_cmd;
-      unsigned long flags;
 
       if (type_data[current->type].flags & TF_text)
         return accent_stack;
 
       data_cmd = element_builtin_data_cmd (current);
-      flags = builtin_command_data[data_cmd].flags;
 
       /* the following can happen if called with a bad tree */
-      if (!data_cmd || !(flags & CF_accent))
+      if (!data_cmd
+          || !(command_data[data_cmd].flags & CF_brace
+               && command_data[data_cmd].data == BRACE_accent))
         return accent_stack;
 
-      push_stack_element (&accent_stack->stack, current);
+      add_(const_element) (&accent_stack->stack, current);
       /* A bogus accent, that may happen */
       if (current->e.c->contents.number <= 0)
         return accent_stack;
@@ -2838,9 +3055,8 @@ find_innermost_accent_contents (const ELEMENT *element)
                 = element_builtin_data_cmd (content);
               if (content_data_cmd)
                 {
-                  unsigned long content_flags
-                     = builtin_command_data[content_data_cmd].flags;
-                  if (content_flags & CF_accent)
+                  if (command_data[content_data_cmd].flags & CF_brace
+               && command_data[content_data_cmd].data == BRACE_accent)
                     {
          /* if accent is tieaccent, keep everything and do not try to
             nest more */
@@ -2878,7 +3094,7 @@ find_innermost_accent_contents (const ELEMENT *element)
 void
 destroy_accent_stack (ACCENTS_STACK *accent_stack)
 {
-  free (accent_stack->stack.stack);
+  free (accent_stack->stack.list);
   if (accent_stack->argument)
     destroy_element (accent_stack->argument);
   free (accent_stack);
@@ -2915,7 +3131,7 @@ input_file_name_encoding (const char *name_encoding,
 
 /* misc functions used in general in structuring and in conversion */
 
-/* corresponding perl function in Common.pm */
+/* ALTIMP perl/Texinfo/Common.pm */
 /* the returned level will be < 0 if the command is not supposed
    to be associated to a level. */
 int
@@ -2960,7 +3176,7 @@ section_level_adjusted_command_name (const ELEMENT *element)
   return element->e.c->cmd;
 }
 
-/* corresponding perl function in Common.pm */
+/* ALTIMP perl/Texinfo/Common.pm */
 int
 is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
 {
@@ -2980,7 +3196,7 @@ is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
           else
             {
               const char *text = content->e.text->text;
-              /* only whitespace characters */
+              /* not only whitespace characters */
               if (text[strspn (text, whitespace_chars)] != '\0')
                 return 0;
               else
@@ -2994,9 +3210,9 @@ is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
       data_cmd = element_builtin_data_cmd (content);
       if (data_cmd)
         {
-          unsigned long flags = builtin_command_data[data_cmd].flags;
+          unsigned long flags = command_data[data_cmd].flags;
           unsigned long other_flags
-               = builtin_command_data[data_cmd].other_flags;
+               = command_data[data_cmd].other_flags;
           if (content->type == ET_index_entry_command)
             {
               if (do_not_ignore_index_entries)
@@ -3033,6 +3249,62 @@ is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
     }
   return 1;
 }
+
+/* In the default case, global informative commands are collected
+    by the parsers.  The following functions allow to collect
+    any @-command.
+ */
+
+void collect_commands_list_in_tree_internal (const ELEMENT *element,
+                                  const enum command_id *commands_list,
+                                  CONST_ELEMENT_LIST *collected_commands_list);
+
+
+void
+collect_commands_list_in_tree_internal (const ELEMENT *element,
+                                  const enum command_id *commands_list,
+                                  CONST_ELEMENT_LIST *collected_commands_list)
+{
+  int i;
+  size_t j;
+  enum command_id cmd;
+
+  if (type_data[element->type].flags & TF_text)
+    return;
+
+  cmd = element_builtin_cmd (element);
+
+  if (cmd != CM_NONE)
+    {
+      for (i = 0; commands_list[i] != CM_NONE; i++)
+        {
+          if (cmd == commands_list[i])
+            {
+              add_to_const_element_list (collected_commands_list, element);
+              break;
+            }
+        }
+    }
+
+  for (j = 0; j < element->e.c->contents.number; j++)
+    collect_commands_list_in_tree_internal (element->e.c->contents.list[j],
+                                       commands_list,
+                                       collected_commands_list);
+}
+
+/* ALTIMP perl/Texinfo/Common.pm */
+CONST_ELEMENT_LIST *
+collect_commands_list_in_tree (const ELEMENT *root,
+                          const enum command_id *commands_list)
+{
+  CONST_ELEMENT_LIST *collected_commands_list = new_const_element_list ();
+
+  collect_commands_list_in_tree_internal (root, commands_list,
+                                     collected_commands_list);
+
+  return collected_commands_list;
+}
+
 
 /*
   decompose a decimal number on a given base.  It is not the
@@ -3137,11 +3409,13 @@ enumerate_item_representation (const ELEMENT *element)
 int
 html_get_direction_index (const CONVERTER *converter, const char *direction)
 {
-  if (converter && converter->main_units_direction_names)
+  const HTML_CONVERTER_STATE *self_html
+    = converter ? converter->html_converter : NULL;
+  if (self_html && self_html->main_units_direction_names)
     {
       int found;
       uintptr_t idx = (uintptr_t)
-        c_hashmap_value (&converter->units_direction_names_index,
+        c_hashmap_value (&self_html->units_direction_names_index,
                          direction, &found);
       if (found)
         return idx;
@@ -3154,12 +3428,15 @@ html_get_direction_index (const CONVERTER *converter, const char *direction)
 const char *
 direction_unit_direction_name (int direction, const CONVERTER *converter)
 {
+  const HTML_CONVERTER_STATE *self_html
+    = converter ? converter->html_converter : NULL;
+
   if (direction < 0)
     return 0;
   else if (direction < NON_SPECIAL_DIRECTIONS_NR)
     return html_button_direction_names[direction];
-  else if (converter && converter->main_units_direction_names)
-    return converter->main_units_direction_names[direction];
+  else if (self_html && self_html->main_units_direction_names)
+    return self_html->main_units_direction_names[direction];
   else
    return 0;
 }
@@ -3273,5 +3550,16 @@ new_formatted_button_info (void)
   memset (result, 0, sizeof (FORMATTED_BUTTON_INFO));
 
   return result;
+}
+
+/* for debugging, to ensure that the memory is moved and find freed
+   memory */
+void *
+malloc_free_realloc(void *p, size_t old_size, size_t size)
+{
+  void *tmp = malloc (size);
+  memcpy (tmp, p, old_size);
+  free (p);
+  return tmp;
 }
 

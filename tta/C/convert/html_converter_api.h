@@ -19,12 +19,13 @@
 
 /* High-level API of HTML converter */
 
+#include "text.h"
+#include "tree_types.h"
 #include "document_types.h"
 #include "converter_types.h"
-#include "option_types.h"
 
 /* in html_prepare_converter.c */
-void html_format_setup (void);
+void html_format_setup (enum converter_format format);
 char *html_builtin_default_css_text (void);
 
 /* in html_converter_init_options.c */
@@ -36,14 +37,21 @@ CONVERTER_INITIALIZATION_INFO *html_converter_defaults (
 void html_converter_initialize (CONVERTER *converter);
 
 /* in convert_html.c */
-char *html_convert_tree (CONVERTER *self, const ELEMENT *tree);
+TEXT html_convert_tree (CONVERTER *self, const ELEMENT *tree);
+ELEMENT *html_cdt_tree (const char *string, CONVERTER *self,
+               NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+               const char *translation_context);
+ELEMENT *html_element_cdt_tree (const char *string, const ELEMENT *element,
+                       CONVERTER *self,
+                       NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+                       const char *translation_context);
 
 /* implemented in html_converter_api.c using html_conversion_api.h functions */
-char *html_output (CONVERTER *converter, DOCUMENT *document);
-char *html_convert (CONVERTER *converter, DOCUMENT *document);
+TEXT html_output (CONVERTER *converter, DOCUMENT *document);
+TEXT html_convert (CONVERTER *converter, DOCUMENT *document);
 
 /* in html_converter_finish.c */
-void html_reset_converter (CONVERTER *self);
+void html_release_output_units (CONVERTER *self);
 
 void html_free_converter (CONVERTER *self);
 

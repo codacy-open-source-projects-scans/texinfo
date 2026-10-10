@@ -28,8 +28,9 @@
 #include "global_commands_types.h"
 #include "options_data.h"
 #include "document_types.h"
-/* fatal */
-#include "base_utils.h"
+#include "list_macros.h"
+/* for CONVERTER_CACHE_TRANSLATE */
+#include "converter_types.h"
 #include "types_data.h"
 #include "tree.h"
 #include "extra.h"
@@ -40,7 +41,7 @@
    xasprintf */
 #include "utils.h"
 /* for copy_element_tree copy_contents parse_node_manual
-   protect_colon_in_tree */
+   protect_colon_in_tree reference_to_arg_in_tree */
 #include "manipulate_tree.h"
 #include "command_stack.h"
 #include "node_name_normalization.h"
@@ -48,6 +49,8 @@
 #include "structure_list.h"
 #include "targets.h"
 #include "translations.h"
+/* for protect_first_parenthesis */
+#include "transformations.h"
 #include "structuring.h"
 
 void
@@ -421,6 +424,92 @@ sectioning_structure (DOCUMENT *document)
 }
 
 void
+sectioning_targets (DOCUMENT *document)
+{
+  const C_HASHMAP *identifiers_target = &document->identifiers_target;
+  ERROR_MESSAGE_LIST *error_messages = &document->error_messages;
+  OPTIONS *options = document->options;
+  int warn_debug = (options && options->DEBUG.o.integer > 0);
+  size_t i;
+
+  const SECTION_RELATIONS_LIST *sections_list = &document->sections_list;
+  for (i = 0; i < sections_list->number; i++)
+    {
+      SECTION_RELATIONS *section_relations = sections_list->list[i];
+      /* cast to remove const */
+      ELEMENT *content = (ELEMENT *)section_relations->element;
+      const ELEMENT *arguments_line;
+      const ELEMENT *line_arg;
+      ELEMENT *node_tree;
+      char *normalized;
+      const char *non_hyphen_char;
+
+      if (section_relations->associated_node)
+        continue;
+
+      if (content->e.c->cmd == CM_part)
+        continue;
+
+      arguments_line = content->e.c->contents.list[0];
+      line_arg = arguments_line->e.c->contents.list[0];
+
+      node_tree = copy_contents (line_arg, 0, ET_NONE);
+
+      if (node_tree->e.c->contents.number == 0)
+        {
+          destroy_element_and_children (node_tree);
+          continue;
+        }
+
+      /* No @xref in target */
+      node_tree = reference_to_arg_in_tree (node_tree, document);
+
+      normalized = convert_contents_to_node_identifier (node_tree);
+
+      destroy_element_and_children (node_tree);
+
+      non_hyphen_char = normalized + strspn (normalized, "-");
+      if (! *non_hyphen_char)
+        {
+           free (normalized);
+           continue;
+        }
+
+      if (identifiers_target_number (identifiers_target))
+        {
+          const ELEMENT *existing_target
+            = find_identifier_target (identifiers_target, normalized);
+          if (existing_target)
+            {
+              if (command_data[existing_target->e.c->cmd].flags
+                     & CF_sectioning_heading)
+                {
+                  char *section_texinfo
+                    = convert_contents_to_texinfo (line_arg);
+
+                  message_list_command_warn (error_messages, warn_debug,
+                                  content, 0, "@%s `%s' already added target",
+                                  builtin_command_name (content->e.c->cmd),
+                                  section_texinfo);
+                  free (section_texinfo);
+                  message_list_command_warn (error_messages, warn_debug,
+                                  existing_target, 1, "added for @%s",
+                       builtin_command_name (existing_target->e.c->cmd));
+                }
+              free (normalized);
+              continue;
+            }
+        }
+
+      document->modified_information |= F_DOCM_tree;
+
+      add_extra_string (content, AI_key_identifier, normalized);
+
+      register_label_element (document, content, error_messages);
+    }
+}
+
+void
 warn_non_empty_parts (DOCUMENT *document)
 {
   const GLOBAL_COMMANDS *global_commands = &document->global_commands;
@@ -554,14 +643,15 @@ get_node_node_childs_from_sectioning (const NODE_RELATIONS *node_relations)
   return node_childs;
 }
 
-static char **
-register_referenced_node (const ELEMENT *node, char **referenced_identifiers,
+static const char **
+register_referenced_node (const ELEMENT *node,
+                          const char **referenced_identifiers,
                           size_t *referenced_identifier_space_ptr,
                           size_t *referenced_identifier_number_ptr)
 {
   size_t referenced_identifier_space = *referenced_identifier_space_ptr;
   size_t referenced_identifier_number = *referenced_identifier_number_ptr;
-  char *normalized;
+  const char *normalized;
 
   if (node->e.c->cmd != CM_node)
     return referenced_identifiers;
@@ -574,7 +664,7 @@ register_referenced_node (const ELEMENT *node, char **referenced_identifiers,
           referenced_identifier_space *= 2;
           referenced_identifiers
              = realloc (referenced_identifiers,
-                        referenced_identifier_space * sizeof (char *));
+                        referenced_identifier_space * sizeof (const char *));
         }
       referenced_identifiers[referenced_identifier_number] = normalized;
       referenced_identifier_number++;
@@ -631,33 +721,37 @@ check_nodes_are_referenced (DOCUMENT *document)
   const C_HASHMAP *identifiers_target = &document->identifiers_target;
   const ELEMENT_LIST *refs = &document->internal_references;
   ERROR_MESSAGE_LIST *error_messages = &document->error_messages;
-  OPTIONS *options = document->options;
+  const OPTIONS *options = document->options;
   int warn_debug = (options && options->DEBUG.o.integer > 0);
   int check_node_in_menu;
   int all_nodes_are_referenced;
 
-  char **referenced_identifiers;
+  const char **referenced_identifiers;
   size_t referenced_identifier_space;
   size_t referenced_identifier_number = 1;
   size_t i;
   size_t nr_nodes_to_find = 0;
   size_t nr_not_found = 0;
 
-  const ELEMENT *top_node;
+  const ELEMENT *top_node = 0;
+  const ELEMENT *top_target_element;
 
   if (nodes_list->number < 1)
     return;
 
   referenced_identifier_space = nodes_list->number * 2;
   referenced_identifiers
-    = malloc (referenced_identifier_space * sizeof (char *));
+    = malloc (referenced_identifier_space * sizeof (const char *));
 
-  top_node = find_identifier_target (identifiers_target,
-                                     "Top");
+  top_target_element = find_identifier_target (identifiers_target,
+                                               "Top");
+  if (top_target_element && top_target_element->e.c->cmd == CM_node)
+    top_node = top_target_element;
+
   if (!top_node)
     {
       top_node = nodes_list->list[0]->element;
-      char *normalized = lookup_extra_string (top_node, AI_key_identifier);
+      const char *normalized = lookup_extra_string (top_node, AI_key_identifier);
       if (normalized)
         referenced_identifiers[0] = normalized;
       else
@@ -758,11 +852,11 @@ check_nodes_are_referenced (DOCUMENT *document)
       size_t i;
       for (i = 0; i < refs->number; i++)
         {
-          ELEMENT *ref = refs->list[i];
+          const ELEMENT *ref = refs->list[i];
           if (ref->e.c->contents.number > 0)
             {
-              ELEMENT *label_arg = ref->e.c->contents.list[0];
-              char *ref_normalized;
+              const ELEMENT *label_arg = ref->e.c->contents.list[0];
+              const char *ref_normalized;
               if (type_data[label_arg->type].flags & TF_text)
                 continue;
 
@@ -770,7 +864,8 @@ check_nodes_are_referenced (DOCUMENT *document)
                                                     AI_key_normalized);
               if (ref_normalized)
                 {
-                  ELEMENT *target = find_identifier_target (identifiers_target,
+                  const ELEMENT *target
+                           = find_identifier_target (identifiers_target,
                                                             ref_normalized);
                   if (target)
                     referenced_identifiers =
@@ -789,7 +884,7 @@ check_nodes_are_referenced (DOCUMENT *document)
    */
 
   qsort (referenced_identifiers, referenced_identifier_number,
-         sizeof (char *), compare_strings);
+         sizeof (const char *), compare_strings);
 
    /*
   fprintf (stderr, "DEBUG: sorted referenced: %zu\n",
@@ -817,7 +912,8 @@ check_nodes_are_referenced (DOCUMENT *document)
                 {
                   memmove (&referenced_identifiers[i+1],
                            &referenced_identifiers[j+1],
-                    (referenced_identifier_number - (j + 1))* sizeof (char*));
+                    (referenced_identifier_number - (j + 1))
+                                                 * sizeof (const char *));
                 }
               referenced_identifier_number -= (j - i);
             }
@@ -859,7 +955,7 @@ check_nodes_are_referenced (DOCUMENT *document)
             {
               const char *found = (const char *)bsearch (&normalized,
                              referenced_identifiers,
-                             referenced_identifier_number, sizeof (char *),
+                             referenced_identifier_number, sizeof (const char *),
                              compare_strings);
               if (!found)
                 {
@@ -907,7 +1003,7 @@ complete_node_tree_with_menus (DOCUMENT *document)
   const NODE_RELATIONS_LIST *nodes_list = &document->nodes_list;
   const C_HASHMAP *identifiers_target = &document->identifiers_target;
   ERROR_MESSAGE_LIST *error_messages = &document->error_messages;
-  OPTIONS *options = document->options;
+  const OPTIONS *options = document->options;
 
   int check_menu_entries = 1;
   size_t i;
@@ -922,7 +1018,8 @@ complete_node_tree_with_menus (DOCUMENT *document)
                   || strcmp (options->FORMAT_MENU.o.string, "menu")))
     check_menu_entries = 0;
 
-  const ELEMENT *top_node = find_identifier_target (identifiers_target, "Top");
+  const ELEMENT *top_target_element
+    = find_identifier_target (identifiers_target, "Top");
 
   /*
   First go through all the menus and set menu up, menu next and menu prev,
@@ -1001,7 +1098,7 @@ complete_node_tree_with_menus (DOCUMENT *document)
                                       menu_node_relations
                                        = node_relations_of_node
                                            (menu_node, nodes_list);
-                                      if (menu_node != top_node
+                                      if (menu_node != top_target_element
                                           && node_automatic_directions (menu_node))
                                         {
                                           if (!menu_node_relations->node_directions)
@@ -1029,7 +1126,7 @@ complete_node_tree_with_menus (DOCUMENT *document)
                                                   AI_key_manual_content);
                       if (!prev_manual_content)
                         {
-                          if (previous_node != top_node
+                          if (previous_node != top_target_element
                               && node_automatic_directions (previous_node))
                             {
                               if (!previous_node_relations->node_directions)
@@ -1050,7 +1147,7 @@ complete_node_tree_with_menus (DOCUMENT *document)
 
                       if (!manual_content)
                         {
-                          if (menu_node != top_node
+                          if (menu_node != top_target_element
                               && node_automatic_directions (menu_node))
                             {
                               if (!menu_node_relations->node_directions)
@@ -1690,7 +1787,7 @@ set_top_node_next (const NODE_RELATIONS_LIST *nodes_list,
 {
   const ELEMENT *top_node = find_identifier_target (identifiers_target, "Top");
 
-  if (!top_node)
+  if (!top_node || (top_node->e.c->cmd != CM_node))
     return 0;
 
   if (node_automatic_directions (top_node))
@@ -1798,6 +1895,9 @@ construct_nodes_tree (DOCUMENT *document)
   OPTIONS *options = document->options;
   int warn_debug = (options && options->DEBUG.o.integer > 0);
 
+  const ELEMENT *top_target_element
+            = find_identifier_target (identifiers_target, "Top");
+
   set_top_node_next (&document->nodes_list, identifiers_target);
 
   size_t i;
@@ -1814,9 +1914,7 @@ construct_nodes_tree (DOCUMENT *document)
 
       if (node_automatic_directions (node))
         {
-          const ELEMENT *top_node
-            = find_identifier_target (identifiers_target, "Top");
-          if (node != top_node)
+          if (node != top_target_element)
             {
               enum directions d;
               for (d = 0; d < directions_length; d++)
@@ -2050,7 +2148,7 @@ number_floats (DOCUMENT *document)
   for (i = 0; i < listoffloats_list->number; i++)
     {
       const LISTOFFLOATS_TYPE *listoffloats
-        = &listoffloats_list->float_types[i];
+        = &listoffloats_list->list[i];
       int float_index = 0;
       int nr_in_chapter = 0;
       const SECTION_RELATIONS *current_chapter_relations = 0;
@@ -2287,8 +2385,9 @@ insert_menu_comment_content (ELEMENT_LIST *element_list, size_t position,
 ELEMENT *
 new_complete_node_menu (const NODE_RELATIONS *node_relations,
                         DOCUMENT *document,
-                        LANG_TRANSLATION *lang_translations,
-                        int debug_level, int use_sections)
+                        const LANG_TRANSLATION *lang_translations,
+                        int debug_level, int use_sections,
+                        CONVERTER_CACHE_TRANSLATE *translation_function)
 {
   CONST_NODE_RELATIONS_LIST *node_childs
     = get_node_node_childs_from_sectioning (node_relations);
@@ -2360,7 +2459,8 @@ new_complete_node_menu (const NODE_RELATIONS *node_relations,
                       part_title
                         = gdt_tree ("Part: {part_title}", document,
                                     lang_translations,
-                                    substrings, debug_level, 0);
+                                    substrings, 0, debug_level,
+                                    translation_function);
 
                       insert_menu_comment_content (&new_menu->e.c->contents,
                                                    content_index, part_title,
@@ -2375,8 +2475,8 @@ new_complete_node_menu (const NODE_RELATIONS *node_relations,
                     {
                       ELEMENT *appendix_title
                         = gdt_tree ("Appendices", document,
-                                    lang_translations,
-                                    0, debug_level, 0);
+                                    lang_translations, 0, 0, debug_level,
+                                    translation_function);
 
                       insert_menu_comment_content (&new_menu->e.c->contents,
                                                    content_index,
@@ -2403,12 +2503,13 @@ new_complete_node_menu (const NODE_RELATIONS *node_relations,
 }
 
 static ELEMENT_LIST *
-print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
+print_down_menus (const ELEMENT *node, CONST_ELEMENT_LIST *up_nodes,
                   ERROR_MESSAGE_LIST *error_messages,
                   const OPTIONS *options,
                   const C_HASHMAP *identifiers_target,
                   const NODE_RELATIONS_LIST *nodes_list,
-                  int use_sections)
+                  int use_sections,
+                  CONVERTER_CACHE_TRANSLATE *translation_function)
 {
   ELEMENT_LIST *master_menu_contents;
   CONST_ELEMENT_LIST *menus = 0;
@@ -2477,7 +2578,8 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
       /* If there is no menu for the node, we create a temporary menu to be
          able to find and copy entries as if there was already a menu */
       new_current_menu = new_complete_node_menu (node_relations,
-                                                 0, 0, 0, use_sections);
+                                                 0, 0, 0, use_sections,
+                                                 translation_function);
       if (new_current_menu)
         {
           menus = new_const_element_list ();
@@ -2545,11 +2647,11 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
       if (!up_nodes)
         {
           new_up_nodes = 1;
-          up_nodes = (ELEMENT_STACK *) malloc (sizeof (ELEMENT_STACK));
-          memset (up_nodes, 0, sizeof (ELEMENT_STACK));
+          up_nodes = (CONST_ELEMENT_LIST *) malloc (sizeof (CONST_ELEMENT_LIST));
+          memset (up_nodes, 0, sizeof (CONST_ELEMENT_LIST));
         }
 
-      push_stack_element (up_nodes, node);
+      add_(const_element) (up_nodes, node);
 
       /* now recurse in the children */
       for (i = 0; i < node_children->number; i++)
@@ -2560,9 +2662,9 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
           size_t j;
           int up_node_in_menu = 0;
 
-          for (j = 0; j < up_nodes->top; j++)
+          for (j = 0; j < up_nodes->number; j++)
             {
-              const ELEMENT *up_node = up_nodes->stack[j];
+              const ELEMENT *up_node = up_nodes->list[j];
               const char *normalized_up_node
                 = lookup_extra_string (up_node, AI_key_identifier);
               if (!strcmp (normalized_child, normalized_up_node))
@@ -2585,7 +2687,7 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
               ELEMENT_LIST *child_menu_content
                = print_down_menus (child, up_nodes, error_messages,
                                    options, identifiers_target, nodes_list,
-                                   use_sections);
+                                   use_sections, translation_function);
               if (child_menu_content)
                 {
                   insert_list_slice_into_list (master_menu_contents,
@@ -2597,11 +2699,11 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
             }
         }
 
-      pop_stack_element (up_nodes);
+      pop_(const_element) (up_nodes);
 
       if (new_up_nodes)
         {
-          free (up_nodes->stack);
+          free (up_nodes->list);
           free (up_nodes);
         }
     }
@@ -2614,10 +2716,11 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
 ELEMENT *
 new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
                 const OPTIONS *options,
-                LANG_TRANSLATION *lang_translation,
+                const LANG_TRANSLATION *lang_translation,
                 const C_HASHMAP *identifiers_target,
                 const NODE_RELATIONS_LIST *nodes_list,
-                const CONST_ELEMENT_LIST *menus, int use_sections)
+                const CONST_ELEMENT_LIST *menus, int use_sections,
+                CONVERTER_CACHE_TRANSLATE *translation_function)
 {
   /* only holds contents here, will add spaces and end in
      new_block_command */
@@ -2645,14 +2748,14 @@ new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
                       ELEMENT_LIST *down_menus = print_down_menus (menu_node,
                                           0, error_messages, options,
                                           identifiers_target, nodes_list,
-                                          use_sections);
+                                          use_sections, translation_function);
                       if (down_menus)
                         {
                           size_t k;
                           for (k = 0; k < down_menus->number; k++)
                             down_menus->list[k]->e.c->parent = new_detailmenu_e;
                           insert_list_slice_into_contents (new_detailmenu_e,
-                                           new_detailmenu_e->e.c->contents.number,
+                                        new_detailmenu_e->e.c->contents.number,
                                            down_menus, 0, down_menus->number);
                           destroy_list (down_menus);
                         }
@@ -2679,7 +2782,7 @@ new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
           master_menu_title
             = gdt_tree (" --- The Detailed Node Listing ---", 0,
                         lang_translation, 0,
-                        options->DEBUG.o.integer, 0);
+                        0, options->DEBUG.o.integer, translation_function);
 
           for (i = 0; i < master_menu_title->e.c->contents.number; i++)
             {
@@ -2715,14 +2818,16 @@ new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
 ELEMENT *
 new_complete_menu_master_menu (ERROR_MESSAGE_LIST *error_messages,
                                const OPTIONS *options,
-                               LANG_TRANSLATION *lang_translations,
+                               const LANG_TRANSLATION *lang_translations,
                                const C_HASHMAP *identifiers_target,
                                const NODE_RELATIONS_LIST *nodes_list,
-                               const NODE_RELATIONS *node_relations)
+                               const NODE_RELATIONS *node_relations,
+                               CONVERTER_CACHE_TRANSLATE *translation_function)
 {
   ELEMENT *menu_node = new_complete_node_menu (node_relations,
                                                0, lang_translations,
-                                               options->DEBUG.o.integer, 0);
+                                               options->DEBUG.o.integer, 0,
+                                               translation_function);
 
   if (menu_node)
     {
@@ -2740,7 +2845,7 @@ new_complete_menu_master_menu (ERROR_MESSAGE_LIST *error_messages,
               detailmenu = new_detailmenu (error_messages, options,
                                            lang_translations,
                                            identifiers_target, nodes_list,
-                                           menus, 0);
+                                           menus, 0, translation_function);
               destroy_const_element_list (menus);
 
               if (detailmenu)

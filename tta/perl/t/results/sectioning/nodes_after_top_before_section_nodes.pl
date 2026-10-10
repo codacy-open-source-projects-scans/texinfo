@@ -1,18 +1,22 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'nodes_after_top_before_section_nodes'} = 'U0 unit{N:Top}
+use Encode;
+
+$result_tree_text{'nodes_after_top_before_section_nodes'} = 'U0 unit{C2}{N:Top}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
 Forward: [U1]
 NodeNext: [U1]
 NodeForward: [U1]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C4 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -59,7 +63,7 @@ NodeForward: [U1]
      {menu}
      {spaces_after_argument:\\n}
   {empty_line:\\n}
-U1 unit{N:chap node}
+U1 unit{C1}{N:chap node}
 unit_directions:D[next->[U2]|prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -100,7 +104,7 @@ NodeBack: [U0]
   *paragraph C1
    {second node\\n}
   {empty_line:\\n}
-U2 unit{N:third node}{s:1 subsection}
+U2 unit{C2}{N:third node}{s:@subsection 1 subsection}
 unit_directions:D[prev->[U1]]
 UNIT_DIRECTIONS
 This: [U2]
@@ -203,7 +207,7 @@ list:
 $result_headings_list{'nodes_after_top_before_section_nodes'} = '';
 
 
-$result_converted{'info'}->{'nodes_after_top_before_section_nodes'} = 'This is , produced from .
+$result_converted{'info'}->{'nodes_after_top_before_section_nodes'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap node,  Up: (dir)
@@ -237,7 +241,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'nodes_after_top_before_section_nodes'} = '<!DOCTYPE html>

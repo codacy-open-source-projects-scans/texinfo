@@ -8,8 +8,6 @@
 # 'use Texinfo::ModulePath' should only occur once per program so that the
 # initialization is only done once.  This makes the way this module is used
 # very unusual.
-#
-# Also used to pass other information from configure to modules.
 
 package Texinfo::ModulePath;
 
@@ -42,16 +40,6 @@ our $XS_modules_dir;
 
 # installed locations paths
 our $datadir;
-
-# Other information passed to modules from configure
-our $conversion_from_euc_cn = '@ICONV_CONVERTS_EUC_CN@';
-our $default_test_level = '@DEFAULT_TEST_LEVEL@';
-our $use_libintl_perl_in_xs = '@use_libintl_perl_in_xs@';
-
-# Passed to texi2any.pl, which is not configured, to t/test_utils.pl
-# and to modules.
-our $enable_xs = '@enable_xs@';
-our $use_shared_txi_libraries = '@use_shared_txi_libraries@';
 
 my $converter = '@CONVERTER@';
 
@@ -99,19 +87,30 @@ sub init {
       }
     }
 
-    if (defined($t2a_srcdir)) {
-      # For Texinfo::Parser and the rest.
-      unshift @INC, join('/', ($t2a_srcdir, 'perl'));
-      $perl_modules_dir = join('/', ($t2a_srcdir, 'maintain'));
-    }
-
-    # Find XS modules and C libraries in the build directory
     if (defined($ENV{'t2a_builddir'})) {
       $t2a_builddir = $ENV{'t2a_builddir'};
     } else {
       # this is correct for in-source builds only.
       $t2a_builddir = $t2a_srcdir;
     }
+
+    my $modules_source_dir;
+    if (defined($t2a_srcdir)) {
+      # For Texinfo::Parser and the rest.
+      $modules_source_dir = join('/', ($t2a_srcdir, 'perl'));
+      unshift @INC, $modules_source_dir;
+      $perl_modules_dir = join('/', ($t2a_srcdir, 'maintain'));
+    }
+    # find generated module(s) in the build directory
+    if (defined($t2a_builddir)) {
+      my $modules_build_dir = join('/',  ($t2a_builddir, 'perl'));
+      if (!defined($modules_source_dir)
+          or $modules_source_dir ne $modules_build_dir) {
+        unshift @INC, $modules_build_dir;
+      }
+    }
+
+    # Find XS modules and C libraries in the build directory
     if (defined($t2a_builddir)) {
       # For XS Modules
       $XS_modules_dir = join('/', ($t2a_builddir, 'perl', 'XSTexinfo'));

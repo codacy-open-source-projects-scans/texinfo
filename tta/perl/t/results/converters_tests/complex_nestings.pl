@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'complex_nestings'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -58,10 +62,6 @@ $result_tree_text{'complex_nestings'} = '*document_root C5
     *def_line C1 l9
     |EXTRA
     |def_command:{defun}
-    |def_index_element:
-     |* C1
-      |*brace_arg C1
-       |{my def}
     |element_node:{chap}
     |index_entry:I{fn,1}
     |original_def_cmdname:{defun}
@@ -95,10 +95,6 @@ $result_tree_text{'complex_nestings'} = '*document_root C5
     *@defunx C1 l10
     |EXTRA
     |def_command:{defun}
-    |def_index_element:
-     |* C1
-      |*brace_arg C1
-       |{other def}
     |element_node:{chap}
     |index_entry:I{fn,2}
     |original_def_cmdname:{defunx}
@@ -127,10 +123,6 @@ $result_tree_text{'complex_nestings'} = '*document_root C5
       *def_line C1 l11
       |EXTRA
       |def_command:{deffn}
-      |def_index_element:
-       |* C1
-        |*brace_arg C1
-         |{name}
       |element_node:{chap}
       |index_entry:I{fn,3}
       |original_def_cmdname:{deffn}
@@ -165,10 +157,6 @@ $result_tree_text{'complex_nestings'} = '*document_root C5
         *def_line C1 l12
         |EXTRA
         |def_command:{defvar}
-        |def_index_element:
-         |* C1
-          |*brace_arg C1
-           |{variables}
         |element_node:{chap}
         |index_entry:I{vr,1}
         |original_def_cmdname:{defvar}
@@ -194,10 +182,6 @@ $result_tree_text{'complex_nestings'} = '*document_root C5
         *@defvarx C1 l14
         |EXTRA
         |def_command:{defvar}
-        |def_index_element:
-         |* C1
-          |*brace_arg C1
-           |{variables too}
         |element_node:{chap}
         |index_entry:I{vr,2}
         |original_def_cmdname:{defvarx}
@@ -425,6 +409,15 @@ $result_converted{'plaintext'}->{'complex_nestings'} = 'top
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'complex_nestings'} = 'fn:
+ my def
+ name
+ other def
+vr:
+ variables
+ variables too
+';
+
 
 $result_converted{'html_text'}->{'complex_nestings'} = '<div class="top-level-extent" id="Top">
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
@@ -534,7 +527,8 @@ explanation
 ';
 
 
-$result_converted{'latex_text'}->{'complex_nestings'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'complex_nestings'} = '\\begin{document}
+\\label{anchor:Top}%
 \\Texinfochapter{{Chapter}}
 \\label{anchor:chap}%
 
@@ -543,6 +537,7 @@ $result_converted{'latex_text'}->{'complex_nestings'} = '\\label{anchor:Top}%
 \\ttfamily deffs
 \\end{Texinfopreformatted}
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{my def \\EmbracOn{}\\textnormal{\\textsl{args \\Texinfocommandstyletextvar{arg} \\dots{}\\@}}\\EmbracOff{}}& [Function]
@@ -550,6 +545,7 @@ $result_converted{'latex_text'}->{'complex_nestings'} = '\\label{anchor:Top}%
 
 \\index[fn]{my def@\\texttt{my def}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{other def \\EmbracOn{}\\textnormal{\\textsl{no args}}\\EmbracOff{}}& [Function]
@@ -559,6 +555,7 @@ $result_converted{'latex_text'}->{'complex_nestings'} = '\\label{anchor:Top}%
 \\begin{Texinfoindented}
 \\unskip{\\parskip=0pt\\noindent}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{name \\EmbracOn{}\\textnormal{\\textsl{and now the args}}\\EmbracOff{}}& [type]
@@ -568,6 +565,7 @@ $result_converted{'latex_text'}->{'complex_nestings'} = '\\label{anchor:Top}%
 \\begin{Texinfoindented}
 \\unskip{\\parskip=0pt\\noindent}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{variables \\EmbracOn{}\\textnormal{\\textsl{variable-name}}\\EmbracOff{}}& [Variable]
@@ -578,6 +576,7 @@ $result_converted{'latex_text'}->{'complex_nestings'} = '\\label{anchor:Top}%
 \\ttfamily 
 \\end{Texinfopreformatted}
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{variables too \\EmbracOn{}\\textnormal{\\textsl{other-variable}}\\EmbracOff{}}& [Variable]

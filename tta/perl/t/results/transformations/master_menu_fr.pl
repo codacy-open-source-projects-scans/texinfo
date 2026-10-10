@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'master_menu_fr'} = '*document_root C7
  *before_node_section C2
@@ -282,7 +285,7 @@ list:
 $result_headings_list{'master_menu_fr'} = '';
 
 
-$result_converted{'info'}->{'master_menu_fr'} = 'This is , produced from no_master_menu_fr.texi.
+$result_converted{'info'}->{'master_menu_fr'} = Encode::encode('utf-8', 'This is , produced from no_master_menu_fr.texi.
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -319,8 +322,8 @@ File: ,  Node: section,  Up: chap
 
 Tag Table:
 Node: Top49
-Node: chap177
-Node: section259
+Node: chap180
+Node: section262
 
 End Tag Table
 
@@ -329,6 +332,6 @@ Local Variables:
 coding: utf-8
 Info-documentlanguage: fr
 End:
-';
+');
 
 1;

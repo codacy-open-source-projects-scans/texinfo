@@ -37,6 +37,7 @@ use File::Spec;
 
 # Also for __(
 use Texinfo::Common;
+use Texinfo::Indices;
 
 # load modules to make sure that they are loaded before use
 use Texinfo::Convert::Unicode;
@@ -185,23 +186,19 @@ foreach my $thing ('OE', 'oe', 'euro') {
                    $Texinfo::Convert::Unicode::unicode_entities{$thing});
 }
 
-sub chm_noop($$)
-{
+sub chm_noop($$) {
   return '';
 }
 
-sub _chm_convert_tree_to_text($$)
-{
-  my $converter = shift;
-  my $tree = shift;
+sub _chm_convert_tree_to_text($$) {
+  my ($converter, $tree) = @_;
 
   return &{$converter->formatting_function('format_protect_text')}($converter,
     Texinfo::Convert::Text::convert_to_text($tree,
                                  $converter->{'convert_text_options'}));
 }
 
-sub chm_init($)
-{
+sub chm_init($) {
   my $self = shift;
 
   return 0 if (defined($self->get_conf('OUTFILE'))
@@ -210,11 +207,22 @@ sub chm_init($)
   my $verbose = $self->get_conf('VERBOSE');
 
   my $document_name = $self->get_info('document_name');
-  my $outdir = $self->get_info('destination_directory');
-  $outdir = File::Spec->curdir() if ($outdir eq '');
+  my $destination_directory = $self->get_info('destination_directory');
+  $destination_directory = File::Spec->curdir()
+                              if ($destination_directory eq '');
+
+  my ($encoded_destination_directory, $dir_encoding)
+    = $self->encoded_output_file_name($destination_directory);
+  my $succeeded
+    = $self->create_destination_directory($encoded_destination_directory,
+                                          $destination_directory);
+
+  if (!$succeeded) {
+    return 1;
+  }
 
   my $hhk_filename = $document_name . ".hhk";
-  my $hhk_file_path_name = join('/', ($outdir, $hhk_filename));
+  my $hhk_file_path_name = join('/', ($destination_directory, $hhk_filename));
   my ($encoded_hhk_file_path_name, $hhk_path_encoding)
     = $self->encoded_output_file_name($hhk_file_path_name);
   my ($hhk_fh, $hhk_error_message)
@@ -228,6 +236,7 @@ sub chm_init($)
                   $hhk_file_path_name, $hhk_error_message));
     return 1;
   }
+
   print STDERR "# chm: writing HTML Help index in $hhk_file_path_name...\n"
      if ($verbose);
   print $hhk_fh "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">\n<HTML>\n";
@@ -243,17 +252,17 @@ sub chm_init($)
   my $document = $self->get_info('document');
   my $indices_information;
   my $sections_list;
-  if ($document) {
+  if (defined($document)) {
     $indices_information = $document->indices_information();
     $sections_list = $document->sections_list();
   }
 
   my $index_entries;
-  if ($indices_information) {
+  if (defined($indices_information)) {
     $index_entries = $self->get_converter_indices_sorted_by_index();
   }
 
-  if ($index_entries) {
+  if (defined($index_entries)) {
     foreach my $index_name (sort(keys(%$index_entries))) {
       foreach my $index_entry_ref (@{$index_entries->{$index_name}}) {
         my $main_entry_element = $index_entry_ref->{'entry_element'};
@@ -270,10 +279,12 @@ sub chm_init($)
 
         my $origin_href = $self->command_href($main_entry_element, '');
         my $entry_content_element
-              = Texinfo::Common::index_content_element($main_entry_element);
+          = $self->converter_index_content_element($main_entry_element);
+
+        my $index_name = $index_entry_ref->{'index_name'};
         my $in_code = 0;
         $in_code = 1
-          if ($indices_information->{$index_entry_ref->{'index_name'}}->{'in_code'});
+          if ($indices_information->{$index_name}->{'in_code'});
         if ($in_code) {
           Texinfo::Convert::Text::set_options_code(
                                  $self->{'convert_text_options'});
@@ -303,7 +314,7 @@ sub chm_init($)
   }
 
   my $hhc_filename = $document_name . ".hhc";
-  my $hhc_file_path_name = join('/', ($outdir, $hhc_filename));
+  my $hhc_file_path_name = join('/', ($destination_directory, $hhc_filename));
   my ($encoded_hhc_file_path_name, $hhc_path_encoding)
     = $self->encoded_output_file_name($hhc_file_path_name);
   my ($hhc_fh, $hhc_error_message)
@@ -331,10 +342,10 @@ sub chm_init($)
   }
   print $hhc_fh "</OBJECT>\n";
 
-  if ($sections_list and scalar(@$sections_list) > 0) {
+  if (defined($sections_list) and scalar(@$sections_list) > 0) {
     my $sectioning_root = $document->sectioning_root();
     my $upper_level = $sectioning_root->{'section_children'}->[0]
-                                  {'element'}->{'extra'}->{'section_level'};
+                               ->{'element'}->{'extra'}->{'section_level'};
     foreach my $top_relations (@{$sectioning_root->{'section_children'}}) {
       my $top_section = $top_relations->{'element'};
       $upper_level = $top_section->{'extra'}->{'section_level'}
@@ -366,11 +377,15 @@ sub chm_init($)
       chomp($text);
       $text = Texinfo::Convert::Utils::add_heading_number($section,
                            $text, $self->get_conf('NUMBER_SECTIONS'),
-                           $self->{'current_lang_translations'});
+                           $self->{'current_lang_translations'},
+                           $self->get_conf('DEBUG'));
       # the empty string as second argument makes sure that the
       # source file is different from the target file.
       my $origin_href = $self->command_href($section, '');
-      print $hhc_fh "<LI> <OBJECT type=\"text/sitemap\">\n<param name=\"Name\" value=\"$text\">\n<param name=\"Local\" value=\"$origin_href\">\n</OBJECT> </LI>\n";
+      print $hhc_fh "<LI> <OBJECT type=\"text/sitemap\">\n"
+                      ."<param name=\"Name\" value=\"$text\">\n"
+                      ."<param name=\"Local\" value=\"$origin_href\">\n".
+                    "</OBJECT> </LI>\n";
     }
     while ($level > $root_level) {
       print $hhc_fh "</UL>\n";
@@ -388,7 +403,7 @@ sub chm_init($)
   }
 
   my $hhp_filename = $document_name . ".hhp";
-  my $hhp_file_path_name = join('/', ($outdir, $hhp_filename));
+  my $hhp_file_path_name = join('/', ($destination_directory, $hhp_filename));
   my ($encoded_hhp_file_path_name, $hhp_path_encoding)
     = $self->encoded_output_file_name($hhp_file_path_name);
   my ($hhp_fh, $hhp_error_message)
@@ -402,16 +417,20 @@ sub chm_init($)
                   $hhp_file_path_name, $hhp_error_message));
     return 1;
   }
+
   print STDERR "# chm: writing HTML Help project in $hhp_file_path_name...\n"
      if ($verbose);
   my $language = '';
   my $documentlanguage = $self->get_conf('documentlanguage');
   if (defined($documentlanguage)) {
     $documentlanguage =~ s/_.*//;
-    if (exists ($chm_languages{$documentlanguage})) {
+    if (exists($chm_languages{$documentlanguage})) {
       $language = $chm_languages{$documentlanguage};
     }
   } else {
+    # Would be more consistent to have no language at all when not specified
+    # but it is not clear if the resulting file would be correct.  Set to be
+    # the same as the default language for translated strings.
     $language = $chm_languages{Texinfo::Common::DEFAULT_STRINGS_LANG};
   }
   my $title = _chm_convert_tree_to_text($self, $self->get_info('title_tree'));
@@ -441,7 +460,8 @@ Default=,"$hhc_filename","$hhk_filename","$top_file","$top_file",,,,,0x22520,,0x
 EOT
 
   my %chm_files;
-  if ($self->{'document_units'}) {
+  # should always exist
+  if (exists($self->{'document_units'})) {
     foreach my $element (@{$self->{'document_units'}}) {
       if (!$chm_files{$element->{'unit_filename'}}) {
         print $hhp_fh "$element->{'unit_filename'}\n";

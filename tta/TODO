@@ -10,39 +10,79 @@ This is the todo list for texi2any
 Before next release
 ===================
 
-Document command_is_in_referred_command_stack in texi2any_api
+make maintainer-clean removes products_regenerate_file_lists, which is right,
+but make does not regenerate the file, only make dist.  Bug?
 
-verify input_files/cpp_lines parse_refold.pl
+No "shadow targets" nor nodes added when a node is associated to
+a @*heading*, we should keep a track of this, such that users relying on
+@heading know that it is different for heading and keep this in a TODO.
+
+1 messages awaiting Gavin answer:
+https://lists.gnu.org/archive/html/bug-texinfo/2026-08/msg00031.html
+
+There is basic documentation of AUTO_SECTION_NODE, but the information
+that nodes are added for sectioning commands without node for formats
+for which is makes a difference need to be integrated in the
+main Node/chapter structuring sections of the document.
+
++ add to documentation and NEWS
+
+
+Document LATEX_TAGGED_PDF + NEWS, change variable name if needed in code
+and tests.
+To document LaTeX customization variable to get accessible PDF.  This adds
+\DocumentMetadata{tagging=on,
+ <value of the customization variable>
+}
+with default for the value being
+ lang=<BCP47 document-language-from-texinfo>,
+ pdfstandard=ua-2,
+
+and replace
+\usepackage{amsmath}
+\usepackage{amsfonts}
+by
+\usepackage{unicode-math}
+
+
+Add breadcrumbs navigation to NEWS?
+Document init files? (asked on the mailing list).
 
 Bugs
 ====
 
-HTML API
-========
+Without XS, Cygwin32 fails with
+2026-05-28T11:00:40.8301466Z libtool: link: gcc -shared  convert/.libs/libtexinfo_convert_la-converter.o convert/.libs/libtexinfo_convert_la-cmd_converter.o convert/.libs/libtexinfo_convert_la-converters_options.o convert/.libs/libtexinfo_convert_la-convert_html.o convert/.libs/libtexinfo_convert_la-format_html.o convert/.libs/libtexinfo_convert_la-html_converter_init_options.o convert/.libs/libtexinfo_convert_la-html_converter_finish.o convert/.libs/libtexinfo_convert_la-html_conversion_state.o convert/.libs/libtexinfo_convert_la-html_prepare_converter.o convert/.libs/libtexinfo_convert_la-html_converter_api.o convert/.libs/libtexinfo_convert_la-plaintexinfo_converter_api.o convert/.libs/libtexinfo_convert_la-rawtext_converter_api.o  -Wl,--whole-archive ./.libs/libcallperl_libtexinfo_convert.a -Wl,--no-whole-archive  ./.libs/libtexinfo.dll.a /cygdrive/d/a/ci-check/ci-check/texinfo-7.3.20260528dev/build/tta/C/.libs/libtexinfo.dll.a -liconv -lintl  -g -O2   -o .libs/cygtexinfo-convert-1.dll -Wl,--enable-auto-image-base -Xlinker --out-implib -Xlinker .libs/libtexinfo-convert.dll.a
+2026-05-28T11:00:40.8301998Z /usr/lib/gcc/i686-pc-cygwin/11/../../../../i686-pc-cygwin/bin/ld: convert/.libs/libtexinfo_convert_la-converter.o: in function `free_output_unit_files_file':
+2026-05-28T11:00:40.8302386Z /cygdrive/d/a/ci-check/ci-check/texinfo-7.3.20260528dev/build/tta/C/../../../tta/C/convert/converter.c:1807: undefined reference to `rpl_free'
+2026-05-28T11:00:40.8304570Z /usr/lib/gcc/i686-pc-cygwin/11/../../../../i686-pc-cygwin/bin/ld: convert/.libs/libtexinfo_convert_la-converter.o: in function `add_output_units_file':
 
-Issues
-------
+The following link flags are in Perl flags and could explain why it does
+not fail with XS:
+-Wl,--enable-auto-import -Wl,--export-all-symbols
 
-Some private function used in conversion
-_convert_printindex_command
- _new_document_context
-_convert_def_line_type
- _set_code_context
- _pop_code_context
+The additional cflags are less likely to be relevant
+-DPERL_USE_SAFE_PUTENV -U__STRICT_ANSI__ -D_GNU_SOURCE -ggdb -O2 -pipe -Wall -Werror=format-security -D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fdebug-prefix-map=/mnt/share/cygpkgs/perl/perl.x86/build=/usr/src/debug/perl-5.32.1-2 -fdebug-prefix-map=/mnt/share/cygpkgs/perl/perl.x86/src/perl-5.32.1=/usr/src/debug/perl-5.32.1-2 -fwrapv -fno-strict-aliasing
 
 
-Missing documentation
-=====================
+Alma linux fails with:
+2026-05-28T10:52:35.4637883Z libtool: link: gcc -g -O2 -Wl,--enable-new-dtags -Wl,-z -Wl,relro -Wl,--as-needed -Wl,-z -Wl,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -Wl,-z -Wl,relro -Wl,--as-needed -Wl,-z -Wl,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -fstack-protector-strong -o teximakehtml main/teximakehtml-tree.o main/teximakehtml-text.o main/teximakehtml-base_utils.o main/teximakehtml-element_types.o main/teximakehtml-builtin_commands.o main/teximakehtml-debug.o main/teximakehtml-errors.o main/teximakehtml-extra.o main/teximakehtml-structure_list.o main/teximakehtml-convert_to_texinfo.o main/teximakehtml-convert_to_text.o main/teximakehtml-convert_utils.o main/teximakehtml-customization_options.o main/teximakehtml-html_conversion_data.o main/teximakehtml-html_css_data.o main/teximakehtml-floats.o main/teximakehtml-manipulate_tree.o main/teximakehtml-reader.o main/teximakehtml-node_name_normalization.o main/teximakehtml-command_stack.o main/teximakehtml-cmd_structuring.o main/teximakehtml-cmd_text.o main/teximakehtml-parser_conf.o main/teximakehtml-targets.o main/teximakehtml-options_init_free.o main/teximakehtml-options_defaults.o main/teximakehtml-utils.o main/teximakehtml-unicode.o main/teximakehtml-hashmap.o main/teximakehtml-translations.o main/teximakehtml-document.o main/teximakehtml-manipulate_indices.o main/teximakehtml-output_unit.o main/teximakehtml-txi_config.o main/teximakehtml-txi_documentlanguage_languages.o main/teximakehtml-txi_documentlanguage_regions.o main/teximakehtml-txi_documentlanguage_scripts.o main/teximakehtml-txi_documentlanguage_variants.o main/unicode-collation/teximakehtml-collation_data_loader.o main/unicode-collation/teximakehtml-collation_key.o parsetexi/teximakehtml-api.o parsetexi/teximakehtml-parser.o parsetexi/teximakehtml-input.o parsetexi/teximakehtml-close.o parsetexi/teximakehtml-conf.o parsetexi/teximakehtml-context_stack.o parsetexi/teximakehtml-debug_parser.o parsetexi/teximakehtml-errors_parser.o parsetexi/teximakehtml-end_line.o parsetexi/teximakehtml-separator.o parsetexi/teximakehtml-multitable.o parsetexi/teximakehtml-indices.o parsetexi/teximakehtml-commands.o parsetexi/teximakehtml-macro.o parsetexi/teximakehtml-handle_commands.o parsetexi/teximakehtml-def.o parsetexi/teximakehtml-menus.o parsetexi/teximakehtml-labels.o parsetexi/teximakehtml-counter.o parsetexi/teximakehtml-source_marks.o structuring_transfo/teximakehtml-structuring.o structuring_transfo/teximakehtml-transformations.o convert/teximakehtml-converter.o convert/teximakehtml-cmd_converter.o convert/teximakehtml-converters_options.o convert/teximakehtml-convert_html.o convert/teximakehtml-format_html.o convert/teximakehtml-html_converter_init_options.o convert/teximakehtml-html_converter_finish.o convert/teximakehtml-html_conversion_state.o convert/teximakehtml-html_prepare_converter.o convert/teximakehtml-html_converter_api.o convert/teximakehtml-plaintexinfo_converter_api.o convert/teximakehtml-rawtext_converter_api.o api_for_swig/teximakehtml-swig_interface.o api_for_swig/teximakehtml-swig_parser_api.o convert/teximakehtml-texinfo.o teximakehtml-texi2any.o main/teximakehtml-replace_set_perl_interpreter.o main/teximakehtml-replace_perl_api_call.o convert/teximakehtml-replace_perl_call_html_function.o convert/teximakehtml-replace_call_conversion_perl.o convert/teximakehtml-replace_call_embed_perl.o  -L/usr/local/lib ../gnulib/lib/.libs/libgnu.a
+2026-05-28T10:52:35.4638587Z /usr/bin/ld: main/teximakehtml-tree.o: relocation R_X86_64_32S against symbol `type_data' can not be used when making a PIE object; recompile with -fPIE
 
-Document the "language" used for the tta/perl/t/*.t tests results for the tree,
-node and sectioning relations, output units, floats, indices and error
-messages?
+In that case, the missing compilation flag may be
+-fPIC
+or in the perl CFLAGS.
 
-Tree documentation in ParserNonXS.pm
-------------------------------------
+Documentation
+=============
 
-Change strategy of documentation, document extra and info as arguments
-as in the SWIG interface?
+Tree documentation
+------------------
+
+Document the tree in texi2any_api instead of ParserNonXS.pm.
+
+Document extra and info together as 'arguments' as in the SWIG interface
+instead of separately?
 
 Document the tree by showing the relations of inclusion?
 
@@ -55,18 +95,14 @@ source marks.
 
 special_unit_element type (only in HTML code)
 
-Node, headings and section relations are explicitly and correctly documented in
-the HTML customization manual.  However, they are also mentioned in
-Texinfo::Structuring POD without being clearly introduced in this POD.  See
-also FIXMEs in ParserNonXS.pm in =begin comment blocks.  It is not clear
-whether there need to be something more explicit in the POD documentation,
-what is in the HTML customization manual may be sufficient.
-
-extra node_number, heading_number and section_number are not documented
-anywhere.
+extra node_number, heading_number and section_number are not documented.
 
 Other
 -----
+
+Document the "language" used for the tta/perl/t/*.t tests results for the tree,
+node and sectioning relations, output units, floats, indices and error
+messages?
 
 Document *XS_EXTERNAL_FORMATTING *XS_EXTERNAL_CONVERSION?
 
@@ -77,6 +113,18 @@ converter_customization_options, unique_at_command_options.
 
 Delayed bugs/features
 =====================
+
+GCC use a simple Perl script to convert Texinfo to POD, as an intermediary
+for man pages generation.  There are also special macros and "magic"
+comments, probably mainly to determine the blocks to use.
+https://gcc.gnu.org/git/?p=gcc.git;a=blob;f=contrib/texi2pod.pl
+https://gcc.gnu.org/onlinedocs/gccint/Man-Page-Generation.html
+It would be nice to have a conversion to POD in texi2any.  A difficulty
+is that there is nothing that corresponds to @anchor in POD (@*ref and
+@anchor are simply ignored in texi2pod.pl).
+
+Use SWIG interface in pod2texi, but wait first for the SWIG interface
+to become common.
 
 According to libtool documentation and Bruno experience, on Windows,
 variable objects exported/imported from dll need to be declared, at
@@ -90,8 +138,7 @@ libtexinfo.
 The list:
 C/main/customization_options.h: txi_base_options, txi_base_sorted_options,
 txi_options_command_map => libtexinfo-convert (converter.c, format_html.c...)
-C/main/document.h: txi_paths_info => libtexinfo-convert (convert_html.c...),
-                                     libtexinfo-main (texinfo.c)
+C/main/document.h: txi_paths_info => libtexinfo-convert (convert_html.c...)
 C/main/translations.h: translation_cache
   => libtexinfo-convert (converter.c, convert_to_text.c)
 C/main/unicode.h: unicode_character_brace_no_arg_commands
@@ -108,64 +155,10 @@ texi2any.exe is installed (in addition to the directory where they are already
 copied by "make install".  That is, on Windows there will be two copies of each
 DLL installed, not one.
 https://lists.gnu.org/archive/html/bug-texinfo/2026-02/msg00090.html
-
-Do not add parent in tree in the first place instead of removing afterwards,
-in gdt?  Or, possibly even better mark parent as weak reference with
-Scalar::Util weaken as explained in man perlref (Gavin).
-in perlapi for XS: sv_rvweaken
-
-inline contents_child_by_index in C?
-
-The Perl/C interface when no XS code is used for structuring works because
-all the C data is built as Perl structure at one point after which C code
-is not called anymore to modify the tree or other Document data.  At that
-point the F_DOCM_* flags should remain unset as there is no modification in
-C data needing to be built to Perl.  Therefore all the calls to XS interfaces
-afterwards, mainly on a Document, returns the Perl data.  This is not
-fundamentaly problematic, as it works.  However, the design of the Document XS
-interface was that the Perl structure could be built on demand, and in that
-case, it is not possible.
-
-When the structure code is done in C and conversion is done in Perl, there
-is no need to rebuild all the document data to Perl.  This is probably
-because there is no Perl code modifying the document data without also
-modifying the underlying C code, ie no case of missing XS interface in
-code run in tests at that point, before conversion.  But it is probably
-more by chance than by design, if code changing the structure of the tree
-that lack XS to change the C data was called at that point, the C and Perl
-data would diverge.
-
-There is disagreement on the strategy to use for libraries versioning.
-For Gavin, the code that can link against libraries should be the code
-with the exact same version than the libraries.
-For Patrice it is possible to explicitly say that mixing versions is
-not supported, but still follow the libtool versioning scheme such that
-if better and compatible libraries are installed they will be prefered
-to same version library.
-
-Could libraries be compiled with Perl C compiler or other C compiler
-and be mixed at the library level?  Ask on the list.
-
-Gavin on using CSV files and a Perl script to generate code for Perl and C.
-For something like html_style_commands_element.csv, it could potentially
-make the code more impenetrable.  Suppose for example someone wants to
-find which part of the code handles the @sansserif command.  If they
-search HTML.pm for 'sansserif' that string isn't there.  As this file
-is shorter, there is less benefit to avoiding duplicating its contents.
-However, the purpose, structure and meaning of this file is quite clear.
-(Files such as HTML.pm are also not self-contained, accessing information
-in files such as Commands.pm, so having another file to access does not
-really change the situation.)
-
-For shorter files like default_special_unit_info.csv and
-default_direction_strings.csv it is less clear that it offers a net
-benefit.  To be honest, the function of these files is not particularly
-clear to me other than one of them is something to do with node direction
-pointers.  I don't someone looking at these files for the first time
-would have an easy time figuring out what they are for.
-
-
-Make building "source marks" optional?
+Another simpler solution was hinted at earlier by Bruno, use libtool -bindir
+option.  This is implemented in
+https://cgit.git.savannah.gnu.org/cgit/texinfo.git/commit/?id=facdf1455f7ff333502ff8348d44ab434455a9c3
+waiting for testing.
 
 
 hyphenation: should only appear in toplevel.
@@ -211,54 +204,29 @@ by native \p{East_Asian_Width=Fullwidth} + \p{East_Asian_Width=Wide}
 when the oldest supported Perl version is 5.12.0 (released in 2010).
 
 
-Transliteration/protection with iconv in C leads to a result different from Perl
-for some characters.  It seems that the iconv result depends on the locale, and
-there are quite a bit of ? output, probably when there is no obvious
-transliteration.  In those cases, the Unidecode transliterations are not
-necessarily very good, either.
-
-
 Sorting indices in C with strxfrm_l using an utf-8 locale with
 LC_COLLATE_MASK on Debian GNU/Linux with glibc is quite consistent with Perl
-for number and letters, but leads to a different output than with Perl for non
-alphanumeric characters.  It is because in Perl we set
-'variable' => 'Non-Ignorable' to set Variable Weighting to Non-ignorable (see
+for number and letters, but leads to a different output than collation
+used in texi2any for non alphanumeric characters.  It is because in
+texi2any we collate using Variable Weighting set to Non-ignorable (see
 http://www.unicode.org/reports/tr10/#Variable_Weighting).
 For spaces, the output with Non-Ignorable Variable Weighting looks better for
 index sorting, as it allows to have spaces and punctuation marks sort before
-letters.  Right now, the XS code calls Perl to get the sorting
-collation strings with Non-Ignorable Variable Weighting.  The
-undocumented XS_STRXFRM_COLLATION_LOCALE customization variable can be used
-to specify a locale and use it with strxfrm_l to sort, but it is only
-for testing and should not be kept in the long term, the plan is to replace by
-C code that sets Variable Weighting to Non-ignorable and before that keep
-calling Perl.
-Related glibc enhancement request:
+letters.
+The undocumented XS_STRXFRM_COLLATION_LOCALE customization variable can be
+used to specify a locale and use it with strxfrm_l to sort, but it is only
+for testing and should not be kept in the long term because of the lack
+of Non-ignorable Variable Weighting.  It is still somewhat relevant for
+locale-dependent sorting, which otherwise calls Perl language
+dependent sorting.
+Related glibc enhancement request (probably obsoleted by
+main/unicode-collation/ code):
  request for Non-Ignorable Variable Weighting Unicode collation
  https://sourceware.org/bugzilla/show_bug.cgi?id=31658
 
 
 Missing tests
 =============
-
-There is a test of translation in parser in a translation in converter, in
-
-  tta/perl/t/init_files_tests.t translation_in_parser_in_translation
-
-It would be nice to also have a translation in parser in a translation
-in parser.  That would mean having a po/gmo file where the string
-translated in the parser for @def* indices, for instance "{name} of {class}"
-is translated to a string including @def* commands, like
-@deftypeop a b c d e f
-AA
-@end deftypeop
-
-@documentlanguage fr
-
-@deftypemethod g h i j k l
-BB
-@end deftypemethod
-
 
 Unit test of end_line_count for Texinfo/Convert/Paragraph.pm .... containers.
 
@@ -269,10 +237,10 @@ Future features
 ===============
 
 Add the possibility to add text to a parsed document by restarting
-parsing, when called as parse_texi_piece or parse_texi_line, by
+parsing, when called as parse_piece or parse_string, by
 storing the parser document state not already in document in document.
 There would be a customization variable to set the parser to be
-restartable, and then parse_texi_piece and parse_texi_line could pass
+restartable, and then parse_piece and parse_string could pass
 a document to retrieve the parsing state.  This should probably
 wait for a clear use case. Currently, the parser is never reused
 for different documents in the main codes, only in specific tests.
@@ -309,6 +277,13 @@ Default is false.
 
 In Plaintext, @quotation text could have the right margin narrowed to be more
 in line with other output formats.
+
+Node, headings and section relations are explicitly and correctly documented in
+the HTML customization manual.  However, they are also mentioned in
+Texinfo::Structuring POD without being clearly introduced in this POD.  See
+also FIXMEs in ParserNonXS.pm in =begin comment blocks.  It is not clear
+whether there need to be something more explicit in the POD documentation,
+what is in the HTML customization manual may be sufficient.
 
 
 DocBook
@@ -502,12 +477,64 @@ char_latin1_latin1_in_refs_tree.txt content encoded in latin1
 Texinfo manuals translations
 ============================
 
-An possible system, for translation only, no special handling of
-cross-references is ti use po4a, possibly with Texinfo SWIG interface
-based new texinfoparser format.
+A po4a texinfo parser based on the Texinfo SWIG interface is to be
+integrated in po4a, maybe for the next Texinfo release, which
+should also have the SWIG interface built by default if SWIG is detected.
 
-Discussions
------------
+Using po4a with one of the two po4a texinfo parsers could be the
+recommended way to translate manuals, solving some of the issues discussed
+in the past.
+
+Discussions started post 7.3 release:
+https://lists.gnu.org/archive/html/bug-texinfo/2026-07/msg00050.html
+https://lists.gnu.org/archive/html/bug-texinfo/2026-07/msg00051.html
+https://lists.gnu.org/archive/html/bug-texinfo/2026-07/msg00052.html
+
+Manual name:
+
+The recommendation for translated manual Texinfo name is to use the
+untranslated manual name and postpend a language code LL taking into account
+@documentlanguage, @documentscript and @documentlanguagevariants, with
+a -, for example between the untranslated manual name and the LL postfix, for
+example manualname-LL.texi.  That way it is easy to make cross-references to
+the translated manual name and register independent information in htmlxref for
+cross-references to external translated HTML manuals.
+
+Anchors and node names in translated manuals:
+
+When starting from an untranslated manual, nodes, anchor and float names
+(hereafter called targets) would be in the untranslated language (English).
+Then the targets and the associated commands should be translated as the
+manual is translated.  In the short term, it is recommended to keep
+anchors with the untranslated target names such that cross-references
+from external manuals can be either to translated or untranslated target
+names.  In the longer term, it is recommended to keep a mention of the
+untranslated targets, such that it is possible for persons not
+understanding the translation language to move sections around, but
+explicit anchors could be removed, and it is even recommended to remove
+them in the long term.
+
+Example of macros that could help the transition and remain in the final
+translated manual.  "name" would be the translated name, and "en" the
+untranslated name.
+
+@c to be used to have an anchor added, for the short term
+@macro nodetranslatedanchor {name, en}
+@node \name\
+@anchor{\en\}
+@end macro
+
+@c to be used to have a mention to the untranslated node, but no anchor
+@c for the long term
+@macro nodetranslatedmention {name, en}
+@node \name\
+@end macro
+
+@c use in document
+@nodetranslatedanchor{Mon noeud, My node}
+
+Past discussions on that subject
+--------------------------------
 
 Main TODO
 Support installation of manuals in different languages, along these lines:
@@ -899,6 +926,10 @@ Labels in Info (not index entries, in index entries the last : not in
 Interrogations and remarks
 ==========================
 
+Could libraries be compiled with Perl C compiler or other C compiler
+and be mixed at the library level?  Probably not, we had to use the
+Perl compilation and linking flags everywhere such that they match.
+
 In general, it is better to avoid extra information in the tree that
 can be retrieved, or that is better in separate data, such as node,
 sectioning commands and heading relations.  In particular to avoid
@@ -913,9 +944,54 @@ translate a perl tree in input, but access directly the C tree that was setup
 by the XS parser.  When using the TreeElements interface, being able to
 create a C element based on a Perl element is needed, though.
 
-There is no forward looking code anymore, so maybe a lex/yacc parser
-could be used for the main loop.  More simply, a binary tokenizer, at
-least, could make for a notable speedup.
+The Perl/C interface when no XS code is used for structuring works because
+all the C data is built as Perl structure at one point after which C code
+is not called anymore to modify the tree or other Document data.  At that
+point the F_DOCM_* flags should remain unset as there is no modification in
+C data needing to be built to Perl.  Therefore all the calls to XS interfaces
+afterwards, mainly on a Document, returns the Perl data.  This is not
+fundamentaly problematic, as it works.  However, the design of the Document XS
+interface was that the Perl structure could be built on demand, and in that
+case, it is not possible.
+
+When the structure code is done in C and conversion is done in Perl, there
+is no need to rebuild all the document data to Perl.  This is probably
+because there is no Perl code modifying the document data without also
+modifying the underlying C code, ie no case of missing XS interface in
+code run in tests at that point, before conversion.  But it is probably
+more by chance than by design, if code changing the structure of the tree
+that lack XS to change the C data was called at that point, the C and Perl
+data would diverge.
+
+There is disagreement on the strategy to use for libraries versioning.
+For Gavin, the code that can link against libraries should be the code
+with the exact same version than the libraries.
+For Patrice it is possible to explicitly say that mixing versions is
+not supported, but still follow the libtool versioning scheme such that
+if better and compatible libraries are installed they will be prefered
+to same version library.
+
+Gavin on using CSV files and a Perl script to generate code for Perl and C.
+For something like html_style_commands_element.csv, it could potentially
+make the code more impenetrable.  Suppose for example someone wants to
+find which part of the code handles the @sansserif command.  If they
+search HTML.pm for 'sansserif' that string isn't there.  As this file
+is shorter, there is less benefit to avoiding duplicating its contents.
+However, the purpose, structure and meaning of this file is quite clear.
+(Files such as HTML.pm are also not self-contained, accessing information
+in files such as Commands.pm, so having another file to access does not
+really change the situation.)
+
+For shorter files like default_special_unit_info.csv and
+default_direction_strings.csv it is less clear that it offers a net
+benefit.  To be honest, the function of these files is not particularly
+clear to me other than one of them is something to do with node direction
+pointers.  I don't think someone looking at these files for the first time
+would have an easy time figuring out what they are for.
+
+There is no forward looking code in the Parsers anymore, so maybe a
+lex/yacc parser could be used for the main loop.  More simply, a binary
+tokenizer, at least, could make for a notable speedup.
 
 From vincent Belaïche. About svg image files in HTML:
 
@@ -970,6 +1046,46 @@ And, in the <body> tag of manual.html:
 Need to make sure that a fix needed
 -----------------------------------
 
+Not sure that it can be solved easily.  When braced substrings in translated
+strings are not in the translation result, they are not part of the returned
+tree and are therefore never destroyed.  This happened in tests in the
+translation_in_parser_in_translation test when '{name} on {class}'
+translation did not contain {name} nor {class}.  It the translated strings
+are not user-defined (for HTML), it is unlikely that the translations do
+not contain the braced substrings.  For user-defined translated strings, it
+could be possible.
+It could be theoretically possible to determine if the braced substrings
+are not all in the translated strings and destroy the non-substituted
+element in the code perfoming the substrings substitution.  However, the
+situation is not likely enough to warrant doing special code.
+
+Similarly, if a braced substrings appears twice, it will probably make
+the program crash as a tree element is destroyed twice leading to double
+free and/or access to unallocated memory.
+
+
+Do an XS interface for converter current_lang_translations?  It is
+somewhat similar to customization setting based on @-commands in the
+document, so it would be more consistent, but it requires adding quite a
+few accessors, as cdt/gdt cannot be overriden.
+
+We mark Perl tree element parent as weaken for tree copies to avoid having
+to remove parent in trees returned after translation, such that they
+do not have cycles already and can be destroyed by Perl.
+
+It could be possible to mark Perl tree element parent as weak reference
+with Scalar::Util weaken in Texinfo::ParserNonXS more generally, such that
+there is no need to remove the parent to break cycles and remove tree element
+references.  In perlapi for XS there is sv_rvweaken for the elements built from
+C.  However, this would slow down the Parsers although for the majority of
+cases, we do not call the code that deletes the tree element parent, we do it
+only if there is more than one manual converted.  So it is not clear that it
+is a good idea.
+
+Make building "source marks" optional?  It does not use that much memory,
+most probably even less time, and would complexify the code, it is not
+clearly a good idea.
+
 In HTML, HEADERS is used.  But not in other modules, especially not in
 Plaintext.pm or Info.pm, this is determined by the module used (Plaintext.pm
 or Info.pm).  No idea whether it is right or wrong.
@@ -1023,6 +1139,9 @@ Perl strings not encoded before being output, leading to
 in UTF-8).  Not clear that it is an issue.  For example with
 export TEXINFO_XS=omit
 /usr/bin/perl -w ./../perl/texi2any.pl  --force --conf-dir ./../perl/t/init/ --conf-dir ./../perl/init --conf-dir ./../perl/ext -I ./coverage/ -I coverage// -I ./ -I . -I built_input --error-limit=1000 -c TEST=1  --output coverage//out_parser/formatting_macro_expand/ --macro-expand=coverage//out_parser/formatting_macro_expand/formatting.texi -c TEXINFO_OUTPUT_FORMAT=structure ./coverage//formatting.texi --debug=1 2>t.err
+
+This does not happen for t/*.t tests, as STDERR is encoded in UTF-8
+in test_utils.pl.
 
 
 HTML5 validation tidy errors that do not need fixing
@@ -1120,8 +1239,8 @@ defvr (defvar, defopt), deftypevr (deftypevar)
 deftp
 
 
-Solaris 11
-==========
+Solaris
+=======
 
 # recent Test::Deep requires perl 5.12
 cpan> o conf urllist push http://backpan.perl.org/
@@ -1131,14 +1250,42 @@ Also possible to install Texinfo dependencies with openCSW, like
 pkgutil -y -i CSWhelp2man CSWpm-data-compare CSWpm-test-deep
 
 The system perl may not be suitable to build XS modules, and the
-system gawk may be too old, openCSW may be needed.  For example:
+system gawk may be too old, openCSW may be needed.  For example,
+on Solaris 11:
 ./configure PERL=/opt/csw/bin/perl GAWK=/opt/csw/bin/gawk CFLAGS='-g' LDFLAGS=-L/opt/csw/lib/ CPPFLAGS='-I/opt/csw/include/' PERL_EXT_CFLAGS='-g' PERL_EXT_CPPFLAGS='-I/opt/csw/include/' PERL_EXT_LDFLAGS=-L/opt/csw/lib/
+
+On Solaris 10, gnulib requires C99, may need to add -D_STDC_C99 to CFLAGS.
+
+On Solaris 10, there may be an error with Perl compilation flags like:
+ld: fatal: file /usr/local/lib/libiconv.so: wrong ELF class: ELFCLASS64
+because Perl cflags select 32 bits, but the library being linked in
+/usr/local/lib/ is 64 bits.  In that case, the library should be found
+in /opt/csw/lib/.
+To mitigate this issue, --without-libiconv-prefix can be used.
+
+With --without-libiconv-prefix, if gcc is used as compiler (without
+the Perl compilation flags), there can be a runtime linking error,
+because /opt/csw/lib is not included in the program runpath as there
+is no -R/opt/csw/lib issued.  To use gcc, one possibility could be to do
+ export LD_OPTIONS=/opt/csw/lib
+Beware that it insert the runpath before any other path set during build.
+
+Alternatively, to use cc, which is more interesting for Texinfo to test Solaris
+10 specificities and reproduce the OpenCSW environment:
+./configure --without-libiconv-prefix PERL=/opt/csw/bin/perl GAWK=/opt/csw/bin/gawk CC=cc CFLAGS='-g -D_STDC_C99=' LDFLAGS=-L/opt/csw/lib/ CPPFLAGS='-I/opt/csw/include/' PERL_EXT_CFLAGS='-g -D_STDC_C99=' PERL_EXT_CPPFLAGS='-I/opt/csw/include/' PERL_EXT_LDFLAGS=-L/opt/csw/lib/
+
+
+OpenBSD
+=======
+
+compiling libintl-perl
+gettext_xs/Makefile.PL:         LIBS => ['-L/usr/local/lib' . ' -lintl -liconv'],
 
 Misc notes
 ==========
 
 # differences between dist in and out source after maintainer-clean
-rm -f texinfo-7.*.*.tar.gz
+rm -f texinfo-7.*.tar.gz
 ./autogen.sh
 ./configure
 make maintainer-clean
@@ -1147,15 +1294,15 @@ make maintainer-clean
 make dist
 rm -rf in_source_dist_contents
 mkdir in_source_dist_contents
-(cd in_source_dist_contents && tar xvf ../texinfo-7.*.*.tar.gz)
+(cd in_source_dist_contents && tar xvf ../texinfo-7.*.tar.gz)
 make maintainer-clean
 rm -rf bb
 mkdir bb
 cd bb
 ../configure
 make dist
-tar xvf texinfo-7.*.*.tar.gz
-diff -u -r ../in_source_dist_contents/texinfo-7.*.*/ texinfo-7.*.*/ > ../build_in_out_source_differences.diff
+tar xvf texinfo-7.*.tar.gz
+diff -u -r ../in_source_dist_contents/texinfo-7.*/ texinfo-7.*/ > ../build_in_out_source_differences.diff
 
 Test validity of Texinfo XML or docbook
 export XML_CATALOG_FILES=~/src/texinfo/tta/maintain/catalog.xml
@@ -1206,116 +1353,137 @@ In tta/tests/, generate Texinfo file for Texinfo TeX coverage
 From doc/
 texi2pdf -I ../tta/tests/layout/ ../tta/tests/formatting_valid.texi
 
+Check includes with iwyu.  Note that iwyu does not know when config.h
+has to be included before a header that is replaced by a Gnulib header.
+rm -rf ../res_iwyu_hdr
+mkdir ../res_iwyu_hdr
+
+for file in */*.h ; do bfile=`basename $file .h`; include-what-you-use -DDATADIR='"/usr"' -I ../ -I main $file 2>../res_iwyu_hdr/$bfile.2 ; done
+
+for file in main/build_perl_info.h main/get_perl_info.h */build_html_perl_info.h *//build_html_perl_state.h */build_perl_tree_elements.h convert/get_converter_perl_info.h */get_perl_tree_elements.h ../perl/XSTexinfo/*/*.h ; do bfile=`basename $file .h`; include-what-you-use -I . -I main -I convert -D_LARGEFILE64_SOURCE -I /usr/lib/x86_64-linux-gnu/perl/5.42/CORE/ $file 2>../res_iwyu_hdr/$bfile.2 ; done
+
+rm -rf ../res_iwyu_code
+mkdir ../res_iwyu_code
+for file in */*.c ; do bfile=`basename $file .c`; include-what-you-use -DDATADIR='"/usr"' -DHAVE_CONFIG_H -I ../ -I main -I structuring_transfo -I parsetexi -I ../gnulib/lib $file 2>../res_iwyu_code/$bfile.2 ; done
+
+Remove filles that are directly included and files that are not compiled
+for file in accent_tables_8bit_codepoints cmd_unicode command_data global_multi_commands_case global_unique_commands_case build_perl_tree_elements get_perl_tree_elements ; do rm -f ../res_iwyu_code/${file}.2 ; done
+
+for file in main/api_to_perl.c convert/build_html_perl_info.c convert/build_html_perl_state.c main/build_perl_info.c convert/call_conversion_perl.c main/call_document_perl_functions.c convert/call_embed_perl.c convert/call_html_perl_function.c main/call_perl_function.c convert/get_converter_perl_info.c main/get_perl_info.c main/options_get_perl.c ; do bfile=`basename $file .c`; include-what-you-use -I . -I main -I convert -D_LARGEFILE64_SOURCE -I /usr/lib/x86_64-linux-gnu/perl/5.42/CORE/ $file 2>../res_iwyu_code/$bfile.2 ; done
+
+NOTE: run make after changing an XS file.
+rm -rf ../res_iwyu_xs
+mkdir ../res_iwyu_xs
+for file in ../perl/XSTexinfo/*.c ../perl/XSTexinfo/*/*.c ; do bfile=`basename $file .c`; include-what-you-use -I . -I main -I convert -I structuring_transfo -I parsetexi -D_LARGEFILE64_SOURCE -I /usr/lib/x86_64-linux-gnu/perl/5.42/CORE/ $file 2>../res_iwyu_xs/$bfile.2 ; done
+
+include-what-you-use -I main ../perl/XSTexinfo/xsmisc.c
+
+
 To generate valgrind .supp rules: --gen-suppressions=all --log-file=gen_supp_rules.log
 
+for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind --suppressions=../texi2any.supp -q --leak-check=full perl -w $file > val_res/$bfile.out 2>&1 ; done
+
+Check memory leaks
 mkdir -p val_res
 PERL_DESTRUCT_LEVEL=2
 export PERL_DESTRUCT_LEVEL
-for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind --suppressions=../texi2any.supp -q perl -w $file > val_res/$bfile.out 2>&1 ; done
-
-With memory leaks
-for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind --suppressions=../texi2any.supp -q --leak-check=full perl -w $file > val_res/$bfile.out 2>&1 ; done
 for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind -q --leak-check=full perl -w $file > val_res/$bfile.out 2>&1 ; done
 (for file in t/z_misc/*.t ; do bfile=`basename $file .t`; echo z_misc/$bfile; valgrind -q --leak-check=full perl -w $file ; done) > val_res/z_misc.out 2>&1
 
 For tests in tta/tests, a way to have valgrind call prependend is to add,
-in tta/defs:
-prepended_command='valgrind --leak-check=full -q'
-prepended_command='valgrind --leak-check=full -q --suppressions=../texi2any.supp'
+in tta/defs (libtool exec is needed for ctexi2any):
+prepended_command='libtool exec valgrind --leak-check=full -q'
+prepended_command='libtool exec valgrind --leak-check=full -q --suppressions=../texi2any.supp'
 
-Before the code reorganization and the separation of linked against Gnulib
-and code linked against Perl, in some cases, memory that was not
-released/freed, but that should still be accessible at the end of conversion
-was shown by valgrind as being leaked, typically static/global
-variables freed upon reuse, or left unreleased on purpose (parser conf, for
-example) and some symbols were shown as ???.  It is unclear what the problem
-was, the documentation of valgrind hints that the memory appearing as leaked
-could have come a dlclosed object.  In that case adding --keep-debuginfo=yes
-showed the missing symbols as seen in the valgrind documentation.
+Before the code reorganization and the separation of code compiled against
+Gnulib+autoconf headers and code compiled against Perl, in some cases, memory
+not released/freed still accessible at the end of conversion was shown by
+valgrind as being leaked.  Mainly static/global variables freed upon reuse,
+or left unreleased on purpose (parser conf, for example).  Also, some symbols
+were shown as ???.  It is unclear what the problem was, the documentation
+of valgrind hints that the memory appearing as leaked could have come a
+dlclosed object.  In that case adding --keep-debuginfo=yes showed the
+missing symbols as seen in the valgrind documentation.
 
-rm -rf t/check_debug_differences/
-mkdir t/check_debug_differences/
-for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 1 2>t/check_debug_differences/XS_$bfile.err ; done
-export TEXINFO_XS_PARSER=0
-for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 1 2>t/check_debug_differences/PL_$bfile.err ; done
-for file in t/*.t ; do bfile=`basename $file .t`; sed 's/^XS|//' t/check_debug_differences/XS_$bfile.err | diff -u t/check_debug_differences/PL_$bfile.err - > t/check_debug_differences/debug_$bfile.diff; done
-
-Full check, including XS conversion and memory leaks in debug:
+To complement the "check that the debug output of pure Perl modules and XS/C
+are the same" described in README-hacking, an additional check with memory leaks
+in debug:
 PERL_DESTRUCT_LEVEL=2
 export PERL_DESTRUCT_LEVEL
-for file in t/*.t ; do bfile=`basename $file .t`; valgrind -q --leak-check=full --keep-debuginfo=yes perl -w $file -d 1 2>t/check_debug_differences/XS_$bfile.err ; done
+unset TEXINFO_XS; for file in t/*.t ; do bfile=`basename $file .t`; valgrind -q --leak-check=full perl -w $file -d 1 2>t/check_debug_differences/XS_$bfile.err ; done
+
+With debugging level 2
+  rm -rf t/check_debug_differences/
+  mkdir t/check_debug_differences/
+  unset TEXINFO_XS; for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 2 2>t/check_debug_differences/XS_$bfile.err ; done
+  export TEXINFO_XS=omit; for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 2 2>t/check_debug_differences/PL_$bfile.err ; done
+  for file in t/*.t ; do bfile=`basename $file .t`; sed 's/^C|//' t/check_debug_differences/XS_$bfile.err | diff -u t/check_debug_differences/PL_$bfile.err - > t/check_debug_differences/debug_$bfile.diff; done
+
 
 Check of XS interface to Perl
 export TEXINFO_XS_EXTERNAL_FORMATTING=1
 export TEXINFO_XS_EXTERNAL_CONVERSION=1
 
 
-Analysing memory use:
-valgrinf massif useful-heap approximate distribution in 2024 (obsolete)
+Analysing memory use (2026)
 mkdir -p massif
-valgrind --tool=massif --massif-out-file=massif/massif_info.out perl -w texi2any.pl ../doc/texinfo.texi
-ms_print massif/massif_info.out > massif/ms_print_info.out
-16M Perl
-36M C tree
-50M Perl tree (visible in detailed use, but difficult to do the
-               imputation right, some may correspond with other uses
-               of Perl memory)
-5M (approximate, not visible in the detailed use, based on difference
-    in use over time) conversion
 
+Info
+----
+valgrind --tool=massif --massif-out-file=massif/massif_info.out perl -w texi2any.pl ../../doc/texinfo.texi
+ms_print massif/massif_info.out > massif/ms_print_info.out
+total 42.6M, extra-heap 6M (alignement, administrative bytes), useful-heap 36.2M
+useful-heap approximate distribution:
+16.3M Perl 9 + 4 + 1.7 + 1 + 0.6
+17M C tree 5.3 + 5 + 3.4 + (0.8 + 0.7) text_alloc + 1.3 + 0.5 get_associated_info_key
+1M conversion text
+1.8M unknown
+= 36.1M (good match with useful-heap)
+
+libtool exec valgrind --tool=massif --massif-out-file=massif/massif_c_info.out ../C/ctexi2any ../../doc/texinfo.texi
+ms_print massif/massif_c_info.out > massif/ms_print_c_info.out
+total 25M, extra-heap 5.3M, useful-heap 19.7M
+useful-heap total and distribution same as C above.
+
+HTML
+----
 With full XS (7.2 64M, with text separate 58.5M, without info_info 56M
               with integer extra keys 54M, with source marks as pointers 52.3M)
-mkdir -p massif
 valgrind --tool=massif --massif-out-file=massif/massif_html.out perl -w texi2any.pl --html ../../doc/texinfo.texi
 ms_print massif/massif_html.out > massif/ms_print_html.out
-useful-heap
-25M = 13.1 + 5.8 + 2.9 + 2.5 + 0.7 Perl
-17.8M Tree
- 6 + 5 = 11M new_element
- 3.5M reallocate_list
- 0.5M get_associated_info_key (below threshold in later reports)
- 2.8M = 0.8 + 0.7 +1.3 text
-5.2M = 3.8 (text) + 0.7 (text printindex) + 0.7: conversion,
-               mainly text in convert_output_output_unit*
-                  (+1.3M by approximate difference with total)
-(7.5 + 1.3) - (3.8 + 0.7 + 0.7 + 0.8 +1.3) = 1.5 M Text not imputed
-3. - 0.5 = 2.5M remaining not imputed (- get_associated_info_key)
-52M TOTAL (for 52.3M reported)
-
+total 58M, extra-head 6.9M, useful-heap 51.1M
+useful-heap distribution:
+22.6M Perl
+ = 13.3 + 5.1 + 2.1 + 1.3 + 0.8
+17.3M Tree
+ 5.5 + 5.3 = 10.8M new_element
+ 3.6M reallocate_list
+ 2.9M = (0.8 + 0.7) text + 1.4 new_text_element
+6.2M Conversion
+ 4.4 (text) + 0.7 (text printindex) + 1.1 add_element_target_to_list
+   mainly text in convert_output_output_unit*
+1.7 M Text not imputed
+ = 8.3 - (4.4 + 0.7 + 0.7 + 0.8)
+3.4M remaining not imputed
+51.2M TOTAL (for 51.1M reported)
 
 Using callgrind to find the time used by functions
 
 valgrind --tool=callgrind perl -w texi2any.pl ../../doc/texinfo.texi --html
-# to avoid cycles (some remain in Perl only code) that mess up the graph:
+# to avoid cycles (in Perl only code, in recursive C calls) that mess up the graph:
 valgrind --tool=callgrind --separate-callers=3 --separate-recs=10 perl -w texi2any.pl ../../doc/texinfo.texi --html
 valgrind --tool=callgrind --separate-callers=4 --separate-recs=11 perl -w texi2any.pl ../../doc/texinfo.texi
 kcachegrind callgrind.out.XXXXXX
 
-This is obsolete with output overriding, although the distribution changed
-very little after reattributing the shares.
-For the Texinfo manual with full XS, in 2024, Perl uses 22% of the time
-(for html), now only for code hopefully called once.  The switch to
-global locales for setlocale calling that is needed for Perl takes also 4%.
-Calling Perl getSortKey uses about 28% (more on sorting and C below).
+For the Texinfo manual with full XS, in 2026, Perl uses 39% of the time
+(for html) for the main program and some HTML parser initialization.
 Decomposition of the time used for the Texinfo manual with full XS
 (in percent):
- parser: 11.5
- index sorting: 30
- main conversion to HTML: 24.8 = 54.8 - 30
-
- node redirections: 2.6
- prepare conversion units: 2.3
- remove document: 1.8
- associate internal references: 0.53
- prepare unit directions: 0.41
- setup indices sort strings: 0.36
- reset converter: 0.23
- structuring transformation1: 0.19
- structuring transformation2: 0.19
- remaining Texinfo XS code: 0.35
-  = 8.95
- Perl: 22.5 = 7 + 15.2 + (75.57 - 54.8 - 11.5 - 8.95)
+ parser: 17
+ main conversion to HTML: 42
 SUM: 98
+Similar for ctexi2any for HTML, 30% parser, 70% conversion.
+ctexi2any for Info 45% parser, 55% conversion.
 
 
 Setting flags

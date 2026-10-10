@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'inter_item_commands_in_table'} = '*document_root C5
  *before_node_section C1
@@ -801,6 +804,32 @@ _b_
 
 ‘asamp--bb2’
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'inter_item_commands_in_table'} = 'cp:
+ cindex after line
+ cindex before line
+ cindex between lines
+ cindex first
+ cindex in table
+ cindex in table
+ index entry between item and itemx
+ index entry between item and itemx
+ samp cindex in table
+ samp cindex in table
+ second
+ third
+fn:
+ a
+ avar--b
+ b
+ b
+ c
+ d
+vr:
+ aasis--b
+ acode--b
+ b
 ';
 
 

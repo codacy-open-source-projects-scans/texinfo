@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "element_types.h"
+#include "command_ids.h"
 #include "tree_types.h"
 #include "text.h"
 #include "types_data.h"
@@ -33,7 +34,6 @@
 #include "convert_to_texinfo.h"
 /* for global_parser_conf */
 #include "parser_conf.h"
-#include "input.h"
 #include "debug_parser.h"
 #include "errors_parser.h"
 #include "source_marks.h"
@@ -133,7 +133,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
       && last_element->type == ET_empty_line
       && last_element->e.text->end == 0)
     {
-      debug ("MENU STAR");
+      debug ("C|MENU STAR");
 
       line++; /* Past the '*'. */
 
@@ -151,7 +151,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
       ELEMENT *menu_star_element;
       int leading_spaces;
 
-      debug ("MENU ENTRY (certainly)");
+      debug ("C|MENU ENTRY (certainly)");
 
       /* this is the menu star collected previously */
       menu_star_element = pop_element_from_contents (current);
@@ -196,7 +196,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
   else if (last_element
            && last_element->type == ET_internal_menu_star)
     {
-      debug_nonl ("ABORT MENU STAR before: ");
+      debug_nonl ("C|ABORT MENU STAR before: ");
       debug_print_protected_string (line); debug ("");
 
       last_element->type = ET_normal_text;
@@ -228,7 +228,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
 
       separator = last_element->e.text->text;
 
-      debug ("AFTER menu_entry_separator %s", separator);
+      debug ("C|AFTER menu_entry_separator %s", separator);
 
       /* Separator is "::". */
       if (!strcmp (separator, ":") && *line == ':')
@@ -261,9 +261,10 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
         {
           ELEMENT *entry_name;
 
-          debug ("MENU NODE done (change from menu entry name) %s", separator);
-          entry_name = contents_child_by_index (current,
-                                            current->e.c->contents.number - 2);
+          debug ("C|MENU NODE done (change from menu entry name) %s",
+                 separator);
+          entry_name = current->e.c->contents.list[
+                                    current->e.c->contents.number - 2];
 
           /* Change from menu_entry_name (i.e. a label)
              to a menu entry node */
@@ -275,7 +276,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
         {
           ELEMENT *entry_node;
 
-          debug ("MENU ENTRY done %s", separator);
+          debug ("C|MENU ENTRY done %s", separator);
           entry_node = new_element (ET_menu_entry_node);
           add_to_element_contents (current, entry_node);
           current = entry_node;
@@ -284,7 +285,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
       /* anything else corresponds to a separator that does not contain
          : and is after a menu node (itself following a menu_entry_name) */
         {
-          debug ("MENU NODE done %s", separator);
+          debug ("C|MENU NODE done %s", separator);
           current = enter_menu_entry_node (current);
         }
     }
@@ -333,7 +334,7 @@ end_line_menu_entry (ELEMENT *current)
   if (empty_menu_entry_node || current->type == ET_menu_entry_name)
     {
       ELEMENT *menu, *menu_entry, *description_or_menu_comment = 0;
-      debug ("FINALLY NOT MENU ENTRY");
+      debug ("C|FINALLY NOT MENU ENTRY");
       menu = current->e.c->parent->e.c->parent;
       menu_entry = pop_element_from_contents (menu);
       if (menu->e.c->contents.number > 0
@@ -345,7 +346,7 @@ end_line_menu_entry (ELEMENT *current)
           entry = last_contents_child (menu);
           for (j = entry->e.c->contents.number; j > 0; j--)
             {
-              ELEMENT *e = contents_child_by_index (entry, j - 1);
+              ELEMENT *e = entry->e.c->contents.list[j - 1];
               if (e->type == ET_menu_entry_description)
                 {
                   description = e;
@@ -394,13 +395,13 @@ end_line_menu_entry (ELEMENT *current)
           e = new_element (ET_preformatted);
           add_to_element_contents (current, e);
           current = e;
-          debug ("THEN MENU_COMMENT OPEN");
+          debug ("C|THEN MENU_COMMENT OPEN");
         }
       {
       size_t i, j;
       for (i = 0; i < menu_entry->e.c->contents.number; i++)
         {
-          ELEMENT *arg = contents_child_by_index (menu_entry, i);
+          ELEMENT *arg = menu_entry->e.c->contents.list[i];
           if (arg->type == ET_menu_entry_leading_text
               || arg->type == ET_menu_entry_separator)
             current = merge_text (current, arg->e.text->text,
@@ -410,7 +411,7 @@ end_line_menu_entry (ELEMENT *current)
               ELEMENT *e;
               for (j = 0; j < arg->e.c->contents.number; j++)
                 {
-                  e = contents_child_by_index (arg, j);
+                  e = arg->e.c->contents.list[j];
                   if (e->type == ET_normal_text)
                     {
                       current = merge_text (current, e->e.text->text,
@@ -430,7 +431,7 @@ end_line_menu_entry (ELEMENT *current)
     }
   else
     {
-      debug ("MENU ENTRY END LINE");
+      debug ("C|MENU ENTRY END LINE");
       current = current->e.c->parent;
       current = enter_menu_entry_node (current);
       if (end_comment)

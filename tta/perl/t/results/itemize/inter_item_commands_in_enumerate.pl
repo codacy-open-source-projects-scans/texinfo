@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'inter_item_commands_in_enumerate'} = '*document_root C5
  *before_node_section C1
@@ -382,6 +385,16 @@ $result_converted{'plaintext'}->{'inter_item_commands_in_enumerate'} = 'top
 
   1. enum
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'inter_item_commands_in_enumerate'} = 'cp:
+ another
+ cindex
+ first idx
+ index inter in enumerate after line
+ index inter in enumerate before line
+ index inter in enumerate between lines
+ sedond idx
 ';
 
 

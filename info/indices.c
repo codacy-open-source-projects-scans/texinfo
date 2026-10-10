@@ -192,6 +192,8 @@ info_indices_of_file_buffer (FILE_BUFFER *file_buffer)
                          as we now know that all the nodes with indices
                          in the Info filebuffer should have markers. */
                       clear_index_nodenames ();
+                      free (result);
+                      result = NULL;
                     }
                   last_index_tag = tag;
                 }
@@ -898,7 +900,11 @@ format_reference (REFERENCE *ref, const char *filename, struct text_buffer *buf)
 
   if (ref->filename && strcmp (ref->filename, filename))
     n += text_buffer_printf (buf, "(%s)", ref->filename);
-  n += text_buffer_printf (buf, "%s. ", ref->nodename);
+
+  if (strchr(ref->nodename, ':'))
+    n += text_buffer_printf (buf, INFO_QUOTE_STR "%s" INFO_QUOTE_STR ". ", ref->nodename);
+  else
+    n += text_buffer_printf (buf, "%s. ", ref->nodename);
 
   if (n < LINECOL)
     n += text_buffer_fill (buf, ' ', LINECOL - n);

@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'inline'} = '*document_root C1
- *before_node_section C5
-  {empty_line:\\n}
+ *before_node_section C6
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *paragraph C12
    *@inlinefmt C2 l2
    |EXTRA
@@ -169,8 +174,7 @@ $result_texis{'inline'} = '
 ';
 
 
-$result_texts{'inline'} = '
-<blink>html</blink> ", 
+$result_texts{'inline'} = '<blink>html</blink> ", 
 plaintext ", 
 ,
 <emphasis>docbook</emphasis> ", 
@@ -203,8 +207,7 @@ $result_converted{'plaintext'}->{'inline'} = ', plaintext ", , ,
 ';
 
 
-$result_converted{'html_text'}->{'inline'} = '
-<p>&lt;blink&gt;html&lt;/blink&gt; &ldquo;, 
+$result_converted{'html_text'}->{'inline'} = '<p>&lt;blink&gt;html&lt;/blink&gt; &ldquo;, 
 , 
 ,
 , 
@@ -221,8 +224,8 @@ $result_converted{'html_text'}->{'inline'} = '
 </p>';
 
 
-$result_converted{'xml'}->{'inline'} = '
-<para><inlinefmt><inlinefmtformat>html</inlinefmtformat><inlinefmtcontent> &lt;blink&gt;html&lt;/blink&gt; &textldquo;</inlinefmtcontent></inlinefmt>, 
+$result_converted{'xml'}->{'inline'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><para><inlinefmt><inlinefmtformat>html</inlinefmtformat><inlinefmtcontent> &lt;blink&gt;html&lt;/blink&gt; &textldquo;</inlinefmtcontent></inlinefmt>, 
 <inlinefmt><inlinefmtformat>plaintext</inlinefmtformat><inlinefmtcontent> plaintext &textldquo;</inlinefmtcontent></inlinefmt>, 
  &lt;para&gt;xml&lt;/para&gt; ``,
 <inlinefmt><inlinefmtformat>docbook</inlinefmtformat><inlinefmtcontent> &lt;emphasis&gt;docbook&lt;/emphasis&gt; &textldquo;</inlinefmtcontent></inlinefmt>, 
@@ -239,8 +242,7 @@ $result_converted{'xml'}->{'inline'} = '
 </para>';
 
 
-$result_converted{'docbook'}->{'inline'} = '
-<para>, 
+$result_converted{'docbook'}->{'inline'} = '<para>, 
 , 
 ,
 &lt;emphasis&gt;docbook&lt;/emphasis&gt; &#8220;, 
@@ -257,7 +259,7 @@ raw <emphasis>docbook</emphasis> ``,
 </para>';
 
 
-$result_converted{'latex_text'}->{'inline'} = '
+$result_converted{'latex_text'}->{'inline'} = '\\begin{document}
 , 
 , 
 ,

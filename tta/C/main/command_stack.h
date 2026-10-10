@@ -16,40 +16,37 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
-#include <stddef.h>
-
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
-/* ELEMENT_STACK */
-#include "document_types.h"
 #include "converter_types.h"
+#include "list_macros.h"
+/* ELEMENT_REFERENCE_STACK HTML_DOCUMENT_CONTEXT HTML_FORMATTING_CONTEXT
+   HTML_FORMATTING_CONTEXT_STACK */
+#include "html_converter_state.h"
+
+decl_list_fns(COMMAND_STACK, command, enum command_id);
+decl_stack_fns(COMMAND_STACK, command, enum command_id);
 
 void reset_command_stack (COMMAND_STACK *stack);
-void push_command (COMMAND_STACK *stack, enum command_id cmd);
-enum command_id pop_command (COMMAND_STACK *stack);
-enum command_id top_command (const COMMAND_STACK *stack);
 
 void push_command_or_type (COMMAND_OR_TYPE_STACK *stack, enum command_id cmd,
                            enum element_type type);
 void pop_command_or_type (COMMAND_OR_TYPE_STACK *stack);
 COMMAND_OR_TYPE *top_command_or_type (const COMMAND_OR_TYPE_STACK *stack);
 
-void push_string_stack_string (STRING_STACK *stack, const char *string);
-void pop_string_stack (STRING_STACK *stack);
-const char *top_string_stack (const STRING_STACK *stack);
-void clear_string_stack (STRING_STACK *stack);
+void push_string_stack_string (STRING_LIST *stack, const char *string);
+decl_stack_fns(STRING_LIST, string, char *);
+void pop_string_stack (STRING_LIST *stack);
 
-void push_integer_stack_integer (INTEGER_STACK *stack, int value);
-int pop_integer_stack (INTEGER_STACK *stack);
-int top_integer_stack (const INTEGER_STACK *stack);
+decl_list_fns(INTEGER_STACK, integer, int);
+decl_stack_fns(INTEGER_STACK, integer, int);
 
-void push_stack_element (ELEMENT_STACK *stack, const ELEMENT *e);
-const ELEMENT *pop_stack_element (ELEMENT_STACK *stack);
+decl_stack_fns(CONST_ELEMENT_LIST, const_element, const ELEMENT *);
 
 void push_element_reference_stack_element (ELEMENT_REFERENCE_STACK *stack,
                                       const ELEMENT *e, const void *hv);
-void pop_element_reference_stack (ELEMENT_REFERENCE_STACK *stack);
+decl_stack_fns(ELEMENT_REFERENCE_STACK, element_reference, ELEMENT_REFERENCE);
 int command_is_in_referred_command_stack (const ELEMENT_REFERENCE_STACK *stack,
                                       const ELEMENT *e, const void *hv);
 ELEMENT_REFERENCE_STACK *new_element_reference_stack (void);

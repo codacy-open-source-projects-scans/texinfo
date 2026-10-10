@@ -1,17 +1,22 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'novalidate'} = '*document_root C2
- *before_node_section C3
-  {empty_line:\\n}
-  *@novalidate C1 l2
-   *line_arg C1
-    {spaces_before_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C2
+   *@novalidate C1 l2
+    *line_arg C1
+     {spaces_before_argument:\\n}
+   {empty_line:\\n}
  *@node C5 l4 {first}
  |EXTRA
  |identifier:{first}
@@ -78,7 +83,6 @@ $result_texis{'novalidate'} = '
 
 $result_texts{'novalidate'} = '
 
-
 * not a node::
 
 unknown ref.
@@ -98,7 +102,7 @@ $result_sectioning_root{'novalidate'} = '';
 $result_headings_list{'novalidate'} = '';
 
 
-$result_converted{'info'}->{'novalidate'} = 'This is , produced from .
+$result_converted{'info'}->{'novalidate'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: first
@@ -119,7 +123,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'novalidate'} = '* W |document without Top node
  warning: document without Top node
@@ -150,7 +154,6 @@ span:hover a.copiable-link {visibility: visible}
 </head>
 
 <body>
-
 
 <h4 class="node" id="first"><span>first<a class="copiable-link" href="#first"> &para;</a></span></h4>
 

@@ -16,9 +16,9 @@
 /* In sync with Texinfo::Convert::Texinfo */
 
 #include <config.h>
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 
 #include "text.h"
@@ -94,7 +94,7 @@ convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
                 ADD((char *)elt->e.text->text);
             }
 
-          if (builtin_command_data[cmd].flags & CF_nobrace)
+          if (command_data[cmd].flags & CF_nobrace)
             {
            /* the spaces following a command are put in a text element in the
               tree, not associated to the command element. */
@@ -112,8 +112,8 @@ convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
               only argument, there is no separation by commas */
               convert_args (arguments, result);
             }
-          else if (builtin_command_data[cmd].flags & CF_brace
-                   || builtin_command_data[cmd].flags & CF_INFOENCLOSE
+          else if (command_data[cmd].flags & CF_brace
+                   || command_data[cmd].flags & CF_INFOENCLOSE
                    || e->type == ET_macro_call || e->type == ET_rmacro_call)
             {
               int braces;
@@ -146,7 +146,7 @@ convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
                 ADD("}");
               return;
             }
-          else if (builtin_command_data[cmd].flags & CF_line
+          else if (command_data[cmd].flags & CF_line
                    || e->type == ET_index_entry_command
                    || e->type == ET_macro_call_line
                    || e->type == ET_rmacro_call_line)
@@ -155,7 +155,7 @@ convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
               convert_args (e, result);
               return;
             }
-          else if (builtin_command_data[cmd].flags & CF_def
+          else if (command_data[cmd].flags & CF_def
                    || e->type == ET_linemacro_call)
             { /* @def* commands (that are also block commands) */
             }
@@ -186,19 +186,27 @@ convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
 }
 #undef ADD
 
-/* Return value to be freed by caller. */
-char *
-convert_to_texinfo (const ELEMENT *e)
+TEXT
+convert_to_texinfo_text (const ELEMENT *e)
 {
   TEXT result;
+  text_init (&result);
 
   if (!e)
-    return strdup ("");
-  text_init (&result);
+    return result;
+
   /* in case of a document without any content expanded, for instance
      containing only containers, we still want to output an empty string */
   text_append (&result, "");
   convert_to_texinfo_internal (e, &result);
+  return result;
+}
+
+/* Return value to be freed by caller. */
+char *
+convert_to_texinfo (const ELEMENT *e)
+{
+  TEXT result = convert_to_texinfo_text (e);
   return result.text;
 }
 
@@ -212,13 +220,13 @@ convert_contents_to_texinfo (const ELEMENT *e)
 
   if (non_empty)
     {
-      char *result;
+      TEXT result;
       ELEMENT *tmp = new_element (ET_NONE);
       insert_slice_into_contents (tmp, 0, e, arg_indices.start,
                                   arg_indices.end +1);
-      result = convert_to_texinfo (tmp);
+      result = convert_to_texinfo_text (tmp);
       destroy_element (tmp);
-      return result;
+      return result.text;
     }
   else
     return 0;
@@ -324,36 +332,38 @@ check_node_same_texinfo_code (const ELEMENT *reference_node,
 char *
 root_heading_command_to_texinfo (const ELEMENT *element)
 {
-  const ELEMENT *tree = 0;
-  TEXT text;
+  char *tree_txi = 0;
+  char *result;
 
   enum command_id data_cmd = element_builtin_data_cmd (element);
 
   if (data_cmd)
     {
       if ((data_cmd == CM_node
-           || (builtin_command_data[data_cmd].flags & CF_sectioning_heading))
+           || (command_data[data_cmd].flags & CF_sectioning_heading))
           && element->e.c->contents.list[0]->type == ET_arguments_line
           /* Should always be true */
           && element->e.c->contents.list[0]->e.c->contents.list[0]->type
                                                              == ET_line_arg
           && element->e.c->contents.list[0]->e.c->contents.list[0]
                                               ->e.c->contents.number > 0)
-        tree = element->e.c->contents.list[0]->e.c->contents.list[0];
+        {
+          const ELEMENT *tree
+            = element->e.c->contents.list[0]->e.c->contents.list[0];
+          tree_txi = convert_contents_to_texinfo (tree);
+        }
     }
   else
     return strdup ("Not a command");
 
-  text_init (&text);
-  if (tree)
+  if (tree_txi)
     {
-      char *tree_txi = convert_contents_to_texinfo (tree);
-      text_printf (&text, "@%s %s", builtin_command_name (data_cmd),
+      xasprintf (&result, "@%s %s", builtin_command_name (data_cmd),
                                     tree_txi);
       free (tree_txi);
     }
   else
-   text_printf (&text, "@%s", builtin_command_name (data_cmd));
+   xasprintf (&result, "@%s", builtin_command_name (data_cmd));
 
-  return (text.text);
+  return (result);
 }

@@ -18,8 +18,8 @@
 package Texinfo::Tests;
 
 use 5.006;
-
 use strict;
+use warnings;
 
 use Test::More;
 
@@ -28,6 +28,8 @@ use File::Spec;
 
 require Exporter;
 our @ISA = qw(Exporter);
+
+our $VERSION = '7.3dev';
 
 our @EXPORT_OK = qw(
 compare_dirs_files
@@ -111,11 +113,18 @@ sub configure_document_locales($) {
   Texinfo::Translations::setup_output_strings($locales_dir);
 }
 
+sub _compare_no_cr {
+  my ($line1, $line2) = @_;
+  $line1 =~ s/\r$//;
+  $line2 =~ s/\r$//;
+  return ($line1 ne $line2);
+}
+
 # not that subdirectories are not compared, so subdirectories generated
 # by INFO_JS_DIR, if different, will not trigger an error in test, but
 # will lead to different directories and files in diffs.
-sub compare_dirs_files($$;$) {
-  my ($dir1, $dir2, $ignore_files) = @_;
+sub compare_dirs_files($$;$$) {
+  my ($dir1, $dir2, $ignore_files, $binary) = @_;
 
   my %dir1_files;
   my %dir2_files;
@@ -151,9 +160,42 @@ sub compare_dirs_files($$;$) {
   }
   foreach my $file (sort(keys(%dir1_files))) {
     if (exists($dir2_files{$file})) {
-      my $status = compare("$dir1/$file", "$dir2/$file");
-      if ($status) {
-        push @errors, "$dir1/$file and $dir2/$file differ: $status";
+      # for a binary format, we can use directly File::Compare::compare
+      if ($binary) {
+        my $status = compare("$dir1/$file", "$dir2/$file");
+        if ($status) {
+          push @errors, "$dir1/$file and $dir2/$file differ: $status";
+        }
+      } else {
+        # for text-based resulting files, we have in general LF in reference
+        # file but can have LF or CRLF end of line in generated files (CRLF
+        # on mingw based native Windows platforms or with native Perl).
+        # We therefore want to normalize the end of lines for the comparisons.
+        # To do that, we open the files ourselves to set binary mode to be sure
+        # that only LF is used for line splitting, independently of the
+        # platform, and remove any trailing end of line, LF or CRLF, in
+        # _compare_no_cr before comparing the lines.
+        my $fh1 = do { local *FH1 };
+        if (!open($fh1, "$dir1/$file")) {
+          push @errors, "could not open $dir1/$file: $!";
+          $fh1 = undef;
+        }
+        my $fh2 = do { local *FH2 };
+        if (!open($fh2, "$dir2/$file")) {
+          push @errors, "could not open $dir2/$file: $!";
+          $fh2 = undef;
+        }
+        if (defined($fh1) and defined($fh2)) {
+          binmode($fh1);
+          binmode($fh2);
+          my $status = File::Compare::compare_text($fh1, $fh2,
+                                                   \&_compare_no_cr);
+          if ($status) {
+            push @errors, "$dir1/$file and $dir2/$file differ: $status";
+          }
+        }
+        close($fh1) if (defined($fh1));
+        close($fh2) if (defined($fh2));
       }
       delete $dir2_files{$file};
     } else {

@@ -1,20 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'wrong_braces_simple'} = '*document_root C1
- *before_node_section C9
+ *before_node_section C10
+  *preamble_before_content
   *@deffn C2 l1
    *def_line C1 l1
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
     *block_line_arg C11
@@ -51,10 +51,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *def_line C1 l4
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffn}
     *block_line_arg C13
@@ -95,10 +91,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *def_line C1 l7
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,3}
    |original_def_cmdname:{deffn}
     *block_line_arg C12
@@ -138,10 +130,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *def_line C1 l10
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,4}
    |original_def_cmdname:{deffn}
     *block_line_arg C12
@@ -183,10 +171,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *def_line C1 l13
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{b}
    |index_entry:I{fn,5}
    |original_def_cmdname:{deffn}
     *block_line_arg C11
@@ -214,10 +198,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *@deffnx C1 l14
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,6}
    |original_def_cmdname:{deffnx}
     *line_arg C11
@@ -245,10 +225,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *@deffnx C1 l15
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,7}
    |original_def_cmdname:{deffnx}
     *line_arg C13
@@ -280,10 +256,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *@deffnx C1 l16
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,8}
    |original_def_cmdname:{deffnx}
     *line_arg C12
@@ -314,10 +286,6 @@ $result_tree_text{'wrong_braces_simple'} = '*document_root C1
    *@deffnx C1 l17
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |index_entry:I{fn,9}
    |original_def_cmdname:{deffnx}
     *line_arg C12

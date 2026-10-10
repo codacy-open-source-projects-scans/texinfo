@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'section_before_top'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {section node}
  |EXTRA
  |identifier:{section-node}
@@ -145,7 +149,7 @@ list:
 $result_headings_list{'section_before_top'} = '';
 
 
-$result_converted{'info'}->{'section_before_top'} = 'This is , produced from .
+$result_converted{'info'}->{'section_before_top'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: section node,  Up: Top
@@ -174,7 +178,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'section_before_top'} = '<!DOCTYPE html>

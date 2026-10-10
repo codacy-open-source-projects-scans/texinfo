@@ -75,19 +75,19 @@ Installation notes specific to Texinfo:
   the unprefixed variants, e.g. CFLAGS instead of PERL_EXT_CFLAGS.  Exception:
   you cannot override CPPFLAGS this way, as gnulib uses this variable.)
 
+  We recommend not using the configure --config-cache nor setting --cache-file
+  because of the differences between the main directory and texi2any
+  settings.  The features found in the main directory may be different from
+  the features available in texi2any.  Using cached values could bring in
+  values found for the main directory that are not correct in the context of
+  texi2any.
+
 * After building the program, you can control the use of XS modules by
   the Perl texi2any implementation with the `TEXINFO_XS' environment
   variable, which may be useful for troubleshooting.
   Set TEXINFO_XS=omit to disable the use of XS modules, or
   TEXINFO_XS=debug to print some information as the modules are
   looked for and loaded.
-
-  Three steps are distinguished: the parsing step, the structure step
-  for the determination of sectioning and node structures, and the
-  conversion step.  If you do not want to use XS for the conversion step,
-  you can set the `TEXINFO_XS_CONVERT' environment variable to 0.  (The
-  TEXINFO_XS_CONVERT environment variable will to be removed in a later
-  release.)
 
 * Native code (in XS modules) get translations for strings to be put in
   output files using libc gettext, using the LANGUAGE variable.  If the

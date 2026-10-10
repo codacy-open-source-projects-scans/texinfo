@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'in_menu_only_special_ascii_spaces_node_menu'} = '*document_root C7
  *before_node_section C1
@@ -60,6 +63,8 @@ $result_tree_text{'in_menu_only_special_ascii_spaces_node_menu'} = '*document_ro
     {spaces_before_argument: '."\r".'\\n}
  *@chapter C2 in_menu_only_special_ascii_spaces_node.texi:l10 {CARRIAGE RETURN|'."\r".'|}
  |EXTRA
+ |identifier:{CARRIAGE-RETURN_007c-_007c}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -75,6 +80,8 @@ $result_tree_text{'in_menu_only_special_ascii_spaces_node_menu'} = '*document_ro
     {spaces_before_argument: \\t\\f\\n}
  *@chapter C2 in_menu_only_special_ascii_spaces_node.texi:l13 {CHARACTER TABULATION|	| FORM FEED||}
  |EXTRA
+ |identifier:{CHARACTER-TABULATION_007c-_007c-FORM-FEED_007c-_007c}
+ |is_target:{1}
  |section_heading_number:{2}
  |section_level:{1}
  |section_number:{3}
@@ -173,7 +180,7 @@ list:
 $result_headings_list{'in_menu_only_special_ascii_spaces_node_menu'} = '';
 
 
-$result_converted{'info'}->{'in_menu_only_special_ascii_spaces_node_menu'} = 'This is , produced from in_menu_only_special_ascii_spaces_node.texi.
+$result_converted{'info'}->{'in_menu_only_special_ascii_spaces_node_menu'} = Encode::encode('utf-8', 'This is , produced from in_menu_only_special_ascii_spaces_node.texi.
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -195,6 +202,8 @@ top
 
 Tag Table:
 Node: Top70
+Ref: CARRIAGE RETURN| |136
+Ref: CHARACTER TABULATION| | FORM FEED| |179
 
 End Tag Table
 
@@ -202,7 +211,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'in_menu_only_special_ascii_spaces_node_menu'} = '<!DOCTYPE html>

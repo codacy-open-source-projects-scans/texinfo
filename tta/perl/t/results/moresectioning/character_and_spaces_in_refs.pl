@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'character_and_spaces_in_refs'} = '*document_root C11
  *before_node_section C1
@@ -526,7 +529,7 @@ $result_headings_list{'character_and_spaces_in_refs'} = '1|Testing distant nodes
 ';
 
 
-$result_converted{'info'}->{'character_and_spaces_in_refs'} = 'This is , produced from character_and_spaces_in_refs_text.texi.
+$result_converted{'info'}->{'character_and_spaces_in_refs'} = Encode::encode('utf-8', 'This is , produced from character_and_spaces_in_refs_text.texi.
 
 
 File: ,  Node: Top,  Next: node to avoid DocBook or LaTeX ignored,  Up: (dir)
@@ -593,7 +596,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'character_and_spaces_in_refs'} = '* W character_and_spaces_in_refs_text.texi:l15|@ref node name should not contain `:\'
  warning: @ref node name should not contain `:\'

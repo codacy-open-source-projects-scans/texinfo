@@ -19,12 +19,11 @@ Gettext are listed in NEWS; usually the latest official releases.  If
 you are getting the sources from the development repository (or change
 configure.ac), you'll need to have these tools installed to (re)build.
 You'll also need help2man (for building man pages) and gperf (for building
-"unicase/*" and "uninorm/*" modules from gnulib).  If you modify
-texindex/ti.twjr, you'll need gawk >= 4.0.  All of these programs are
-available from https://ftp.gnu.org/gnu.  You'll also need pod2man
+"unicase/*" and "uninorm/*" modules from gnulib).  All of these programs
+are available from https://ftp.gnu.org/gnu.  You'll also need pod2man
 for building a man page, which should be part of the Perl core
-distribution.  To regenerate the languages codes you'll need the
-Text::CSV Perl module, gperf, wget and access to the internet.
+distribution.  To regenerate the languages codes you'll need gperf,
+wget and access to the internet.
 
 
 After getting the development sources, and installing the tools above,
@@ -58,7 +57,9 @@ Additionally, make dist may not work until make has been run at least
 once, because of rules to create man pages under the man/ directory.
 
 "make dist" will fail if the use of Perl XS extension modules is 
-disabled and there is no Makefile in the XS subdirectory.
+disabled, the C Texinfo libraries are not built or the SWIG interface
+is not built and there is no Makefile in any of the corresponding
+subdirectory.
 
 
 Using git
@@ -219,29 +220,19 @@ http://ftpmirror.gnu.org/texinfo.
 
 
 
-XS modules replacing perl code for the main processing steps can be
-controlled finely for development purposes.  Three steps are distinguished: the
-parsing step, the structure step for the determination of sectioning and node
-structures, and the conversion step.  If the XS modules are not used for one
-step, they cannot be used for any following steps.
-
-If you want to use the XS modules but not the XS parser, you can set the
-`TEXINFO_XS_PARSER' environment variable to 0.  If you use the XS parser but do
-not want to use XS for the structure step, you can set the
-`TEXINFO_XS_STRUCTURE' environment variable to 0.  If you use the XS modules
-for the structure but do not want to use XS for the conversion step, you can
-set the `TEXINFO_XS_CONVERT' environment variable to 0.
-
-In the long term, those environment variables are supposed to be removed to
-simplify the code.
-
-
-
 References for working on various parts of the system:
 
-If you want to delve into making a new backend for the Perl makeinfo,
-the documentation in tta/Texinfo/Convert/Converter.pm is a good starting
-point, as it describes the existing backends and other places to look.
+If you want to delve into making a new backend for makeinfo/texi2any in
+Perl, the documentation in tta/Texinfo/Convert/Converter.pm is a good
+starting point, as it describes the existing backends and other places
+to look.
+
+If you want to port a backend from Perl to C or do a new backend in C,
+you should add a line in the converter_format_data table in
+tta/C/convert/converter.c code and register in the table the functions
+needed for the conversion.  This interface is similar to the Perl
+Converter interface, therefore the documentation in
+tta/Texinfo/Convert/Converter.pm could be useful too.
 
 If you want to delve into texinfo.tex, a thorough plain TeX reference
 is available under the GFDL:
@@ -251,12 +242,6 @@ Another book on plain TeX, also available under the GFDL, is a GNU package:
 Occasionally you may need to know about the details of the PDF format.
 A reference for this is the PDF reference, Sixth Edition, version 1.7,  
 downloadable at http://www.adobe.com/devnet/pdf/pdf_reference_archive.html
-
-The texindex program is implemented using the TexiWebJR literate
-programming system, combining Texinfo and Awk
-(https://github.com/arnoldrobbins/texiwebjr).  Running "make ti.pdf"
-in the texindex/ subdirectory creates the printable form of the
-program.  All the usual Texinfo output formats are possible.
 
 
 
@@ -278,8 +263,9 @@ years that should be updated yet.
 
 Update copyright years in usage notices (can also be done at release
 time but may as well do at New Year's as well):
-* util/texi2dvi, util/texi2pdf, tta/perl/texi2any.pl, info/info.c,
-  install-info/install-info.c, texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi.pl
+* util/texi2dvi, util/texi2pdf, tta/perl/texi2any.pl, tta/C/texi2any.c,
+  info/info.c, install-info/install-info.c, texindex/texindex.awk,
+  Pod-Simple-Texinfo/pod2texi.pl
 
 
 - Note on "reproducible builds"
@@ -378,6 +364,37 @@ Manual testing:
     a Texinfo with external references to HTML, and that translated output
     strings are found by converting a manual with @documentlanguage.
   - do the same with ctexi2any.
+. check that the debug output of pure Perl modules and XS/C are the same.
+  They do not need to be exactly the same, but differences should be
+  investigated for two reasons:
+   1) differences are very often associated to bugs in one implementation
+      that are not visible without debug output;
+   2) when a bug affects only one implementation, being able to do
+      clean diffs between implementations debug output may help.
+
+  rm -rf t/check_debug_differences/
+  mkdir t/check_debug_differences/
+  unset TEXINFO_XS; for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 1 2>t/check_debug_differences/XS_$bfile.err ; done
+  export TEXINFO_XS=omit; for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 1 2>t/check_debug_differences/PL_$bfile.err ; done
+  for file in t/*.t ; do bfile=`basename $file .t`; sed 's/^C|//' t/check_debug_differences/XS_$bfile.err | diff -u t/check_debug_differences/PL_$bfile.err - > t/check_debug_differences/debug_$bfile.diff; done
+
+. check that translated strings and associated tree caching is effective
+
+  Non-functional caching does not change the output, and the associated
+  debugging is only enabled for DEBUG > 1, as the caching debug output
+  is different for XS and pure Perl (in general, more hit of the cache
+  with pure Perl, as a cache in both Perl and C data must be built with XS).
+  The check should be done with TEXINFO_XS both unset and set to omit.
+  Output with debugging level set to 2, grep the messages and check visually
+  that cache is hit once built with the following commands (in tta/perl):
+   cache common for all the converters for translated strings:
+    perl -w t/init_files_tests.t -d2 2>&1 | grep '\<CacheT ' | less
+   cache for user-defined translations in HTML reset for each conversion:
+    perl -w t/init_files_tests.t -d2 2>&1 | grep '\<UserCacheT ' | less
+   tree parsed based on the translated tree to check reuse:
+    perl -w t/init_files_tests.t -d2 2>&1 | grep '\<TreeT ' | less
+   everything together:
+    perl -w t/init_files_tests.t -d2 2>&1 | grep '\<\(TreeT \|\(User\)\?CacheT \)' | less
 
 check for C compiler warnings by configuring with
 
@@ -461,10 +478,12 @@ different versions of Perl:
   version of pport.h.
 
 * Check what changes ppport.h reports:
-    perl ppport.h --compat-version=5.8.1 ../perl/XSTexinfo/*.xs ../perl/XSTexinfo/*/*.xs main/get_perl_info.* main/build_perl_info.* main/api_to_perl.* main/call_perl_function.* convert/call_html_perl_function.* convert/call_conversion_perl.* convert/call_embed_perl.* convert/build_html_perl_info.* convert/build_html_perl_state.* convert/get_converter_perl_info.* tree_elements/build_perl_tree_elements.* tree_elements/get_perl_tree_elements.* ../perl/XSTexinfo/convert/get_html_perl_info.*
+    perl ppport.h --compat-version=5.8.1 ../perl/XSTexinfo/*.xs ../perl/XSTexinfo/*/*.xs main/api_to_perl.* main/build_perl_info.* main/call_document_perl_functions.* main/call_perl_function.* main/get_perl_info.* convert/build_html_perl_info.* convert/build_html_perl_state.* convert/call_conversion_perl.* convert/call_embed_perl.* convert/call_html_perl_function.* convert/call_plaintext_perl_function.* convert/get_converter_perl_info.* tree_elements/build_perl_tree_elements.* tree_elements/get_perl_tree_elements.* ../perl/XSTexinfo/convert/get_html_perl_info.*
 
 make po-check             # update po/POTFILES.in as needed
 make po_document-check    # update po_document/POTFILES.in as needed
+
+Update TXI_DOCUMENT_TRANSLATED_STRINGS_NR in tta/C/main/translations.h
 
 check indices of Texinfo manuals and check for duplicates (with <1> in Info)
 
@@ -540,8 +559,8 @@ check OpenCSW build reports at
 (for master branch only)
 
 check up to date copyright years in files relevant to --version calls
-(tta/perl/texi2any.pl, info/info.c, install-info/install-info.c,
-texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi)
+(tta/perl/texi2any.pl, tta/C/texi2any.c, info/info.c,
+install-info/install-info.c, texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi)
 
 Ensure TXI_XLATE in doc/Makefile.am matches actual file list.
 
@@ -603,10 +622,10 @@ to check that LINGUAS under po and po_document match actual file list.
 
 - Official releases only:
 version and date in NEWS.
-(cd tta && ./maintain/regenerate_documentlanguages-loc.pl)
+(cd tta && ./maintain/regenerate_documentlanguages-iana.pl)
   -- regenerates tta/perl/Texinfo/Documentlanguages.pm and
-     tta/C/main/txi_documentlanguage_*.c (requires Text::CSV
-     Perl module, wget and gperf and access to the internet)
+     tta/C/main/txi_documentlanguage_*.c (requires wget and
+     gperf and access to the internet)
 
 notice in ChangeLog.
 one last "git diff" to check release commit looks good
@@ -648,6 +667,11 @@ as needed.
 remove links to refcard from website as we don't update it any more.
 delete this note when done.
 
+(next release only):
+remove texinfo/manual/texi2any_internals from webpages (link already
+removed from landing page).
+delete this note when done.
+
 #  ... set up dtd directory on web pages:
 cd CVS_WEB/dtd # or wherever webpages checkout is
 mkdir $ver && cvs add $ver
@@ -682,7 +706,6 @@ news item at savannah.
 configure.ac, util/texi2dvi: add "dev" to versions for clarity,
 until it's time to do pretests again.
 
-see "Post-release:" section in TODO file.  delete this note once done.
 -------------------------------------------------------------------------
 
 Other files are uploaded to ftp.gnu.org as and when they are updated

@@ -32,6 +32,7 @@
 * Texinfo@asis{::}Translations::
 * Texinfo@asis{::}Transformations::
 * Texinfo@asis{::}Indices::
+* Texinfo@asis{::}Document@asis{::}Indices::
 * Texinfo@asis{::}OutputUnits::
 * Texinfo@asis{::}Convert@asis{::}Texinfo::
 * Texinfo@asis{::}Convert@asis{::}Utils::
@@ -148,7 +149,6 @@ Texinfo::Document
 Texinfo::Document METHODS
 
 * Texinfo@asis{::}Document Getting document information::
-* Texinfo@asis{::}Document Merging and sorting indexes::
 * Texinfo@asis{::}Document Getting errors and warnings::
 * Texinfo@asis{::}Document Getting customization options values registered in document::
 * Texinfo@asis{::}Document Registering information in document::
@@ -218,6 +218,17 @@ Texinfo::Indices
 * Texinfo@asis{::}Indices AUTHOR::
 * Texinfo@asis{::}Indices COPYRIGHT AND LICENSE::
 
+Texinfo::Document::Indices
+
+* Texinfo@asis{::}Document@asis{::}Indices NAME::
+* Texinfo@asis{::}Document@asis{::}Indices SYNOPSIS::
+* Texinfo@asis{::}Document@asis{::}Indices NOTES::
+* Texinfo@asis{::}Document@asis{::}Indices DESCRIPTION::
+* Texinfo@asis{::}Document@asis{::}Indices METHODS::
+* Texinfo@asis{::}Document@asis{::}Indices SEE ALSO::
+* Texinfo@asis{::}Document@asis{::}Indices AUTHOR::
+* Texinfo@asis{::}Document@asis{::}Indices COPYRIGHT AND LICENSE::
+
 Texinfo::OutputUnits
 
 * Texinfo@asis{::}OutputUnits NAME::
@@ -283,6 +294,7 @@ Texinfo::Convert::Text
 * Texinfo@asis{::}Convert@asis{::}Text NOTES::
 * Texinfo@asis{::}Convert@asis{::}Text DESCRIPTION::
 * Texinfo@asis{::}Convert@asis{::}Text METHODS::
+* Texinfo@asis{::}Convert@asis{::}Text OPTIONS::
 * Texinfo@asis{::}Convert@asis{::}Text AUTHOR::
 * Texinfo@asis{::}Convert@asis{::}Text COPYRIGHT AND LICENSE::
 
@@ -411,6 +423,7 @@ Texinfo::Reader
 @include api_includes/Texinfo-Translations.texi
 @include api_includes/Texinfo-Transformations.texi
 @include api_includes/Texinfo-Indices.texi
+@include api_includes/Texinfo-Document-Indices.texi
 @include api_includes/Texinfo-OutputUnits.texi
 @include api_includes/Texinfo-Convert-Texinfo.texi
 @include api_includes/Texinfo-Convert-Utils.texi

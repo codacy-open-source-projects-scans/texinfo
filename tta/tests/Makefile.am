@@ -17,7 +17,8 @@ include $(srcdir)/Makefile.onetst
 $(srcdir)/Makefile.onetst: \
   ../maintain/regenerate_cmd_tests.sh $(test_driving_files_generated_list)
 	cd $(srcdir) \
-	&& $(SHELL) ../maintain/regenerate_cmd_tests.sh Makefile.onetst . \
+	&& rm -f test_scripts/*.sh* \
+        && $(SHELL) ../maintain/regenerate_cmd_tests.sh Makefile.onetst \
 	  -base '$(base_tests_dirs)' \
 	  -tex_html '$(tex_html_tests_dirs)' \
 	  -other '$(other_tests_dirs)'
@@ -44,8 +45,20 @@ copy-other-tests:
 
 clean-tests:
 	$(parser_tests_environment) $(srcdir)/parser_tests.sh -clean $(base_tests_dirs) $(tex_html_tests_dirs) $(other_tests_dirs)
+	$(parser_tests_environment) $(srcdir)/parser_tests.sh -clean -native $(base_tests_dirs) $(tex_html_tests_dirs) $(other_tests_dirs)
 
-TESTS = $(one_test_files_generated_list)
+# *_one_*_test_files_generated_list are automatically defined in
+# Makefile.onetst
+TESTS = $(one_perl_test_files_generated_list)
+tex_html_tests = $(type_tex_html_one_perl_test_files_generated_list)
+other_tests = $(type_other_one_perl_test_files_generated_list)
+if USE_SHARED_TXI_LIBRARIES
+if PERL_EMBEDDED
+TESTS += $(one_native_test_files_generated_list)
+tex_html_tests += $(type_tex_html_one_native_test_files_generated_list)
+other_tests += $(type_other_one_native_test_files_generated_list)
+endif
+endif
 
 AM_TESTS_ENVIRONMENT = srcdir="$(srcdir)"; export srcdir; t2a_srcdir="$(top_srcdir)"; export t2a_srcdir; t2a_builddir="$(top_builddir)"; export t2a_builddir;
 
@@ -56,13 +69,11 @@ all-checks all-check: all
 # tries to run the tests in TESTS which do not exist in many_input_files.
 # The recursion is explicitly done after.
 tex-html-checks tex-html-check: all
-	$(MAKE) $(AM_MAKEFLAGS) check TEX_HTML_TESTS=yes TESTS='$(type_tex_html_one_test_files_generated_list)' SUBDIRS=
+	$(MAKE) $(AM_MAKEFLAGS) check TEX_HTML_TESTS=yes TESTS='$(tex_html_tests)' SUBDIRS=
 	cd many_input_files && $(MAKE) $(AM_MAKEFLAGS) check TEX_HTML_TESTS=yes
 
-# type_other_one_test_files_generated_list is automatically defined in
-# Makefile.onetst
 other-checks: all
-	$(MAKE) $(AM_MAKEFLAGS) check OTHER_TESTS=yes TESTS='$(type_other_one_test_files_generated_list)' SUBDIRS=
+	$(MAKE) $(AM_MAKEFLAGS) check OTHER_TESTS=yes TESTS='$(other_tests)' SUBDIRS=
 
 check_DATA = input_file_names_recoded_stamp.txt
 

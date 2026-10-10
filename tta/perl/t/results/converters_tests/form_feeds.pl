@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'form_feeds'} = '*document_root C3
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C2 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -144,12 +148,6 @@ $result_tree_text{'form_feeds'} = '*document_root C3
    *def_line C1 l31
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C3
-      |{spaces_before_argument: }
-      |{machin}
-      |{spaces_after_argument: }
    |element_node:{chap-node}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
@@ -188,12 +186,6 @@ $result_tree_text{'form_feeds'} = '*document_root C3
    *@deffnx C1 l32
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C3
-      |{spaces_before_argument: }
-      |{xmachin}
-      |{spaces_after_argument: }
    |element_node:{chap-node}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffnx}
@@ -502,6 +494,11 @@ type 1
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'form_feeds'} = 'fn:
+ machin
+ xmachin
+';
+
 
 $result_converted{'html_text'}->{'form_feeds'} = '<h1 class="node" id="Top"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
@@ -653,7 +650,8 @@ $result_converted{'docbook'}->{'form_feeds'} = '<anchor id="chap-node"/>
 ';
 
 
-$result_converted{'latex_text'}->{'form_feeds'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'form_feeds'} = '\\begin{document}
+\\label{anchor:Top}%
 \\label{anchor:chap-node}%
 
 \\par{}
@@ -693,6 +691,7 @@ in center
 `\\texttt{\\  in indicateurl}\'
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{machin \\EmbracOn{}\\textnormal{\\textsl{bidule  chose arg}}\\EmbracOff{}}& [truc]
@@ -700,6 +699,7 @@ in center
 
 \\index[fn]{machin@\\texttt{machin}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{xmachin \\EmbracOn{}\\textnormal{\\textsl{xbidule  xchose xarg}}\\EmbracOff{}}& [xtruc]

@@ -1,23 +1,27 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'comment_space_command_on_line'} = '*document_root C6
- *before_node_section C2
-  *@settitle C1 l1
-   *line_arg C4
-    {spaces_before_argument: }
-    {Settitle }
-    *@ 
-    *@c C1
-     *line_arg C3
-      {spaces_before_argument: }
-      {rawline_text:settittle}
-      {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C1
+  *preamble_before_content C2
+   *@settitle C1 l1
+    *line_arg C4
+     {spaces_before_argument: }
+     {Settitle }
+     *@ 
+     *@c C1
+      *line_arg C3
+       {spaces_before_argument: }
+       {rawline_text:settittle}
+       {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l3 {Top}
  |EXTRA
  |identifier:{Top}
@@ -324,6 +328,10 @@ Text 1.1
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'comment_space_command_on_line'} = 'cp:
+ index entry  
+';
+
 
 $result_converted{'html_text'}->{'comment_space_command_on_line'} = '
 <div class="top-level-extent" id="Top">
@@ -369,6 +377,13 @@ $result_converted{'latex'}->{'comment_space_command_on_line'} = '\\documentclass
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -379,6 +394,8 @@ $result_converted{'latex'}->{'comment_space_command_on_line'} = '\\documentclass
 \\usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
 \\usepackage[hidelinks]{hyperref}
+
+\\hypersetup{pdftitle={Settitle  }}
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}
@@ -448,6 +465,7 @@ $result_converted{'latex'}->{'comment_space_command_on_line'} = '\\documentclass
 \\pagestyle{single}%
 
 
+\\begin{document}
 \\label{anchor:Top}%
 \\Texinfochapter{{Chapter\\ {}}}
 \\label{anchor:chap}%
@@ -501,7 +519,7 @@ $result_converted{'docbook_doc'}->{'comment_space_command_on_line'} = '<?xml ver
 ';
 
 
-$result_converted{'info'}->{'comment_space_command_on_line'} = 'This is , produced from .
+$result_converted{'info'}->{'comment_space_command_on_line'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -543,6 +561,10 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'comment_space_command_on_line'} = 'cp:
+ index entry  
 ';
 
 

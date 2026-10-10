@@ -9,7 +9,6 @@
 
 #include "tree_types.h"
 #include "option_types.h"
-#include "options_data.h"
 #include "document_types.h"
 #include "converter_types.h"
 
@@ -79,9 +78,6 @@ SV *document_labels_list (SV *document_in);
 
 SV *document_global_information (SV *document_in);
 
-HV *build_indices_sort_strings (
-                  const INDICES_SORT_STRINGS *indices_sort_strings,
-                            HV *indices_information_hv);
 HV *build_sorted_indices_by_letter (
                       const INDEX_SORTED_BY_LETTER *index_entries_by_letter,
                       HV *indices_information_hv);
@@ -106,11 +102,11 @@ SV *html_build_direction_icons (const DIRECTION_ICON_LIST *direction_icons);
 void html_build_buttons_specification (CONVERTER *converter,
                                        BUTTON_SPECIFICATION_LIST *buttons);
 SV *build_sv_option (const OPTION *option, CONVERTER *converter);
-SV *build_sv_options_from_options_list (const OPTIONS_LIST *options_list,
-                                        CONVERTER *converter);
+SV *build_sv_options_from_options_list (const OPTIONS_LIST *options_list);
 
-SV *build_sv_converter_info_from_converter_initialization_info
-       (const CONVERTER_INITIALIZATION_INFO *conf, CONVERTER *converter);
+SV *build_sv_converter_info_from_converter_initialization_info (
+                             const CONVERTER_INITIALIZATION_INFO *conf);
+
 void pass_generic_converter_to_converter_sv (SV *converter_sv,
                                              const CONVERTER *converter);
 

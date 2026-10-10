@@ -19,29 +19,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "text.h"
+#include "element_types.h"
 #include "command_ids.h"
+#include "text.h"
 #include "tree_types.h"
-/* document used in complete_indices */
-#include "document_types.h"
 #include "types_data.h"
+#include "list_macros.h"
 /* fatal */
 #include "base_utils.h"
-#include "tree.h"
 #include "extra.h"
 #include "builtin_commands.h"
 /* for ultimate_index xasprintf */
 #include "utils.h"
 #include "command_stack.h"
-/* for copy_element_tree */
-#include "manipulate_tree.h"
 /* for global_parser_conf */
 #include "parser_conf.h"
 /*
 #include "convert_to_texinfo.h"
 */
-#include "document.h"
-#include "translations.h"
 #include "commands.h"
 #include "errors_parser.h"
 #include "context_stack.h"
@@ -302,9 +297,9 @@ enter_index_entry (enum command_id index_type_cmd,
     add_extra_index_entry (element, AI_key_index_entry, index_entry);
   }
 
-  if (nesting_context.regions_stack.top > 0)
+  if (nesting_context.regions_stack.number > 0)
     {
-      enum command_id region = top_command (&nesting_context.regions_stack);
+      enum command_id region = *top_(command) (&nesting_context.regions_stack);
       add_extra_string_dup (element, AI_key_element_region, command_name (region));
     }
   else if (current_node)
@@ -314,7 +309,7 @@ enter_index_entry (enum command_id index_type_cmd,
       add_extra_string_dup (element, AI_key_element_node, normalized);
     }
 
-  if (nesting_context.regions_stack.top == 0
+  if (nesting_context.regions_stack.number == 0
       && !current_node && !current_section)
     line_warn ("entry for index `%s' outside of any node", idx->name);
 }
@@ -330,8 +325,6 @@ set_non_ignored_space_in_index_before_command (ELEMENT *content)
   size_t i;
   for (i = 0; i < content->e.c->contents.number; i++)
     {
-      /* could also be, but it does not seems to be needed here:
-         e = contents_child_by_index (content, i); */
       e = content->e.c->contents.list[i];
       if (e->type == ET_internal_spaces_before_brace_in_index)
         {
@@ -380,167 +373,3 @@ resolve_indices_merged_in (const INDEX_LIST *indices_info)
     }
 }
 
-static LANG_TRANSLATION **lang_translations;
-
-static void
-remove_def_types (ELEMENT *element)
-{
-  element->type = ET_NONE;
-
-  if (element->e.c->contents.number
-      && element->e.c->contents.list[0]->type == ET_bracketed_arg)
-    element->e.c->contents.list[0]->type = ET_brace_arg;
-}
-
-/* complete some @def* index information that require translations.
-   Done in a separate function and not inside the main parser loop because
-   it requires parsing Texinfo code in gdt_tree too */
-void
-complete_indices (DOCUMENT *document, int debug_level)
-{
-  INDEX_LIST *indices;
-  size_t i;
-
-  indices = &document->indices_info;
-
-  for (i = 0; i < indices->number; i++)
-    {
-      INDEX *idx = indices->list[i];
-      if (idx->entries_number > 0)
-        {
-          size_t j;
-          for (j = 0; j < idx->entries_number; j++)
-            {
-              INDEX_ENTRY *entry;
-              ELEMENT *main_entry_element;
-              ELEMENT *idx_element;
-              char *def_cmdname;
-
-              entry = &idx->index_entries[j];
-              main_entry_element = entry->entry_element;
-
-              def_cmdname = lookup_extra_string (main_entry_element,
-                                                 AI_key_def_command);
-
-              idx_element = lookup_extra_element_oot (main_entry_element,
-                                                      AI_key_def_index_element);
-              if (def_cmdname && !idx_element)
-                {
-                  ELEMENT *name = 0;
-                  ELEMENT *class = 0;
-                  ELEMENT *def_l_e = main_entry_element->e.c->contents.list[0];
-                  if (def_l_e->e.c->contents.number > 0)
-                    {
-                      size_t ic;
-                      for (ic = 0; ic < def_l_e->e.c->contents.number; ic++)
-                        {
-                          ELEMENT *arg = def_l_e->e.c->contents.list[ic];
-                          if (arg->type == ET_def_name)
-                            name = arg;
-                          else if (arg->type == ET_def_class)
-                            class = arg;
-                          else if (arg->type == ET_def_arg
-                                   || arg->type == ET_def_typearg
-                                   || arg->type == ET_delimiter)
-                            break;
-                        }
-                    }
-
-                  if (name && class)
-                    {
-                      LANG_TRANSLATION *element_lang_translations = 0;
-                      ELEMENT *index_entry;
-                  /* container without type in extra "def_index_ref_element" */
-                      ELEMENT *index_entry_normalized = new_element (ET_NONE);
-                      ELEMENT *text_element = new_text_element (ET_normal_text);
-                      enum command_id def_command
-                        = lookup_command (def_cmdname);
-                      NAMED_STRING_ELEMENT_LIST *substrings
-                                       = new_named_string_element_list ();
-                      ELEMENT *name_copy = copy_element_tree (name, 0);
-                      remove_def_types (name_copy);
-                      ELEMENT *class_copy = copy_element_tree (class, 0);
-                      remove_def_types (class_copy);
-                      ELEMENT *ref_name_copy = copy_element_tree (name, 0);
-                      remove_def_types (ref_name_copy);
-                      ELEMENT *ref_class_copy = copy_element_tree (class, 0);
-                      remove_def_types (ref_class_copy);
-
-                      DOCUMENT_LANG_INFO *lang_info
-                       = new_element_lang_info (main_entry_element);
-                      if (lang_info)
-                        {
-                          element_lang_translations
-                            = set_lang_info_translation (&lang_translations,
-                                                   lang_info,
-                                                   TXI_PARSER_STRINGS_NR);
-                        }
-
-                      add_element_to_named_string_element_list (substrings,
-                                                           "name", name_copy);
-                      add_element_to_named_string_element_list (substrings,
-                                                           "class", class_copy);
-                      if (def_command == CM_defop
-                          || def_command == CM_deftypeop
-                          || def_command == CM_defmethod
-                          || def_command == CM_deftypemethod)
-                        {
-                          index_entry = gdt_tree ("{name} on {class}",
-                                          document, element_lang_translations,
-                                          substrings, debug_level, 0);
-
-                          text_append (text_element->e.text, " on ");
-                        }
-                      else if (def_command == CM_defcv
-                               || def_command == CM_defivar
-                               || def_command == CM_deftypeivar
-                               || def_command == CM_deftypecv)
-                        {
-                          index_entry = gdt_tree ("{name} of {class}",
-                                          document, element_lang_translations,
-                                          substrings, debug_level, 0);
-
-                          text_append (text_element->e.text, " of ");
-                        }
-           /* should not be possible, still considered for more robust code */
-                      else
-                        {
-                          char *msg;
-                 /* set index_entry to a value to avoid a compiler warning
-                    on uninitialized value.  Incorrect for the code below, but
-                    we do not care as fatal is called. */
-                          index_entry = 0;
-                          xasprintf (&msg,
-                                     "BUG: unexpected def command with name"
-                                     "and class: %s",
-                                     builtin_command_name (def_command));
-                          fatal (msg);
-                          free (msg);
-                        }
-                      destroy_named_string_element_list (substrings);
-
-                      add_to_element_contents
-                                   (index_entry_normalized, ref_name_copy);
-                      add_to_contents_as_array
-                                   (index_entry_normalized, text_element);
-                      add_to_element_contents
-                                   (index_entry_normalized, ref_class_copy);
-                      /*
-         prefer a type-less container rather than 'root_line' returned by gdt
-                       */
-                      index_entry->type = ET_NONE;
-
-                      /* the order is significant for tree printing.  It should
-                         match the lexicographic order used in Perl */
-                      add_extra_element_oot (main_entry_element,
-                                             AI_key_def_index_element,
-                                             index_entry);
-                      add_extra_element_oot (main_entry_element,
-                                             AI_key_def_index_ref_element,
-                                             index_entry_normalized);
-                    }
-                }
-            }
-        }
-    }
-}

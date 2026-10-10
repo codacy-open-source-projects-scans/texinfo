@@ -2,6 +2,8 @@
 #ifndef SWIG_INTERFACE_H
 #define SWIG_INTERFACE_H
 
+#include <stddef.h>
+
 #include "source_mark_types.h"
 #include "tree_types.h"
 #include "document_types.h"
@@ -113,6 +115,14 @@ FLOAT_INFORMATION_LIST *txi_ext_get_float_type_floats_information (
                            DOCUMENT *document, const char *float_type);
 
 GLOBAL_INFO *txi_ext_document_global_information (DOCUMENT *document);
+
+size_t txi_ext_output_parser_error_messages (DOCUMENT *document,
+                                  const char *message_encoding,
+                                  int no_warn, int use_filename);
+
+size_t txi_ext_output_document_error_messages (DOCUMENT *document,
+                                    const char *message_encoding,
+                                    int no_warn, int use_filename);
 
 FORMATTED_ERROR_MESSAGE_LIST *txi_ext_get_parser_error_messages (
                                   DOCUMENT *document,

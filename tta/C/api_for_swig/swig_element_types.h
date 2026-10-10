@@ -8,7 +8,6 @@
   cm_flag(root) \
   cm_flag(sectioning_heading) \
   cm_flag(brace) \
-  cm_flag(accent) \
   cm_flag(math) \
   cm_flag(variadic) \
   cm_flag(ref) \
@@ -38,7 +37,8 @@
   cm_oflag(non_formatted_block) \
   cm_oflag(non_formatted_brace) \
   cm_oflag(appendix) \
-  cm_oflag(unnumbered)
+  cm_oflag(unnumbered) \
+  cm_oflag(metadata)
 
 /* next list may need changes for types_data.h flags modifications */
 #define TXI_TY_FLAGS_LIST \

@@ -17,6 +17,7 @@
 
 #include <config.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,11 +25,11 @@
 #include "unistr.h"
 
 #include "source_mark_types.h"
-#include "tree_types.h"
 #include "command_ids.h"
-#include "types_data.h"
-#include "document_types.h"
 #include "text.h"
+#include "tree_types.h"
+#include "document_types.h"
+#include "types_data.h"
 /* fatal */
 #include "base_utils.h"
 #include "tree.h"
@@ -43,6 +44,7 @@
 #include "errors.h"
 #include "convert_to_texinfo.h"
 #include "unicode.h"
+#include "list_macros.h"
 #include "manipulate_tree.h"
 
 /* To do the copy, we do two pass.  First with copy_tree_internal, the tree is
@@ -621,6 +623,8 @@ tree_remove_parents (ELEMENT *element)
 
 /* Source marks low level handling functions and relocate_source_marks */
 
+def_list_fns(SOURCE_MARK_LIST, source_mark, SOURCE_MARK *, 1)
+
 void
 add_source_mark (SOURCE_MARK *source_mark, ELEMENT *e)
 {
@@ -633,18 +637,7 @@ add_source_mark (SOURCE_MARK *source_mark, ELEMENT *e)
     }
 
   s_mark_list = e->source_mark_list;
-
-  if (s_mark_list->number == s_mark_list->space)
-    {
-      s_mark_list->space++;
-      s_mark_list->list
-          = realloc (s_mark_list->list,
-                     s_mark_list->space * sizeof (SOURCE_MARK *));
-      if (!s_mark_list->list)
-        fatal ("realloc failed");
-    }
-  s_mark_list->list[s_mark_list->number] = source_mark;
-  s_mark_list->number++;
+  add_(source_mark) (s_mark_list, source_mark);
 }
 
 static SOURCE_MARK *
@@ -1086,7 +1079,7 @@ unused_set_element_tree_numbers (ELEMENT *element, uintptr_t current_nr)
   if (0 && data_cmd == CM_node)
      /*
       (data_cmd == CM_node
-       || (builtin_command_data[data_cmd].flags & CF_sectioning_heading))
+       || (command_data[data_cmd].flags & CF_sectioning_heading))
        */
     {
 
@@ -1136,7 +1129,8 @@ unused_set_element_tree_numbers (ELEMENT *element, uintptr_t current_nr)
 static uintptr_t
 print_source_marks (ELEMENT *element, int level, const char *prepended,
                     uintptr_t current_nr, TEXT *result,
-                    const char *fname_encoding, int use_filename)
+                    const char *fname_encoding, int use_filename,
+                    int show_element_pointer)
 {
   char *s_mark_prepended;
   size_t i;
@@ -1197,7 +1191,7 @@ print_source_marks (ELEMENT *element, int level, const char *prepended,
         {
           current_nr = print_tree_details (s_mark->element, level+1,
                         s_mark_prepended, current_nr, result,
-                        fname_encoding, use_filename);
+                        fname_encoding, use_filename, show_element_pointer);
         }
     }
 
@@ -1230,7 +1224,7 @@ print_text_element (ELEMENT *element, int level, const char *prepended,
 
   current_nr = print_source_marks (element, level, prepended,
                                    current_nr, result, fname_encoding,
-                                   use_filename);
+                                   use_filename, 0);
 
   return current_nr;
 }
@@ -1352,7 +1346,7 @@ static uintptr_t
 print_element_add_prepend_info (ELEMENT *element, int level,
                                 const char *prepended, uintptr_t current_nr,
                                 TEXT *result, const char *fname_encoding,
-                                int use_filename)
+                                int use_filename, int show_element_pointer)
 {
   char *info_prepended;
   if (prepended)
@@ -1362,7 +1356,8 @@ print_element_add_prepend_info (ELEMENT *element, int level,
     info_prepended = ADDITIONAL_INFO_PREPEND;
 
   current_nr = print_tree_details (element, level, info_prepended,
-                          current_nr, result, fname_encoding, use_filename);
+                          current_nr, result, fname_encoding, use_filename,
+                          show_element_pointer);
 
   if (prepended)
     free (info_prepended);
@@ -1374,7 +1369,8 @@ print_element_add_prepend_info (ELEMENT *element, int level,
 static uintptr_t
 print_element_info (ELEMENT *element, int level,
                     const char *prepended, uintptr_t current_nr,
-                    TEXT *result, const char *fname_encoding, int use_filename)
+                    TEXT *result, const char *fname_encoding,
+                    int use_filename, int show_element_pointer)
 {
   int i;
   TEXT info_e_text;
@@ -1398,7 +1394,8 @@ print_element_info (ELEMENT *element, int level,
 
           current_nr = print_element_add_prepend_info (info_element,
                               level+1, prepended, current_nr, &info_e_text,
-                              fname_encoding, use_filename);
+                              fname_encoding, use_filename,
+                              show_element_pointer);
 
           add_info_name_value (&info_strings, elt_info_names[i],
                                info_e_text.text, 1);
@@ -1493,7 +1490,8 @@ root_command_element_string (const ELEMENT *element)
 static uintptr_t
 print_element_extra (ELEMENT *element, int level,
                     const char *prepended, uintptr_t current_nr,
-                    TEXT *result, const char *fname_encoding, int use_filename)
+                    TEXT *result, const char *fname_encoding,
+                    int use_filename, int show_element_pointer)
 {
   size_t i;
 
@@ -1513,6 +1511,7 @@ print_element_extra (ELEMENT *element, int level,
 
   /* node */
   store_flag(isindex)
+  store_flag(added)
   /* node, anchor, float */
   store_flag(is_target)
   /* def_line for block/line for @def*x */
@@ -1565,7 +1564,8 @@ print_element_extra (ELEMENT *element, int level,
             current_nr
               = print_element_add_prepend_info (k_pair->k.element, level+1,
                                        prepended, current_nr, &info_e_text,
-                                       fname_encoding, use_filename);
+                                       fname_encoding, use_filename,
+                                       show_element_pointer);
             value = info_e_text.text;
             need_eol = 1;
             break;
@@ -1606,7 +1606,7 @@ print_element_extra (ELEMENT *element, int level,
               {
                 const ELEMENT *e = l->list[j];
                 char *element_value = element_number_or_error (e);
-                add_string (element_value, &elements_values_list);
+                add_string (&elements_values_list, element_value);
                 free (element_value);
               }
             joined_values = join_strings_list (&elements_values_list, 0);
@@ -1631,7 +1631,7 @@ print_element_extra (ELEMENT *element, int level,
                     char *direction_value;
                     xasprintf (&direction_value, "%s->%s", d_key, element_str);
                     free (element_str);
-                    add_string (direction_value, &elements_values_list);
+                    add_string (&elements_values_list, direction_value);
                     free (direction_value);
                   }
               }
@@ -1675,7 +1675,8 @@ print_element_extra (ELEMENT *element, int level,
 uintptr_t
 print_element_details (ELEMENT *element, int level, const char *prepended,
                               uintptr_t current_nr, TEXT *result,
-                              const char *fname_encoding, int use_filename)
+                              const char *fname_encoding, int use_filename,
+                              int show_element_pointer)
 {
   int j;
   enum command_id data_cmd = 0;
@@ -1729,7 +1730,7 @@ print_element_details (ELEMENT *element, int level, const char *prepended,
     data_cmd = element_builtin_data_cmd (element);
 
   if (data_cmd
-      && builtin_command_data[data_cmd].flags & CF_root)
+      && command_data[data_cmd].flags & CF_root)
     {
       const ELEMENT *argument_line = element->e.c->contents.list[0];
       if (argument_line->e.c->contents.number > 0)
@@ -1752,25 +1753,31 @@ print_element_details (ELEMENT *element, int level, const char *prepended,
 
   current_nr = print_element_info (element, level, prepended,
                                    current_nr, result, fname_encoding,
-                                   use_filename);
+                                   use_filename, show_element_pointer);
 
   current_nr = print_element_extra (element, level, prepended,
                                     current_nr, result, fname_encoding,
-                                    use_filename);
+                                    use_filename, show_element_pointer);
 
   current_nr = print_source_marks (element, level, prepended,
                                    current_nr, result, fname_encoding,
-                                   use_filename);
+                                   use_filename, show_element_pointer);
   return current_nr;
 }
 
+/* if SHOW_ELEMENT_POINTER is set, show the element pointer address too.
+   Should only be set for debugging when called from tree_print_details */
 uintptr_t
 print_tree_details (ELEMENT *element, int level, const char *prepended,
                               uintptr_t current_nr, TEXT *result,
-                              const char *fname_encoding, int use_filename)
+                              const char *fname_encoding, int use_filename,
+                              int show_element_pointer)
 {
+  if (show_element_pointer)
+    text_printf (result, "EE %p\n", element);
   current_nr = print_element_details (element, level, prepended,
-                      current_nr, result, fname_encoding, use_filename);
+                      current_nr, result, fname_encoding, use_filename,
+                      show_element_pointer);
 
   if (!(type_data[element->type].flags & TF_text))
     {
@@ -1780,7 +1787,8 @@ print_tree_details (ELEMENT *element, int level, const char *prepended,
         current_nr
           = print_tree_details (element->e.c->contents.list[i], level +1,
                                 prepended, current_nr, result,
-                                fname_encoding, use_filename);
+                                fname_encoding, use_filename,
+                                show_element_pointer);
     }
 
   return current_nr;
@@ -1839,10 +1847,12 @@ remove_element_tree_numbers (ELEMENT *element)
    element numbers to refer to.
    The calls to set_element_tree_numbers and remove_element_tree_numbers
    are thus commented out.
+   If SHOW_ELEMENT_POINTER is set, show the element pointer address too.
+   Should only be set manually for debugging.
  */
 char *
 tree_print_details (ELEMENT *tree, const char *fname_encoding,
-                    int use_filename)
+                    int use_filename, int show_element_pointer)
 {
   TEXT result;
   uintptr_t current_nr = 0;
@@ -1855,7 +1865,7 @@ tree_print_details (ELEMENT *tree, const char *fname_encoding,
    */
 
   print_tree_details (tree, 0, 0, current_nr, &result, fname_encoding,
-                         use_filename);
+                         use_filename, show_element_pointer);
 
   /*
   remove_element_tree_numbers (tree);
@@ -1875,7 +1885,7 @@ element_print_details (ELEMENT *element, const char *fname_encoding,
   text_append (&result, "");
 
   print_element_details (element, 0, 0, 0, &result, fname_encoding,
-                         use_filename);
+                         use_filename, 1);
 
   return result.text;
 }
@@ -2129,6 +2139,116 @@ protect_node_after_label_in_document (DOCUMENT *document)
 {
   protect_node_after_label_in_tree (document->tree);
   document->modified_information |= F_DOCM_tree;
+}
+
+/*
+ This converts a reference @-command to simple text using one of the
+ arguments.  This is used to remove reference @-command from
+ constructed node names trees, as node names cannot contain
+ reference @-command while there could be some in the tree used in
+ input for the node name tree.
+ */
+static ELEMENT_LIST *
+reference_to_arg_internal (const char *type,
+                           ELEMENT *e,
+                           void *argument)
+{
+  if (!(type_data[e->type].flags & TF_text) && e->e.c->cmd
+      && command_data[e->e.c->cmd].flags & CF_ref)
+    {
+      DOCUMENT *document = (DOCUMENT *) argument;
+      int order_index = 0;
+      int *arguments_order = ref_5_args_order;
+      /* container for the new elements to insert, will be destroyed
+         by the caller */
+      ELEMENT_LIST *container = new_list ();
+
+      if (e->e.c->cmd == CM_inforef || e->e.c->cmd == CM_link)
+        arguments_order = ref_3_args_order;
+
+      while (arguments_order[order_index] >= 0)
+        {
+          size_t idx = (size_t) arguments_order[order_index];
+          if (e->e.c->contents.number > idx)
+            {
+              ELEMENT *arg = e->e.c->contents.list[idx];
+            /*
+             this will not detect if the content expands as spaces only, like
+             @asis{ }, @ , but it is not an issue or could even be considered
+             as a feature.
+             */
+              if (!is_content_empty (arg, 0))
+                {
+                  ELEMENT *removed = remove_from_contents (e, idx);
+                  size_t i;
+                  ARG_INDICES arg_indices;
+                  int non_empty;
+                  ELEMENT *new = new_element (ET_NONE);
+
+                  if (removed != arg)
+                    fatal ("BUG: reference_to_arg_internal removed != arg");
+
+                  /* avoid the type and spaces by getting only the contents */
+                  non_empty = non_leading_trailing_indices (removed,
+                                                            &arg_indices);
+                  if (!non_empty)
+                    fatal ("BUG: reference_to_arg_internal removed empty");
+
+                  new->e.c->parent = e->e.c->parent;
+                  add_to_element_list (container, new);
+                  insert_slice_into_contents (new, 0,
+                                              removed, arg_indices.start,
+                                              arg_indices.end +1);
+                  if (arg_indices.start > 0)
+                    {
+                      for (i = 0; i < arg_indices.start; i++)
+                        {
+                          ELEMENT *content = removed->e.c->contents.list[i];
+                          destroy_element (content);
+                        }
+                    }
+                  if (arg_indices.end +1 < removed->e.c->contents.number)
+                    {
+                      for (i = arg_indices.end +1;
+                           i < removed->e.c->contents.number; i++)
+                        {
+                          ELEMENT *content = removed->e.c->contents.list[i];
+                          destroy_element (content);
+                        }
+                    }
+                  for (i = 0; i < new->e.c->contents.number; i++)
+                    {
+                      ELEMENT *content = new->e.c->contents.list[i];
+                      if (!(type_data[content->type].flags & TF_text))
+                        content->e.c->parent = new;
+                    }
+                  destroy_element (removed);
+                  break;
+                }
+            }
+          order_index++;
+        }
+
+      if (document && document->internal_references.number > 0)
+        {
+          const ELEMENT *removed_internal_ref =
+            replace_remove_list_element (&document->internal_references, e, 0);
+          if (removed_internal_ref)
+            document->modified_information |= F_DOCM_internal_references;
+        }
+      if (document)
+        document->modified_information |= F_DOCM_tree;
+      destroy_element_and_children (e);
+      return container;
+    }
+  else
+   return 0;
+}
+
+ELEMENT *
+reference_to_arg_in_tree (ELEMENT *tree, DOCUMENT *document)
+{
+  return modify_tree (tree, &reference_to_arg_internal, (void *) document);
 }
 
 

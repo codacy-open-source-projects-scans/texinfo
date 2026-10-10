@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'encoding_index_utf8_no_use_unicode'} = '*document_root C5
  *before_node_section C2
@@ -685,10 +688,10 @@ $result_indices_sort_strings{'encoding_index_utf8_no_use_unicode'} = 'cp:
  “
  €
  ≥
- a
  A
- b
  B
+ a
+ b
  c
  d
  e
@@ -696,7 +699,6 @@ $result_indices_sort_strings{'encoding_index_utf8_no_use_unicode'} = 'cp:
  g
  h
  i
- ı ı (dotless)
  j
  k
  l
@@ -707,7 +709,6 @@ $result_indices_sort_strings{'encoding_index_utf8_no_use_unicode'} = 'cp:
  q
  r
  s
- ß
  t
  u
  v
@@ -716,14 +717,190 @@ $result_indices_sort_strings{'encoding_index_utf8_no_use_unicode'} = 'cp:
  y
  z
  Æ
+ Ð
+ Þ
+ ß
  é é
  î î (dotless)
  î îîîî
  ï ïïï
+ ı ı (dotless)
+ Ł
+ ł
+';
+
+$result_converted_sort_strings{'file_html'}->{'encoding_index_utf8_no_use_unicode'} = 'cp:
+ "
+ "
+ "
+ \'
+ ,
+ -
+ --
+ 0
+ 9
+ @
+ `
+ ¡
+ °
+ “
+ €
+ ≥
+ A
+ B
+ a
+ b
+ c
+ d
+ e
+ f
+ g
+ h
+ i
+ j
+ k
+ l
+ m
+ n
+ o
+ p
+ q
+ r
+ s
+ t
+ u
+ v
+ w
+ x
+ y
+ z
+ Æ
  Ð
  Þ
- ł
+ ß
+ é é
+ î î (dotless)
+ î îîîî
+ ï ïïï
+ ı ı (dotless)
  Ł
+ ł
+';
+
+$result_converted_sort_strings{'file_plaintext'}->{'encoding_index_utf8_no_use_unicode'} = 'cp:
+ "
+ "
+ "
+ \'
+ ,
+ -
+ --
+ 0
+ 9
+ @
+ `
+ ¡
+ °
+ “
+ €
+ ≥
+ A
+ B
+ a
+ b
+ c
+ d
+ e
+ f
+ g
+ h
+ i
+ j
+ k
+ l
+ m
+ n
+ o
+ p
+ q
+ r
+ s
+ t
+ u
+ v
+ w
+ x
+ y
+ z
+ Æ
+ Ð
+ Þ
+ ß
+ é é
+ î î (dotless)
+ î îîîî
+ ï ïïï
+ ı ı (dotless)
+ Ł
+ ł
+';
+
+$result_converted_sort_strings{'file_info'}->{'encoding_index_utf8_no_use_unicode'} = 'cp:
+ "
+ "
+ "
+ \'
+ ,
+ -
+ --
+ 0
+ 9
+ @
+ `
+ ¡
+ °
+ “
+ €
+ ≥
+ A
+ B
+ a
+ b
+ c
+ d
+ e
+ f
+ g
+ h
+ i
+ j
+ k
+ l
+ m
+ n
+ o
+ p
+ q
+ r
+ s
+ t
+ u
+ v
+ w
+ x
+ y
+ z
+ Æ
+ Ð
+ Þ
+ ß
+ é é
+ î î (dotless)
+ î îîîî
+ ï ïïï
+ ı ı (dotless)
+ Ł
+ ł
 ';
 
 1;

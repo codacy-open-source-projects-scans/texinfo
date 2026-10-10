@@ -75,7 +75,7 @@ my @test_cases = (
 @printindex vr
 '],
 ['multiple_in_preamble',
-'@documentlanguage fr
+'@documentlanguage hr
 
 @copying
 @defivar copying a b
@@ -83,7 +83,7 @@ my @test_cases = (
 @end defivar
 @end copying
 
-@documentlanguage hr
+@documentlanguage fr_BE
 
 @node Top
 @top top section
@@ -465,7 +465,21 @@ Another unknown language. @xref{Top}.
 @xref{Top, t}.
 @abbr{C, Ckl}
 
-']
+'],
+# next two tests test current lang translations without @documentlanguage
+# being set.
+['documentscript_documentlanguagevariant',
+'@documentscript Latn
+@documentlanguagevariant 1901
+
+@error{}.
+'],
+['documentlanguagevariant_documentscript',
+'@documentlanguagevariant 1901
+@documentscript Latn
+
+@error{}.
+'],
 );
 
 my $multiple_lang_chapters_text = 
@@ -573,6 +587,8 @@ my %info_tests = (
   'documentscript_conversion' => 1,
   'documentlanguagevariant_conversion' => 1,
   'documentscript_variant_reset_in_preamble' => 1,
+  'documentscript_documentlanguagevariant' => 1,
+  'documentlanguagevariant_documentscript' => 1,
 );
 
 my %xml_tests = (
@@ -612,21 +628,15 @@ foreach my $test (@test_cases) {
   if ($latex_tests{$test->[0]}) {
     push @{$test->[2]->{'test_formats'}}, 'latex';
   }
-
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_html';
   push @{$test->[2]->{'test_formats'}}, 'file_info';
-
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 foreach my $test (@latex_file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_latex';
-
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 run_all('languages', [@test_cases, @file_tests, @latex_file_tests]);

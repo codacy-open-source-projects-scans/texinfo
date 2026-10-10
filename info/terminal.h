@@ -47,8 +47,8 @@ extern int terminal_can_scroll_region;
    doesn't have cursor addressability, TERMINAL_IS_DUMB_P becomes non-zero.
    The variables SCREENHEIGHT and SCREENWIDTH are set to the dimensions that
    this terminal actually has. */
-extern void terminal_initialize_terminal (char *terminal_name);
-extern void (*terminal_initialize_terminal_hook) (char *terminal_name);
+extern void terminal_initialize_terminal (const char *terminal_name);
+extern void (*terminal_initialize_terminal_hook) (const char *terminal_name);
 
 /* Return the current screen width and height in the variables
    SCREENWIDTH and SCREENHEIGHT. */
@@ -61,10 +61,6 @@ extern void terminal_unprep_terminal (void);
 
 extern void (*terminal_prep_terminal_hook) (void);
 extern void (*terminal_unprep_terminal_hook) (void);
-
-/* Re-initialize the terminal to TERMINAL_NAME. */
-extern void terminal_new_terminal (char *terminal_name);
-extern void (*terminal_new_terminal_hook) (char *terminal_name);
 
 /* Move the cursor to the terminal location of X and Y. */
 extern void terminal_goto_xy (int x, int y);

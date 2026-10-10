@@ -24,7 +24,7 @@ formatting.html#subsubsection-three_002d_002d_002dfour_002d_002d_002d_002d_0027_
 formatting.html#chapter2	node	chapter2
 formatting.html#node-with-empty-xrefname	node	node with empty xrefname
 formatting.html#anchor	anchor	anchor
-formatting.html#index-a-index_002d_002d_002dentry-te-_002d_002d_002d-i	codeidx	a index---entry tẽ --- î
+formatting.html#index-a-index_002d_002d_002dentry-t_1ebd-_002d_002d_002d-_00ee	codeidx	a index---entry tẽ --- î
 formatting.html#index-copying-_002d_002doption	cp	-option
 formatting.html#index-titlepage-_002d_002doption	cp	-option
 formatting.html#index-_002d_002doption	cp	-option
@@ -49,14 +49,14 @@ formatting.html#index-b-5	cp	b
 formatting.html#index-b_002d_002d_002db-c_002d_002d_002dc	cp	b--b, c--c
 formatting.html#index-counting-entry	cp	counting entry
 formatting.html#index-d_002d_002d_002ddd-e_002d_002d_002dee-f_002d_002d_002dff	cp	d--dd, e--ee, f--ff
-formatting.html#index-copying-d_002d_002defcv_005fname	cp	d--efcv_name
-formatting.html#index-copying-d_002d_002defcv_005fname-1	cp	d--efcv_name
-formatting.html#index-titlepage-d_002d_002defcv_005fname	cp	d--efcv_name
-formatting.html#index-titlepage-d_002d_002defcv_005fname-1	cp	d--efcv_name
-formatting.html#index-d_002d_002defcv_005fname	cp	d--efcv_name
-formatting.html#index-d_002d_002defcv_005fname-1	cp	d--efcv_name
-formatting.html#index-d_002d_002defcv_005fname-2	cp	d--efcv_name
-formatting.html#index-d_002d_002defcv_005fname-3	cp	d--efcv_name
+formatting.html#index-copying-d_002d_002defcv_005fname-of-c_002d_002dlass	cp	d--efcv_name of c--lass
+formatting.html#index-copying-d_002d_002defcv_005fname-of-c_002d_002dlass-1	cp	d--efcv_name of c--lass
+formatting.html#index-titlepage-d_002d_002defcv_005fname-of-c_002d_002dlass	cp	d--efcv_name of c--lass
+formatting.html#index-titlepage-d_002d_002defcv_005fname-of-c_002d_002dlass-1	cp	d--efcv_name of c--lass
+formatting.html#index-d_002d_002defcv_005fname-of-c_002d_002dlass	cp	d--efcv_name of c--lass
+formatting.html#index-d_002d_002defcv_005fname-of-c_002d_002dlass-1	cp	d--efcv_name of c--lass
+formatting.html#index-d_002d_002defcv_005fname-of-c_002d_002dlass-2	cp	d--efcv_name of c--lass
+formatting.html#index-d_002d_002defcv_005fname-of-c_002d_002dlass-3	cp	d--efcv_name of c--lass
 formatting.html#index-copying-d_002d_002defivar_005fname-of-c_002d_002dlass	cp	d--efivar_name of c--lass
 formatting.html#index-titlepage-d_002d_002defivar_005fname-of-c_002d_002dlass	cp	d--efivar_name of c--lass
 formatting.html#index-d_002d_002defivar_005fname-of-c_002d_002dlass	cp	d--efivar_name of c--lass

@@ -13,8 +13,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -26,18 +27,14 @@
 
 #undef context
 
-#include "command_ids.h"
-#include "option_types.h"
-#include "options_data.h"
+#include "tree_types.h"
+#include "document_types.h"
 #include "converter_types.h"
 /* non_perl_* */
 #include "xs_utils.h"
-#include "builtin_commands.h"
 #include "utils.h"
 /* wipe_error_message_list */
 #include "errors.h"
-#include "translations.h"
-#include "customization_options.h"
 #include "convert_to_text.h"
 #include "get_perl_info.h"
 /* retrieve_converter find_perl_converter_class_converter_format
@@ -46,7 +43,6 @@
 /* pass_errors newSVpv_utf8 */
 #include "build_perl_info.h"
 #include "get_converter_perl_info.h"
-
 
 CONVERTER *
 get_or_create_sv_converter (SV *converter_in, const char *input_class)
@@ -84,21 +80,19 @@ get_or_create_sv_converter (SV *converter_in, const char *input_class)
   return converter;
 }
 
-CONVERTER *
-converter_set_document_from_sv (SV *converter_in, SV *document_in)
+DOCUMENT *
+get_converter_and_document_from_sv (SV *converter_in, SV *document_in,
+                                    CONVERTER **converter)
 {
-  CONVERTER *converter;
   DOCUMENT *document = 0;
 
   dTHX;
 
-  converter = get_sv_converter (converter_in, "converter_set_document");
+  *converter = get_sv_converter (converter_in, "converter_set_document");
   if (document_in && SvOK (document_in))
     document = get_sv_document_document (document_in, 0);
 
-  converter_set_document (converter, document);
-
-  return converter;
+  return document;
 }
 
 DOCUMENT *
@@ -192,11 +186,25 @@ get_expanded_formats (HV *hv, EXPANDED_FORMAT **expanded_formats)
     }
 }
 
+#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen (#key), 0);
+const LANG_TRANSLATION *
+get_hv_lang_translation (HV *hv_in)
+{
+  SV **current_lang_translations_sv;
+
+  dTHX;
+
+  FETCH(current_lang_translations)
+  if (current_lang_translations_sv && SvOK (*current_lang_translations_sv))
+    return get_lang_translation_sv (*current_lang_translations_sv);
+
+  return 0;
+}
+
 /* map hash reference of Convert::Text options to TEXT_OPTIONS */
 /* _raw_state is not fetched, as it is not documented as an option,
    and there is no way to set it through text options either, it can only
    be set as a state during conversion */
-#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen (#key), 0);
 TEXT_OPTIONS *
 copy_sv_options_for_convert_text (SV *sv_in)
 {
@@ -210,7 +218,6 @@ copy_sv_options_for_convert_text (SV *sv_in)
   SV **enabled_encoding_sv;
   SV **sort_string_sv;
   SV **set_case_sv;
-  SV **current_lang_translations_sv;
   SV **DEBUG_sv;
   SV **DOC_ENCODING_FOR_INPUT_FILE_NAME_sv;
   SV **INPUT_FILE_NAME_ENCODING_sv;
@@ -259,22 +266,7 @@ copy_sv_options_for_convert_text (SV *sv_in)
 
   get_expanded_formats (hv_in, &text_options->expanded_formats);
 
-  FETCH(current_lang_translations)
-  if (current_lang_translations_sv && SvOK (*current_lang_translations_sv))
-    {
-      AV *lang_translations_av = (AV *) SvRV (*current_lang_translations_sv);
-      SV **lang_info_sv = av_fetch (lang_translations_av, 0, 0);
-
-      if (lang_info_sv && SvOK (*lang_info_sv))
-        {
-          HV *lang_info_hv = (HV *) SvRV (*lang_info_sv);
-          DOCUMENT_LANG_INFO *info = get_lang_info_hv (lang_info_hv);
-          text_options->current_lang_translations
-                = set_lang_info_translation (
-                          &translation_cache, info,
-                          TXI_CONVERT_STRINGS_NR);
-        }
-    }
+  text_options->current_lang_translations = get_hv_lang_translation (hv_in);
 
   FETCH(DEBUG)
   if (DEBUG_sv && SvOK (*DEBUG_sv))

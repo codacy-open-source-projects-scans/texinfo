@@ -1,34 +1,38 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'set_form_feed'} = '*document_root C1
- *before_node_section C5
-  *@set C1
-  |EXTRA
-  |misc_args:A{gg|a\\a\\f\\\\}
-   *line_arg C3
-    {spaces_before_argument: }
-    {rawline_text:gg \\f a\\a\\f\\\\}
-    {spaces_after_argument:\\n}
-  *@set C1
-  |EXTRA
-  |misc_args:A{hh|}
-   *line_arg C3
-    {spaces_before_argument: }
-    {rawline_text:hh\\f}
-    {spaces_after_argument:\\n}
-  *@set C1
-  |EXTRA
-  |misc_args:A{ll|}
-   *line_arg C3
-    {spaces_before_argument: }
-    {rawline_text:ll \\f}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_content C4
+   *@set C1
+   |EXTRA
+   |misc_args:A{gg|a\\a\\f\\\\}
+    *line_arg C3
+     {spaces_before_argument: }
+     {rawline_text:gg \\f a\\a\\f\\\\}
+     {spaces_after_argument:\\n}
+   *@set C1
+   |EXTRA
+   |misc_args:A{hh|}
+    *line_arg C3
+     {spaces_before_argument: }
+     {rawline_text:hh\\f}
+     {spaces_after_argument:\\n}
+   *@set C1
+   |EXTRA
+   |misc_args:A{ll|}
+    *line_arg C3
+     {spaces_before_argument: }
+     {rawline_text:ll \\f}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C2
    *@code C1 l5
     *brace_container C1

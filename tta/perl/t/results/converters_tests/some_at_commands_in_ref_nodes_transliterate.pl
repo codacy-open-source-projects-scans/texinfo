@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'some_at_commands_in_ref_nodes_transliterate'} = '*document_root C5
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C1 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -294,8 +299,7 @@ see @ref{a @strong{strong} ref with @sc{sc}@comma{} a i trema @"i@comma{} a dotl
 ';
 
 
-$result_texts{'some_at_commands_in_ref_nodes_transliterate'} = '
-Top
+$result_texts{'some_at_commands_in_ref_nodes_transliterate'} = 'Top
 ***
 
 * A SC N~ AA TeX node i" i" E=` /l C\', !::
@@ -363,8 +367,7 @@ and exclamdown ¡.
 ';
 
 
-$result_converted{'html_text'}->{'some_at_commands_in_ref_nodes_transliterate'} = '
-<div class="top-level-extent" id="Top">
+$result_converted{'html_text'}->{'some_at_commands_in_ref_nodes_transliterate'} = '<div class="top-level-extent" id="Top">
 <h1 class="top" id="Top-1"><span>Top<a class="copiable-link" href="#Top-1"> &para;</a></span></h1>
 
 
@@ -373,7 +376,7 @@ $result_converted{'html_text'}->{'some_at_commands_in_ref_nodes_transliterate'} 
 </ul>
 <hr>
 <div class="chapter-level-extent" id="A-sc-_00f1-_00e5-TeX-node-_00ef-_00ef-_1e14-_0142-_1e08-_00a1">
-<h2 class="chapter" id="A-sc-node-i-i-E-l-C-_00a1"><span>1 A <small class="sc">SC</small> node &iuml; &iuml; &#274;&#768; &#322; &#262;&#807; &iexcl;<a class="copiable-link" href="#A-sc-node-i-i-E-l-C-_00a1"> &para;</a></span></h2>
+<h2 class="chapter" id="A-sc-node-i-i-E-l-C-_0021"><span>1 A <small class="sc">SC</small> node &iuml; &iuml; &#274;&#768; &#322; &#262;&#807; &iexcl;<a class="copiable-link" href="#A-sc-node-i-i-E-l-C-_0021"> &para;</a></span></h2>
 
 <p>see <a data-manual="manual" href="manual.html#a-strong-ref-with-sc_002c-a-i-trema-_00ef_002c-a-dotless-i-trema-_00ef-_1e14-and-exclamdown-_00a1">(manual)a <strong class="strong">strong</strong> ref with <small class="sc">SC</small>, a i trema &iuml;, a dotless i trema &iuml; &#274;&#768; and exclamdown &iexcl;</a>.
 </p>
@@ -383,8 +386,8 @@ $result_converted{'html_text'}->{'some_at_commands_in_ref_nodes_transliterate'} 
 ';
 
 
-$result_converted{'xml'}->{'some_at_commands_in_ref_nodes_transliterate'} = '
-<node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> A <sc>sc <accent type="tilde" bracketed="off">n</accent> &aring; &tex;</sc> node <accent type="uml" bracketed="off">i</accent> <accent type="uml"><dotless>i</dotless></accent> <accent type="grave"><accent type="macr" bracketed="off">E</accent></accent> &lslash; <accent type="cedil"><accent type="acute" bracketed="off">C</accent></accent> &iexcl;</nodenext></node>
+$result_converted{'xml'}->{'some_at_commands_in_ref_nodes_transliterate'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> A <sc>sc <accent type="tilde" bracketed="off">n</accent> &aring; &tex;</sc> node <accent type="uml" bracketed="off">i</accent> <accent type="uml"><dotless>i</dotless></accent> <accent type="grave"><accent type="macr" bracketed="off">E</accent></accent> &lslash; <accent type="cedil"><accent type="acute" bracketed="off">C</accent></accent> &iexcl;</nodenext></node>
 <top><sectiontitle> Top</sectiontitle>
 
 <menu endspaces=" ">
@@ -412,7 +415,7 @@ $result_converted{'docbook'}->{'some_at_commands_in_ref_nodes_transliterate'} = 
 ';
 
 
-$result_converted{'latex_text'}->{'some_at_commands_in_ref_nodes_transliterate'} = '
+$result_converted{'latex_text'}->{'some_at_commands_in_ref_nodes_transliterate'} = '\\begin{document}
 \\label{anchor:Top}%
 \\Texinfochapter{{A \\textsc{sc} node \\"{i} \\"{\\i{}} \\`{\\={E}} \\l{} \\c{\\\'{C}} \\textexclamdown{}}}
 \\label{anchor:A-sc-_00f1-_00e5-TeX-node-_00ef-_00ef-_1e14-_0142-_1e08-_00a1}%

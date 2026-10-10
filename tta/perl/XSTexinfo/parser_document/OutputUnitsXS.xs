@@ -25,8 +25,10 @@
 
 #undef context
 
-#include "tree_types.h"
+#include <stddef.h>
+
 #include "document_types.h"
+#include "xs_utils.h"
 #include "output_unit.h"
 #include "get_perl_info.h"
 #include "build_perl_info.h"
@@ -47,7 +49,7 @@ unused_split_by_node (SV *document_in)
         document = get_sv_document_document (document_in, "split_by_node");
         if (document)
           {
-            size_t output_units_descriptor = split_by_node (document);
+            size_t output_units_descriptor = register_split_by_node (document);
             RETVAL = build_output_units_list (document,
                                               output_units_descriptor);
           }
@@ -65,7 +67,7 @@ unused_split_by_section (SV *document_in)
         document = get_sv_document_document (document_in, "split_by_section");
         if (document)
           {
-            size_t output_units_descriptor = split_by_section (document);
+            size_t output_units_descriptor = register_split_by_section (document);
             RETVAL = build_output_units_list (document,
                                               output_units_descriptor);
           }
@@ -177,7 +179,7 @@ print_output_units_tree_details (SV *output_units_in, SV *tree_in, SV *fname_enc
                 char *result = print_output_units_tree_details (output_units,
                                 document->tree, fname_encoding, use_filename);
                 result_sv = newSVpv_utf8 (result, 0);
-                free (result);
+                non_perl_free (result);
               }
           }
 

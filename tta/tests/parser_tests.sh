@@ -14,20 +14,17 @@ fi
 command=run_parser_all.sh
 
 arg=
-if [ z"$1" = 'z-clean' ]; then
-  arg='-clean'
+while [ z"$1" = 'z-clean' -o z"$1" = 'z-copy' -o z"$1" = 'z-native' ]; do
+  arg="$arg $1"
   shift
-elif [ z"$1" = 'z-copy' ]; then
-  arg='-copy'
-  shift
-fi
+done
 
 failed=0
 while [ z"$1" != 'z' ]; do
   dir=$1
   shift
   [ -d "$dir" ] || mkdir $dir
-  "$srcdir"/"$command" -dir $dir $arg
+  "$srcdir"/"$command" $arg $dir
   result=$?
   if [ "z$result" = 'z0' ]; then
     result_text=ok

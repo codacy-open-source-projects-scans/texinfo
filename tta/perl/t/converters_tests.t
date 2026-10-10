@@ -5,6 +5,8 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 require 't/test_utils.pl';
 
+my $XS_convert = Texinfo::XSLoader::XS_modules_enabled();
+
 my $inline_text = '
 @inlinefmt{html, <blink>html</blink> ``}, 
 @inlinefmt{plaintext, plaintext ``}, 
@@ -234,7 +236,9 @@ Document.
 ['some_at_commands_in_ref_nodes',
 $some_at_commands_in_ref_nodes_text, {}, {'TRANSLITERATE_FILE_NAMES' => 0}],
 ['some_at_commands_in_ref_nodes_transliterate',
-$some_at_commands_in_ref_nodes_text, {}, {'TRANSLITERATE_FILE_NAMES' => 1}],
+$some_at_commands_in_ref_nodes_text,
+  {'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
+  {'TRANSLITERATE_FILE_NAMES' => 1}],
 ['refs_formatting',
 '@node chapter
 @chapter chapter
@@ -1482,6 +1486,78 @@ xrefautomaticsectiontitle on @ref{ntiti}.
 
 xrefautomaticsectiontitle on @ref{entiti}.
 '],
+['metadata_in_documentinfo',
+'@documentinfo
+@title The Title
+@ifepub
+@html
+   <dc:creator
+       id="creator">
+      Some Body
+   </dc:creator>
+   <meta
+       refines="#creator"
+       property="role"
+       scheme="marc:relators"
+       id="role">
+      aut
+   </meta>
+@end html
+@end ifepub
+@ifnotepub
+@html
+<meta name="creator" content="Some Body" />
+@end html
+@end ifnotepub
+@docbook
+<authorgroup>
+  <author>
+    <honorific>Dr.</honorific>
+    <firstname>Lois</firstname>
+    <surname>Common-Demoninator</surname>
+    <affiliation>
+      <shortaffil>Director, M. Behn School of Coop. Eng.</shortaffil>
+      <jobtitle>Director of Cooperative Efforts</jobtitle>
+      <orgname>The Marguerite Behn International School of
+               Cooperative Engineering</orgname>
+    </affiliation>
+  </author>
+
+  <editor>
+    <firstname>Peter</firstname>
+    <surname>Parker</surname>
+    <lineage>Sr.</lineage>
+    <othername>Spiderman</othername>
+    <authorblurb>
+      <para>
+      Peter is a super hero in his spare time.
+      </para>
+    </authorblurb>
+  </editor>
+</authorgroup>
+@end docbook
+@end documentinfo
+
+@node Top
+@top top
+
+@node chapter
+@chapter Chap
+'],
+['documentinfo_with_empty_line',
+'
+@documentinfo
+@title yup
+
+@author Toto
+@end documentinfo
+
+@node Top
+@top top
+
+@node chapter
+@chapter Chap
+']
 );
 
 my @html_text_cases = (
@@ -1545,7 +1621,7 @@ In Main
 @end float
 
 @listoffloats list
-', {'test_formats' => ['file_latex', 'file_html'], 'full_document' => 1},
+', {'test_formats' => ['file_latex', 'file_html'],},
    {'NO_TOP_NODE_OUTPUT' => 1}],
 );
 
@@ -1571,9 +1647,61 @@ undef, {'test_file' => 'minimal_empty_empty.texi'}],
 ['empty',
 undef, {'test_file' => 'empty.texi'}],
 ['simplest_test_prefix',
-undef,{'test_file' => 'simplest.texi',},
+undef, {'test_file' => 'simplest.texi',},
 {'SPLIT' => '', 'PREFIX' => 'truc'}
 ],
+['top_is_an_anchor',
+'@setfilename top_is_an_anchor.info
+
+@anchor{Top}
+'],
+['top_is_an_anchor_and_node',
+'@setfilename top_is_an_anchor_and_node.info
+
+@anchor{Top}
+
+@node some node
+'],
+# similar with 'shadow_links_to_sections_in_top_node' in t/docbook_tests.t
+# but without anything in Top node
+['shadow_links_to_sections',
+'@node Top
+@top Shadow
+
+@node first
+@chapter First chap
+
+@xref{two}. --- goes to one of the section named two
+
+@chapter foo
+
+Aaaaaaaaaa.  @xref{bar}.
+
+@chapter bar
+
+Bbbbbbbbbbb.  @xref{foo}. -- goes to baz chapter.
+
+@section two
+
+CCCCCCC.
+
+@xref{baz}. --- fails
+
+@node foo
+@chapter baz
+
+LLLLLLLLLLL.
+
+@section two
+
+DDDDDDDDD.
+
+@section with @ref{foo, b} after
+
+@xref{with foo after}. --- link to section with @@ref in name
+
+@xref{two}. --- another link to a section named two.
+', {'test_input_file_name' => 'shadow_links_to_sections.texi'}, ],
 ['indices_in_begin_tables_lists',
 undef, {'test_file' => '../../../tests/formatting/indices_in_begin_tables_lists.texi'},
 {'SPLIT' => '', 'USE_NODES' => 0}],
@@ -1730,6 +1858,8 @@ my %html_tests = (
  'contents_at_document_begin' => 1,
  'contents_at_document_begin_inline' => 1,
  'contents_at_document_begin_separate_element' => 1,
+ 'metadata_in_documentinfo' => 1,
+ 'documentinfo_with_empty_line' => 1,
 );
 
 my %file_html_tests = (
@@ -1741,6 +1871,8 @@ my %file_html_tests = (
 
 my %docbooc_doc_tests = (
  'line_breaks' => 1,
+ 'metadata_in_documentinfo' => 1,
+ 'documentinfo_with_empty_line' => 1,
 );
 
 my %file_latex_tests = (
@@ -1759,8 +1891,6 @@ foreach my $test (@test_cases) {
   if ($file_html_tests{$test->[0]}
       or $file_latex_tests{$test->[0]}) {
     $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-    $test->[2]->{'full_document'} = 1
-        unless (exists($test->[2]->{'full_document'}));
   }
   if ($file_html_tests{$test->[0]}) {
     push @{$test->[2]->{'test_formats'}}, 'file_html';
@@ -1786,9 +1916,8 @@ foreach my $test (@html_text_cases) {
 
 foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_html';
-  push @{$test->[2]->{'test_formats'}}, 'file_info';
+  push @{$test->[2]->{'test_formats'}}, ('file_info', 'file_plaintext');
   push @{$test->[2]->{'test_formats'}}, ('file_xml', 'file_docbook', 'file_latex');
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 run_all('converters_tests', [@test_cases, @html_text_cases, @file_tests]);

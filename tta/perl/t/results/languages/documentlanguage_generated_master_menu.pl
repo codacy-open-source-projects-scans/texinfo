@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'documentlanguage_generated_master_menu'} = '*document_root C11
  *before_node_section C1
@@ -310,7 +313,7 @@ Privitak A App
 ';
 
 
-$result_converted{'info'}->{'documentlanguage_generated_master_menu'} = 'This is , produced from .
+$result_converted{'info'}->{'documentlanguage_generated_master_menu'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chapter,  Up: (dir)
@@ -362,9 +365,9 @@ End Tag Table
 
 Local Variables:
 coding: utf-8
-Info-documentlanguage: hr
+Info-documentlanguage: de
 End:
-';
+');
 
 
 $result_converted{'html'}->{'documentlanguage_generated_master_menu'} = '<!DOCTYPE html>

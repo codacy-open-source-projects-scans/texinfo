@@ -33,7 +33,9 @@
 
 package Texinfo::Config;
 
+use 5.006;
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -48,11 +50,20 @@ use Texinfo::Common;
 
 use Texinfo::XSLoader;
 
+require Exporter;
+
+our $VERSION = '7.3dev';
+
+# When the main program is the C implementation, the way init files options
+# are shared with the main program cannot work.  Instead, the functions
+# are overriden such that the init files options stored in C data are
+# set and accessed.  Functions are overriden only in that case,
+# if customization data is managed from C code.
+# Otherwise, the customization code related to init files
+# is run early in Perl and customization variables are passed through the XS
+# interfaces of converters.
 BEGIN {
-  # Functions are overriden only if customization data is managed
-  # from C code.  Otherwise, all the customization code related to init files
-  # is run early and customization variables are passed through the XS
-  # interfaces of converters.
+  # load XS only if main caller is a C caller
   if ($Texinfo::XSLoader::mandatory_xs) {
     Texinfo::XSLoader::init (
       "Texinfo::ConfigXS",
@@ -68,11 +79,6 @@ BEGIN {
 # interface because it would be complicated to separate the overriden
 # Perl functions as they use file scoped variables and it is better to
 # keep it that way.
-
-# When the main program is the C implementation, the way init files options
-# are shared with the main program cannot work.  Instead, the functions
-# are overriden such that the init files options stored in C data are
-# set and accessed.
 my %XS_overrides = (
   "Texinfo::Config::texinfo_get_conf"
     => "Texinfo::ConfigXS::texinfo_get_conf",
@@ -89,7 +95,7 @@ my %XS_overrides = (
 my $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    # override only if customization data is managed from C code
+    # override only if main caller is a C caller
     if ($Texinfo::XSLoader::mandatory_xs) {
       foreach my $sub (keys(%XS_overrides)) {
         Texinfo::XSLoader::override($sub, $XS_overrides{$sub});
@@ -213,6 +219,8 @@ my @init_file_loading_messages;
 sub GNUT_load_init_file($) {
   my $file = shift;
 
+  # push an array reference where user-defined messages registered through
+  # texinfo_register_init_loading_* are added.
   push @init_file_loading_messages, [];
 
   my $result = do($file);
@@ -280,36 +288,10 @@ sub texinfo_register_init_loading_warning($) {
                                             'text' => $message};
 }
 
-# L2H removed in 2021
-# return undef var when there is nothing to set.
-# NOTE this has not been done consistently, many options were renamed
-# without doing something here.
-# NOTE in C there is no mapping of values.
-sub _GNUT_map_obsolete_options($$) {
-  my ($input_var, $input_value) = @_;
-
-  my $var = $input_var;
-  my $value = $input_value;
-
-  if ($input_var eq 'L2H') {
-    _GNUT_document_warn(sprintf(__("obsolete option: %s"), $input_var));
-    if (! $input_value) {
-      # nothing to do in that case
-      $var = undef;
-      $value = undef;
-    } else {
-      $var = 'HTML_MATH';
-      $value = 'l2h';
-    }
-  }
-  return $var, $value;
-}
-
 # Called from init files to set configuration options.
 sub texinfo_set_from_init_file($$) {
   my ($var, $value) = @_;
 
-  ($var, $value) = _GNUT_map_obsolete_options($var, $value);
   if (!defined($var)) {
     return 1;
   }
@@ -331,7 +313,6 @@ sub texinfo_set_from_init_file($$) {
 sub GNUT_set_from_cmdline($$) {
   my ($var, $value) = @_;
 
-  ($var, $value) = _GNUT_map_obsolete_options($var, $value);
   if (!defined($var)) {
     return 1;
   }
@@ -351,7 +332,6 @@ sub GNUT_set_from_cmdline($$) {
 sub GNUT_set_customization_default($$) {
   my ($var, $value) = @_;
 
-  ($var, $value) = _GNUT_map_obsolete_options($var, $value);
   if (!defined($var)) {
     return 1;
   }

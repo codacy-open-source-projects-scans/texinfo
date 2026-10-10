@@ -20,13 +20,15 @@
 
 #include "text.h"
 #include "tree_types.h"
-#include "tree.h"
 #include "extra.h"
 #include "builtin_commands.h"
+/* for fatal called from def_list_fns */
+#include "base_utils.h"
 #include "utils.h"
 #include "node_name_normalization.h"
 #include "convert_to_texinfo.h"
 #include "floats.h"
+#include "list_macros.h"
 
 char *
 parse_float_type (ELEMENT *current, ELEMENT *element)
@@ -62,12 +64,16 @@ find_float_type (LISTOFFLOATS_TYPE_LIST *listoffloats_list,
   size_t i;
   for (i = 0; i < listoffloats_list->number; i++)
     {
-      LISTOFFLOATS_TYPE *listoffloats = &listoffloats_list->float_types[i];
+      LISTOFFLOATS_TYPE *listoffloats = &listoffloats_list->list[i];
       if (!strcmp (listoffloats->type, float_type))
         return listoffloats;
     }
   return 0;
 }
+
+/* Trailing _ to avoid name clash with following function. */
+def_list_fns (LISTOFFLOATS_TYPE_LIST, listoffloats_,
+              LISTOFFLOATS_TYPE, 5)
 
 static LISTOFFLOATS_TYPE *
 add_to_listoffloats_list (LISTOFFLOATS_TYPE_LIST *listoffloats_list,
@@ -78,44 +84,26 @@ add_to_listoffloats_list (LISTOFFLOATS_TYPE_LIST *listoffloats_list,
   if (result)
     return result;
 
-  if (listoffloats_list->number == listoffloats_list->space)
-    {
-      listoffloats_list->float_types
-               = realloc (listoffloats_list->float_types,
-                  (listoffloats_list->space += 5) * sizeof (LISTOFFLOATS_TYPE));
-    }
+  LISTOFFLOATS_TYPE new = { 0 };
+  new.type = strdup (type);
+  add_(listoffloats_) (listoffloats_list, new);
 
-  result = &listoffloats_list->float_types[listoffloats_list->number];
-  memset (result, 0, sizeof (LISTOFFLOATS_TYPE));
-  result->type = strdup (type);
-
-  listoffloats_list->number++;
-
-  return result;
+  return &listoffloats_list->list[listoffloats_list->number - 1];
 }
+
+def_list_fns (FLOAT_INFORMATION_LIST, float_info, FLOAT_INFORMATION, 5)
 
 static FLOAT_INFORMATION *
 add_to_float_information_list (FLOAT_INFORMATION_LIST *float_list,
                                ELEMENT *float_element,
                                const SECTION_RELATIONS *float_section)
 {
-  FLOAT_INFORMATION *result;
-  if (float_list->number == float_list->space)
-    {
-      float_list->list
-               = realloc (float_list->list,
-                  (float_list->space += 5) * sizeof (FLOAT_INFORMATION));
-    }
+  FLOAT_INFORMATION result = { 0 };
+  result.float_element = float_element;
+  result.float_section = float_section;
+  add_(float_info) (float_list, result);
 
-  result = &float_list->list[float_list->number];
-  memset (result, 0, sizeof (FLOAT_INFORMATION));
-
-  result->float_element = float_element;
-  result->float_section = float_section;
-
-  float_list->number++;
-
-  return result;
+  return &float_list->list[float_list->number - 1];
 }
 
 static int
@@ -146,7 +134,7 @@ float_list_to_listoffloats_list (const FLOAT_RECORD_LIST *floats_list,
                                      float_record->section);
     }
 
-  qsort (result->float_types, result->number,
+  qsort (result->list, result->number,
          sizeof (LISTOFFLOATS_TYPE), compare_listoffloats_type);
 
 }
@@ -158,11 +146,11 @@ free_listoffloats_list (LISTOFFLOATS_TYPE_LIST *listoffloats_list)
   for (i = 0; i < listoffloats_list->number; i++)
     {
       LISTOFFLOATS_TYPE *listoffloats_type
-         = &listoffloats_list->float_types[i];
+         = &listoffloats_list->list[i];
       free (listoffloats_type->type);
       free (listoffloats_type->float_list.list);
     }
-  free (listoffloats_list->float_types);
+  free (listoffloats_list->list);
 }
 
 static void
@@ -244,7 +232,7 @@ print_listoffloats_types (LISTOFFLOATS_TYPE_LIST *listoffloats_list)
     {
       size_t j;
       LISTOFFLOATS_TYPE *listoffloats_type
-         = &listoffloats_list->float_types[i];
+         = &listoffloats_list->list[i];
       text_printf (&result, "%s: %zu\n", listoffloats_type->type,
                    listoffloats_type->float_list.number);
 

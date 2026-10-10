@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'index_no_node_no_top'} = '*document_root C7
  *before_node_section C7
@@ -32,6 +35,8 @@ $result_tree_text{'index_no_node_no_top'} = '*document_root C7
   {empty_line:\\n}
  *@unnumbered C8 index_no_node_no_top.texi:l8 {unnumbered}
  |EXTRA
+ |identifier:{unnumbered}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{1}
   *arguments_line C1
@@ -75,6 +80,8 @@ $result_tree_text{'index_no_node_no_top'} = '*document_root C7
   {empty_line:\\n}
  *@unnumbered C15 index_no_node_no_top.texi:l17 {top (chapter) section}
  |EXTRA
+ |identifier:{top-_0028chapter_0029-section}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{2}
   *arguments_line C1
@@ -148,6 +155,8 @@ $result_tree_text{'index_no_node_no_top'} = '*document_root C7
   {empty_line:\\n}
  *@section C7 index_no_node_no_top.texi:l32 {second}
  |EXTRA
+ |identifier:{second}
+ |is_target:{1}
  |section_level:{2}
  |section_number:{3}
   *arguments_line C1
@@ -191,6 +200,8 @@ $result_tree_text{'index_no_node_no_top'} = '*document_root C7
     {spaces_after_argument:\\n}
  *@chapter C6 index_no_node_no_top.texi:l40 {Chapter}
  |EXTRA
+ |identifier:{Chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{4}
@@ -227,6 +238,8 @@ $result_tree_text{'index_no_node_no_top'} = '*document_root C7
   {empty_line:\\n}
  *@chapter C4 index_no_node_no_top.texi:l47 {Chapter 2}
  |EXTRA
+ |identifier:{Chapter-2}
+ |is_target:{1}
  |section_heading_number:{2}
  |section_level:{1}
  |section_number:{5}
@@ -405,7 +418,7 @@ $result_indices_sort_strings{'index_no_node_no_top'} = 'cp:
 ';
 
 
-$result_converted{'info'}->{'index_no_node_no_top'} = 'This is , produced from index_no_node_no_top.texi.
+$result_converted{'info'}->{'index_no_node_no_top'} = Encode::encode('utf-8', 'This is , produced from index_no_node_no_top.texi.
 
 Garbage
 
@@ -544,6 +557,11 @@ In chapter 2
 
 
 Tag Table:
+Ref: unnumbered1105
+Ref: top (chapter) section2187
+Ref: second3286
+Ref: Chapter5402
+Ref: Chapter 26484
 
 End Tag Table
 
@@ -551,6 +569,23 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'index_no_node_no_top'} = 'cp:
+ chapter
+ Chapter2
+ second
+ second
+ top section
+ top section
+ top section
+ top section
+ top section
+ top section
+ top section1
+ truc
+ unnumbered
+ unnumbered after text
 ';
 
 $result_converted_errors{'info'}->{'index_no_node_no_top'} = '* W index_no_node_no_top.texi|document without nodes
@@ -597,6 +632,21 @@ $result_converted_errors{'info'}->{'index_no_node_no_top'} = '* W index_no_node_
 
 * W index_no_node_no_top.texi:l13|entry for index `cp\' outside of any node
  warning: entry for index `cp\' outside of any node
+
+* W index_no_node_no_top.texi:l8|@unnumbered outside of any node
+ warning: @unnumbered outside of any node
+
+* W index_no_node_no_top.texi:l17|@unnumbered outside of any node
+ warning: @unnumbered outside of any node
+
+* W index_no_node_no_top.texi:l32|@section outside of any node
+ warning: @section outside of any node
+
+* W index_no_node_no_top.texi:l40|@chapter outside of any node
+ warning: @chapter outside of any node
+
+* W index_no_node_no_top.texi:l47|@chapter outside of any node
+ warning: @chapter outside of any node
 
 ';
 
@@ -730,6 +780,23 @@ Text of chapter
 
 In chapter 2
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'index_no_node_no_top'} = 'cp:
+ chapter
+ Chapter2
+ second
+ second
+ top section
+ top section
+ top section
+ top section
+ top section
+ top section
+ top section1
+ truc
+ unnumbered
+ unnumbered after text
 ';
 
 $result_converted_errors{'plaintext'}->{'index_no_node_no_top'} = '* W index_no_node_no_top.texi:l41|entry for index `cp\' outside of any node

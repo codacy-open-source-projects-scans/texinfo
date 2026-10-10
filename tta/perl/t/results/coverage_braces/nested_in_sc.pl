@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'nested_in_sc'} = '*document_root C1
- *before_node_section C1
+ *before_node_section C2
+  *preamble_before_content
   *paragraph C2
    *@sc C1 l1
     *brace_container C1
@@ -92,7 +96,8 @@ $result_converted{'html_text'}->{'nested_in_sc'} = '<p><small class="sc"><small 
 ';
 
 
-$result_converted{'latex_text'}->{'nested_in_sc'} = '\\textsc{\\textsc{aaa \\~{n} \\aa{} \\TeX{} \\~{\\aa{}} \\footnote{In footnote}, ABr (expl), 
+$result_converted{'latex_text'}->{'nested_in_sc'} = '\\begin{document}
+\\textsc{\\textsc{aaa \\~{n} \\aa{} \\TeX{} \\~{\\aa{}} \\footnote{In footnote}, ABr (expl), 
 \\verb:in verb:}}
 ';
 

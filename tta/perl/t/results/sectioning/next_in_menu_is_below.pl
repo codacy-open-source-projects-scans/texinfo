@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'next_in_menu_is_below'} = '*document_root C9
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -295,7 +299,7 @@ list:
 $result_headings_list{'next_in_menu_is_below'} = '';
 
 
-$result_converted{'info'}->{'next_in_menu_is_below'} = 'This is , produced from .
+$result_converted{'info'}->{'next_in_menu_is_below'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chapter,  Up: (dir)
@@ -347,7 +351,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'next_in_menu_is_below'} = '<!DOCTYPE html>

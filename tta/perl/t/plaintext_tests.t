@@ -5,6 +5,11 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 require 't/test_utils.pl';
 
+use Texinfo::XSLoader;
+
+my $use_XS = (Texinfo::XSLoader::XS_modules_enabled()
+              and $Texinfo::XSLoader::core_modules_built);
+
 my @test_cases = (
 ['settitle_and_empty_top',
 '@settitle Title
@@ -38,6 +43,14 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaa BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 9AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBB
 10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBB
 11AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBB
+'],
+# this test is designed to have upper-case letters followed by punctuation
+# and space right after a line cut.  The line cut happens to be at an end of
+# line, but it should not be important, it could also have been a space that
+# triggers the line cut.
+['line_begin_upper_case_letter_punctuation_space',
+'it read and process the user configuration file and connects to to the
+ MTA. Of course, the client is not able to.
 '],
 ['commands_and_punctuation',
 'SomthingA@.   and now inhibit.@: Now dots @dots{} and enddots @enddots{} and'],
@@ -88,6 +101,18 @@ Before samp. @samp{a}. after samp, w @w{in   w. after dot}  afterw
 # and splitting by commands (also tested in other tests)
 ['split_punctuation_detection_in_commands',
 'Before @asis{B}@asis{)}@asis{.}]]? Afte@strong{R}@emph{"!}\'? Last'],
+# test uppercase in @*ref command closing before punctuation and space,
+# with the line cut before the uppercase in @*ref.  The use of @*ref is
+# not important, any @-command that isolates the . from the previous
+# uppercase text would do.
+['end_sentence_upper_case_in_ref',
+'@node Top
+@top top
+
+@anchor{LINKS}
+
+Some text known to work correctly, define function is available cut @ref{LINKS}.  Something more.
+'],
 ['html_expanded',
 'Before
 @html
@@ -399,6 +424,16 @@ follows}.
 '@documentencoding utf-8
 @U{00FF} (should be a real y-dieresis in UTF-8).
 '],
+# test that a float with empty type does not lead to an empty line,
+# with @noindent
+['empty_type_float_empty_line_with_noindent',
+'@float
+toto
+@end float
+@noindent
+Titi
+
+'],
 ['flushright_not_closed_and_format',
 '@flushright
 flushright
@@ -670,6 +705,15 @@ HHH
 @image{figure} JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
 @end flushright
 '],
+['anchor_in_chapter_and_contents',
+'@node Top
+@top top
+
+@contents
+
+@node chap
+@chapter Chapter @anchor{point} after anchor
+']
 );
 
 my $insert_copying_and_paragraph = 
@@ -1015,12 +1059,14 @@ undef, {'test_file' => 'chinese_mixed_with_en.texi'}
 ['non_break_spaces',
 undef,
 {'test_file' => 'non_break_spaces.texi',
- 'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef, },
+ 'skip' => ($] < 5.014 and not $use_XS)
+            ? 'Perl too old: /a regex flag needed' : undef, },
 ],
 ['all_spaces',
 undef,
 {'test_file' => 'all_spaces.texi',
- 'skip' => ($] < 5.014) ? 'Perl too old: LINE TABULATION in /a needed' : undef, },
+ 'skip' => ($] < 5.014 and not $use_XS)
+            ? 'Perl too old: LINE TABULATION in /a needed' : undef, },
 ],
 ['east_asian_in_w',
 undef, {'test_file' => 'east_asian_in_w.texi'}

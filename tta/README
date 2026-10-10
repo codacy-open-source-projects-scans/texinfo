@@ -38,10 +38,7 @@ Module requirements
 These modules and libraries are required (all have been standard
 parts of Perl for years, at least since 5.7.3):
   Carp, Config, Data::Dumper, Encode, File::Basename, File::Spec
-  Getopt::Long, Unicode::Normalize, Storable
-
-Unicode::Collate (also a standard module since 5.7.3) is required for
-correct index sorting.
+  Getopt::Long, Unicode::Collate, Unicode::Normalize, Scalar::Util, Storable.
 
 texi2any also uses the less widely-available modules:
   Locale::Messages, Unicode::EastAsianWidth, Text::Unidecode
@@ -73,7 +70,7 @@ variable to the tta/ build directory, in order to have compiled modules
 and translated in-document strings found.  If you use scripts with
 names ending in .pl or .t test files, the source directory obtained
 from the script name might be used to determine the source directories
-and you may not need to set them explicitely.  Otherwise, you could
+and you may not need to set them explicitly.  Otherwise, you could
 need to set the srcdir environment variable, and/or set the t2a_srcdir
 environment variables to the in-source tta/ directory.
 
@@ -82,11 +79,9 @@ Running tests:
 
 Tests in perl/t/ test the Perl modules used by the texi2any command.
 To run those tests, you also need:
-  Test::More, Data::Compare, Test::Deep
+  Test::More
 On Debian-based distros, Test::More is part of perl-modules and thus
-installed with perl, the packages corresponding to the other modules
-are named:
-  libdata-compare-perl libtest-deep-perl
+installed with perl.
 
 Devel::Refcount is needed for some checks.  It is detected at configure
 time.  If checks using Devel::Refcount fail, Devel::FindRef, detected at
@@ -126,7 +121,7 @@ The conversion of Texinfo to output formats is done in three steps:
    backend.  Using Texinfo::Converter::**** Perl modules or C code in
    C/convert.
 
-The C converage of steps 1) and 2) is complete.  Many converter backends
+The C coverage of steps 1) and 2) is complete.  Many converter backends
 are only available in Perl.
 
 Much of the code is available in two versions, both Perl and C.  Please
@@ -146,6 +141,14 @@ If you want to delve into making a new Perl converter backend, the
 documentation in perl/Texinfo/Convert/Converter.pm is a good starting
 point, as it describes the existing backends and other places to look.
 
+If you want to port a backend from Perl to C or do a new backend in C,
+you should add a line in the converter_format_data table in
+tta/C/convert/converter.c code and register in the table the functions
+needed for the conversion.  This interface is similar to the Perl
+Converter interface, therefore the documentation in
+tta/Texinfo/Convert/Converter.pm could be useful too.
+
+
 The Texinfo parser builds a complicated parse tree.  It can output a lot of
 debug information about the tree, and what it's doing generally.  For example,
 these commands output the tree (in different forms):
@@ -161,7 +164,8 @@ system used to set the paths.  It is possible in that case to use something
 along the following line to test the validity of one source file from
 the perl/ subdirectory:
 
-perl -c -I '.' -I '../maintain/lib/libintl-perl/lib/' -I '../maintain/lib/Unicode-EastAsianWidth/lib/' -I '../maintain/lib/Text-Unidecode/lib' Texinfo/Convert/HTML.pm
+export t2a_srcdir=../
+perl -c -I '.' -I '../maintain/lib/libintl-perl/lib/' -I '../maintain/lib/Unicode-EastAsianWidth/lib/' -I '../maintain/lib/Text-Unidecode/lib' Texinfo/Indices.pm
 
 
 The modules in perl/Texinfo/Example are not developped anymore.  The Docbook

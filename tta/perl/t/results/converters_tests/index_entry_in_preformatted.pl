@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'index_entry_in_preformatted'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -180,6 +184,12 @@ $result_converted{'plaintext'}->{'index_entry_in_preformatted'} = 'top
      text2
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'index_entry_in_preformatted'} = 'cp:
+ first
+ last
+ other
+';
+
 
 $result_converted{'html_text'}->{'index_entry_in_preformatted'} = '<div class="top-level-extent" id="Top">
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
@@ -230,7 +240,8 @@ $result_converted{'docbook'}->{'index_entry_in_preformatted'} = '<chapter label=
 ';
 
 
-$result_converted{'latex_text'}->{'index_entry_in_preformatted'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'index_entry_in_preformatted'} = '\\begin{document}
+\\label{anchor:Top}%
 \\Texinfochapter{{Chapter}}
 \\label{anchor:chap}%
 

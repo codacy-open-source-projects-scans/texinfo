@@ -21,6 +21,7 @@ package Texinfo::Convert::TextContent;
 
 use 5.006;
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -184,7 +185,9 @@ sub _convert($$) {
     } elsif (defined($Texinfo::CommandsValues::text_brace_no_arg_commands{
                                                       $element->{'cmdname'}})) {
       return Texinfo::Convert::Text::brace_no_arg_command($element, undef);
-    } elsif (exists($Texinfo::Commands::accent_commands{$element->{'cmdname'}})) {
+    } elsif (exists($Texinfo::Commands::brace_commands{$element->{'cmdname'}})
+             and $Texinfo::Commands::brace_commands{$element->{'cmdname'}}
+                      eq 'accent') {
       my $result = Texinfo::Convert::Text::text_accents($element,
                   $self->{'convert_text_options'}->{'enabled_encoding'});
       return $result;

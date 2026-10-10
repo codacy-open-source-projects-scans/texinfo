@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'invalid_node_name_no_warning'} = '*document_root C5
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C4 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -177,7 +182,6 @@ $result_texis{'invalid_node_name_no_warning'} = '
 
 
 $result_texts{'invalid_node_name_no_warning'} = '
-
 * truc:: nodename. a
 * machin: node,comma, def
 * bidule:::
@@ -222,7 +226,7 @@ $result_sectioning_root{'invalid_node_name_no_warning'} = '';
 $result_headings_list{'invalid_node_name_no_warning'} = '';
 
 
-$result_converted{'info'}->{'invalid_node_name_no_warning'} = 'This is , produced from .
+$result_converted{'info'}->{'invalid_node_name_no_warning'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: nodename. a,  Up: (dir)
@@ -258,6 +262,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

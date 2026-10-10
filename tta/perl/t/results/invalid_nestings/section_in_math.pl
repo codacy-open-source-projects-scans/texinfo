@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'section_in_math'} = '*document_root C3
- *before_node_section C2
-  {empty_line:\\n}
+ *before_node_section C3
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *paragraph C2
    {Some }
    *@math C1 l2
@@ -19,6 +24,8 @@ $result_tree_text{'section_in_math'} = '*document_root C3
       {}}
  *@section C3 l4 {sec1}
  |EXTRA
+ |identifier:{sec1}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{2}
  |section_number:{1}
@@ -38,6 +45,8 @@ $result_tree_text{'section_in_math'} = '*document_root C3
      {empty_line:\\n}
  *@section C1 l8 {sec2}
  |EXTRA
+ |identifier:{sec2}
+ |is_target:{1}
  |section_heading_number:{2}
  |section_level:{2}
  |section_number:{2}
@@ -60,8 +69,7 @@ More @math{ in math
 ';
 
 
-$result_texts{'section_in_math'} = '
-Some aa {x^2
+$result_texts{'section_in_math'} = 'Some aa {x^2
 
 }1 sec1
 ======

@@ -1,6 +1,6 @@
 # Texinfo_GNU.cnf - reference file for GNU Texinfo manuals on the web.
 
-htmlxrefversion=2026-03-30.30 # UTC
+htmlxrefversion=2026-08-23.19 # UTC
 
 # Copyright 2010-2026 Free Software Foundation, Inc.
 # 
@@ -69,6 +69,10 @@ automake	node	${GS}/automake/manual/html_node/
  #
  automake-history mono	${GS}/automake/history/automake-history.html
  automake-history node	${GS}/automake/history/html_node/
+
+# from gettext libasprinf, could also be grouped with gettext
+autosprintf	mono	${GS}/gettext/libasprintf/manual/autosprintf.html
+autosprintf	node	${GS}/gettext/libasprintf/manual/html_node/
 
 avl		node	http://adtinfo.org/libavl.html/
 
@@ -378,7 +382,7 @@ gcc		node	${GCC}/gcc/
 
 GDB = https://sourceware.org/gdb
 gdb		node	${GDB}/current/onlinedocs/gdb.html/
- stabs		node	${GDB}/onlinedocs/stabs.html/
+ stabs		node	${GDB}/download/onlinedocs/stabs.html/
 
 GDBM = http://www.gnu.org.ua/software/gdbm/manual
 gdbm		node	${GDBM}/

@@ -15,8 +15,10 @@
 
 /* ALTIMP perl/Texinfo/Convert/Converter.pm */
 
+/* used for malloc and free in the same function */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -32,10 +34,14 @@
 
 #include "command_ids.h"
 #include "option_types.h"
+#include "tree_types.h"
 #include "document_types.h"
 #include "converter_types.h"
+/* for HTML_CONVERTER_STATE */
+#include "html_converter_state.h"
 #include "builtin_commands.h"
-/* message_list_document_error message_list_document_formatted_message
+#include "xs_utils.h"
+/* message_list_document_error message_list_format_document_message
    wipe_error_message_list */
 #include "errors.h"
 /*
@@ -71,10 +77,12 @@ PROTOTYPES: ENABLE
 # File paths are byte strings and can be in any encoding.
 # The paths are not of interest here, but we know that init is called
 # early, which is what we want.
+# Let C code initialize the library if called from C (mandatory_xs_sv set).
 int
-init (SV *, SV *, SV *, SV *)
+init (SV *, SV *, SV *, SV *, SV *mandatory_xs_sv)
       CODE:
-        setup_converter_generic ();
+        if (!SvOK (mandatory_xs_sv) || !SvIV (mandatory_xs_sv))
+          setup_converter_generic ();
         RETVAL = 1;
     OUTPUT:
         RETVAL
@@ -149,13 +157,16 @@ _generic_converter_init (SV *converter_in, SV *format_defaults_sv, SV *conf_sv=0
 void
 set_document (SV *converter_in, SV *document_in)
       PREINIT:
+        DOCUMENT *document;
         CONVERTER *self;
       CODE:
         pass_document_sv_to_converter_sv (converter_in, document_in);
 
         /* if a converter is properly initialized, the XS converter should
            always be found when XS is used */
-        self = converter_set_document_from_sv (converter_in, document_in);
+        document = get_converter_and_document_from_sv (converter_in,
+                                                     document_in, &self);
+        converter_set_document (self, document);
 
         pass_converter_text_options (self, converter_in);
 
@@ -312,7 +323,7 @@ converter_document_error (SV *converter_in, text, ...)
           continuation = SvIV (ST(2));
         if (self)
           {
-            message_list_document_formatted_message (&self->error_messages,
+            message_list_format_document_message (&self->error_messages,
               self->conf, MSG_document_error, continuation, text);
           }
 
@@ -329,7 +340,7 @@ converter_document_warn (SV *converter_in, text, ...)
           continuation = SvIV (ST(2));
         if (self)
           {
-            message_list_document_formatted_message (&self->error_messages,
+            message_list_format_document_message (&self->error_messages,
                      self->conf, MSG_document_warning, continuation, text);
           }
 
@@ -426,11 +437,16 @@ get_converter_indices_sorted_by_index (SV *converter_sv)
      CODE:
         self = get_sv_converter (converter_sv,
                                  "get_converter_indices_sorted_by_index");
-        if (self)
-          index_entries_by_index
-            = get_converter_indices_sorted_by_index (self, &language);
-
         converter_hv = (HV *) SvRV (converter_sv);
+        if (self)
+          {
+            self->current_lang_translations
+              = get_hv_lang_translation (converter_hv);
+
+            index_entries_by_index
+              = get_converter_indices_sorted_by_index (self, &language);
+          }
+
         document_sv = hv_fetch (converter_hv, "document",
                                 strlen ("document"), 0);
         RETVAL = 0;
@@ -561,6 +577,29 @@ get_converter_indices_sorted_by_letter (SV *converter_sv)
     OUTPUT:
         RETVAL
 
+SV *
+print_converter_indices_sort_strings (SV *converter_sv)
+     PREINIT:
+        CONVERTER *self;
+        char *result = 0;
+     CODE:
+        self = get_sv_converter (converter_sv,
+                                 "print_converter_indices_sort_strings");
+        if (self)
+          {
+            result = print_converter_indices_sort_strings (self);
+          }
+        if (result)
+          {
+            RETVAL = newSVpv_utf8 (result, 0);
+            non_perl_free (result);
+          }
+        else
+          RETVAL = newSV (0);
+    OUTPUT:
+        RETVAL
+
+
 # pass the stream of an unclosed file path.
 # tried with OutputStream instead of FILE, but it did not work, there
 # was an error with a missing type.
@@ -684,13 +723,14 @@ XS_get_output_units_lists (SV *converter_in)
                                  "get_output_units_lists");
 
         store_document_tree_output_units (self->document);
+        HTML_CONVERTER_STATE *self_html = self->html_converter;
 
         output_units_sv = build_output_units_list (self->document,
-                           self->output_units_descriptors[OUDT_units]);
+          self_html->output_units_descriptors[OUDT_units]);
         special_units_sv = build_output_units_list (self->document,
-                     self->output_units_descriptors[OUDT_special_units]);
+          self_html->output_units_descriptors[OUDT_special_units]);
         associated_special_units_sv = build_output_units_list (self->document,
-          self->output_units_descriptors[OUDT_associated_special_units]);
+          self_html->output_units_descriptors[OUDT_associated_special_units]);
 
         EXTEND(SP, 3);
         PUSHs(sv_2mortal(output_units_sv));

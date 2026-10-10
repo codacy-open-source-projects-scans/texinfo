@@ -1463,8 +1463,11 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
   outstr = xmalloc (width
          + (desc_len + width) / (width - align) * width * 2 * sizeof (char));
   outstr[0] = '\0';
+  char *poutstr = outstr;
 
-  strncat (outstr, name, name_len);
+#define cat(out, str, len) { memcpy (out, str, len); out += len; }
+
+  cat (poutstr, name, name_len);
 
   column = name_len;
 
@@ -1473,12 +1476,12 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
       /* Name is too long to have description on the same line. */
       if (desc_len > 1)
         {
-          strcat (outstr, "\n");
+          cat (poutstr, "\n", 1);
           column = 0;
           for (j = 0; j < calign - 1; j++)
             {
               column = adjust_column (column, ' ');
-              strcat (outstr, " ");
+              cat (poutstr, " ", 1);
             }
         }
     }
@@ -1488,7 +1491,7 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
         if (desc_len <= 2)
           break;
         column = adjust_column (column, ' ');
-        strcat (outstr, " ");
+        cat (poutstr, " ", 1);
       }
 
   for (i = 0; i < desc_len; i++)
@@ -1499,15 +1502,13 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
       if (offset_out + 1 >= allocated_out)
         {
           allocated_out = offset_out + 1;
-          line_out = (char *) xrealloc ((void *)line_out, allocated_out + 1);
-          /* The + 1 here shouldn't be necessary, but a crash was reported
-             for a following strncat call. */
+          line_out = (char *) xrealloc ((void *)line_out, allocated_out);
         }
 
       if (c == '\n')
         {
           line_out[offset_out++] = c;
-          strncat (outstr, line_out, offset_out);
+          cat (poutstr, line_out, offset_out);
           column = offset_out = 0;
           continue;
         }
@@ -1543,12 +1544,12 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
 
               /* Found a blank.  Don't output the part after it. */
               logical_end++;
-              strncat (outstr, line_out, logical_end);
-              strcat (outstr, "\n");
+              cat (poutstr, line_out, logical_end);
+              cat (poutstr, "\n", 1);
               for (j = 0; j < align - 1; j++)
                 {
                   column = adjust_column (column, ' ');
-                  strcat (outstr, " ");
+                  cat (poutstr, " ", 1);
                 }
 
               /* Move the remainder to the beginning of the next 
@@ -1569,7 +1570,7 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
             }
 
           line_out[offset_out++] = '\n';
-          strncat (outstr, line_out, offset_out);
+          cat (poutstr, line_out, offset_out);
           column = offset_out = 0;
           goto rescan;
         }
@@ -1577,15 +1578,18 @@ format_entry (char *name, size_t name_len, char *desc, size_t desc_len,
     }
 
   if (desc_len <= 2)
-    strcat (outstr, "\n");
+    cat (poutstr, "\n", 1);
 
   if (offset_out)
-    strncat (outstr, line_out, offset_out);
+    cat (poutstr, line_out, offset_out);
+
+  poutstr[0] = '\0';
 
   free (*outstr_out);
   *outstr_out = outstr;
-  *outstr_len = strlen (outstr);
+  *outstr_len = poutstr - outstr;
   return 1;
+#undef cat
 }
 
 
@@ -1621,12 +1625,16 @@ split_entry (const char *entry, char **name, size_t *name_len,
   /* The name is everything up to and including the period. */
   *name_len = (size_t) (ptr - entry + 1);
   *name = xmalloc (*name_len + 1);
-  (*name)[0] = '\0';
-  strncat (*name, entry, *name_len);
+  memcpy (*name, entry, *name_len);
+  (*name)[*name_len] = '\0';
 
   ptr++;
-  *description = xmalloc (strlen (entry));
-  (*description)[0] = '\0';
+  int extra = 10;
+  *description = xmalloc (strlen (ptr) + extra + 1);
+  char *pdesc = *description;
+  *pdesc = '\0';
+
+#define cat(out, str, len) { memcpy (out, str, len); out += len; }
 
   while (ptr[0] != '\0')
     {
@@ -1643,15 +1651,17 @@ split_entry (const char *entry, char **name, size_t *name_len,
       /* Either the description continues up to the next newline. */
       if (endptr)
         {
-          size_t length  = (size_t) (endptr - ptr) / sizeof (char);
-          strncat (*description, ptr, length);
+          size_t length  = (size_t) (endptr - ptr);
+          cat (pdesc, ptr, length);
           ptr = endptr;
           /* First of all, we eat the newline here.  But then what?
              Sometimes the newline separates 2 sentences, so we
              end up with the next word starting directly after the period,
-             instead of after the customary 2 spaces in english. 
+             instead of after the customary 2 spaces in English.
              If the previous character was a `.', then we should add 2
              spaces if there is anything on the next line.
+             (We can only do this a limited number of times as each time
+             we consume an extra byte.)
              if it's a comma, then we should put one space.
              If it's neither, we just put a space.
              If it's some other whitespace, we shouldn't do anything. */
@@ -1661,22 +1671,32 @@ split_entry (const char *entry, char **name, size_t *name_len,
               endptr--;
               /* *ENDPTR is the 2nd last character */
               if (*endptr == '.')
-                strcat (*description, "  ");
+                {
+                  if (extra)
+                    {
+                      cat (pdesc, "  ", 2);
+                      extra--;
+                    }
+                  else
+                    cat (pdesc, " ", 1);
+                }
               else if (!isspace ((unsigned char) *endptr))
-                strcat (*description, " ");
+                cat (pdesc, " ", 1);
             }
         }
       /* Or the description continues to the end of the string. */
       else
         {
           /* Just show the rest when there's no newline. */
-          strcat (*description, ptr);
-          ptr += strlen (ptr);
+          size_t ptrlen = strlen (ptr);
+          cat (pdesc, (ptr += ptrlen), ptrlen);
         }
     }
   /* Descriptions end in a new line. */
-  strcat (*description, "\n");
-  *description_len = strlen (*description);
+  cat (pdesc, "\n", 1);
+  *pdesc = '\0';
+  *description_len = pdesc - *description;
+#undef cat
 }
 
 

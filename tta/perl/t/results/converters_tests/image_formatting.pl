@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'image_formatting'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -778,19 +782,20 @@ $result_converted_errors{'docbook'}->{'image_formatting'} = '* W l14|@image file
 ';
 
 
-$result_converted{'latex_text'}->{'image_formatting'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'image_formatting'} = '\\begin{document}
+\\label{anchor:Top}%
 \\Texinfochapter{{Chapter}}
 \\label{anchor:chap}%
 
 \\texttt{@image\\{f{-}{-}ile\\}} \\includegraphics{f--ile}
 \\texttt{@image\\{f{-}{-}ile,l{-}{-}i\\}} \\includegraphics[width=l--i]{f--ile}
 \\texttt{@image\\{f{-}{-}ile{,}{,}l{-}{-}e\\}} \\includegraphics[height=l--e]{f--ile}
-\\texttt{@image\\{f{-}{-}ile{,}{,},alt\\}} \\includegraphics{f--ile}
+\\texttt{@image\\{f{-}{-}ile{,}{,},alt\\}} \\includegraphics[alt={alt}]{f--ile}
 \\texttt{@image\\{f{-}{-}ile{,}{,}{,}{,}e-d-xt\\}} \\includegraphics{f--ile}
-\\texttt{@image\\{f{-}{-}ile,aze,az,alt,e{-}{-}xt\\}} \\includegraphics[width=aze,height=az]{f--ile}
-\\texttt{@image\\{f{-}{-}ile,aze,az,alt,} \\includegraphics[width=aze,height=az]{f--ile}
-\\texttt{@image\\{f-ile,aze{,}{,}a{-}{-}lt\\}} \\includegraphics[width=aze]{f-ile}
-\\texttt{@image\\{@file\\{f{-}{-}ile\\}@@@.,aze,az,alt,@file\\{file ext\\}\\ e{-}{-}xt@\\}} \\includegraphics[width=aze,height=az]{f--ile@.}
+\\texttt{@image\\{f{-}{-}ile,aze,az,alt,e{-}{-}xt\\}} \\includegraphics[width=aze,height=az,alt={alt}]{f--ile}
+\\texttt{@image\\{f{-}{-}ile,aze,az,alt,} \\includegraphics[width=aze,height=az,alt={alt}]{f--ile}
+\\texttt{@image\\{f-ile,aze{,}{,}a{-}{-}lt\\}} \\includegraphics[width=aze,alt={a-lt}]{f-ile}
+\\texttt{@image\\{@file\\{f{-}{-}ile\\}@@@.,aze,az,alt,@file\\{file ext\\}\\ e{-}{-}xt@\\}} \\includegraphics[width=aze,height=az,alt={alt}]{f--ile@.}
 \\includegraphics{image} \\includegraphics{image}
 
 \\begin{Texinfoindented}
@@ -798,19 +803,19 @@ $result_converted{'latex_text'}->{'image_formatting'} = '\\label{anchor:Top}%
 \\ttfamily \\texttt{@image\\{f{-}{-}ile\\}}\\ \\includegraphics{f--ile}
 \\texttt{@image\\{f{-}{-}ile,l{-}{-}i\\}}\\ \\includegraphics[width=l--i]{f--ile}
 \\texttt{@image\\{f{-}{-}ile{,}{,}l{-}{-}e\\}}\\ \\includegraphics[height=l--e]{f--ile}
-\\texttt{@image\\{f{-}{-}ile{,}{,},alt\\}}\\ \\includegraphics{f--ile}
+\\texttt{@image\\{f{-}{-}ile{,}{,},alt\\}}\\ \\includegraphics[alt={alt}]{f--ile}
 \\texttt{@image\\{f{-}{-}ile{,}{,}{,}{,}e-d-xt\\}}\\ \\includegraphics{f--ile}
-\\texttt{@image\\{f{-}{-}ile,aze,az,alt,e{-}{-}xt\\}}\\ \\includegraphics[width=aze,height=az]{f--ile}
-\\texttt{@image\\{f-ile,aze{,}{,}a{-}{-}lt\\}}\\ \\includegraphics[width=aze]{f-ile}
-\\texttt{@image\\{@file\\{f{-}{-}ile\\}@@@.,aze,az,alt,@file\\{file ext\\}\\ e{-}{-}xt@\\}}\\ \\includegraphics[width=aze,height=az]{f--ile@.}
+\\texttt{@image\\{f{-}{-}ile,aze,az,alt,e{-}{-}xt\\}}\\ \\includegraphics[width=aze,height=az,alt={alt}]{f--ile}
+\\texttt{@image\\{f-ile,aze{,}{,}a{-}{-}lt\\}}\\ \\includegraphics[width=aze,alt={a-lt}]{f-ile}
+\\texttt{@image\\{@file\\{f{-}{-}ile\\}@@@.,aze,az,alt,@file\\{file ext\\}\\ e{-}{-}xt@\\}}\\ \\includegraphics[width=aze,height=az,alt={alt}]{f--ile@.}
 \\includegraphics{image}\\ \\includegraphics{image}
 \\end{Texinfopreformatted}
 \\end{Texinfoindented}
 
-\\includegraphics{f--ile}
+\\includegraphics[alt={a very long alt argument that could span more than one line who knows}]{f--ile}
 
 in para
-\\includegraphics{f--ile}.
+\\includegraphics[alt={a very long alt argument that could span more than one line who knows}]{f--ile}.
 ';
 
 $result_converted_errors{'latex_text'}->{'image_formatting'} = '* W l14|@image file `f-ile\' (for LaTeX) not found
@@ -840,7 +845,7 @@ $result_converted_errors{'latex_text'}->{'image_formatting'} = '* W l14|@image f
 ';
 
 
-$result_converted{'info'}->{'image_formatting'} = 'This is , produced from .
+$result_converted{'info'}->{'image_formatting'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -897,6 +902,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

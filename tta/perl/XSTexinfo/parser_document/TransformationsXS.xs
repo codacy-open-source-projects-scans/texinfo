@@ -40,29 +40,20 @@ MODULE = Texinfo::Transformations	PACKAGE = Texinfo::Transformations
 PROTOTYPES: ENABLE
 
 void
-fill_gaps_in_sectioning_in_document (SV *document_in, ...)
+fill_gaps_in_sectioning_in_document (SV *document_in, SV *commands_heading_texi_sv=0)
     PROTOTYPE: $;$
     PREINIT:
-        ELEMENT_LIST *added_sections;
         DOCUMENT *document;
      CODE:
         document = get_sv_document_document (document_in,
                               "fill_gaps_in_sectioning_in_document");
         if (document)
           {
-            const ELEMENT *commands_heading_content = 0;
-            if (items > 1 && SvOK(ST(1)))
-              {
-                DOCUMENT *commands_heading_document
-                   = get_sv_tree_document (ST(1), 0);
-                if (commands_heading_document)
-                  commands_heading_content = commands_heading_document->tree;
-              }
-            added_sections = fill_gaps_in_sectioning_in_document (document,
-                                                   commands_heading_content);
-            /* cannot easily be used as it does not match with perl tree.
-               Also the return would not be usable as error status */
-            destroy_list (added_sections);
+            const char *commands_heading_texi = 0;
+            if (commands_heading_texi_sv && SvOK(commands_heading_texi_sv))
+              commands_heading_texi = SvPVutf8_nolen (commands_heading_texi_sv);
+            fill_gaps_in_sectioning_in_document (document,
+                                                 commands_heading_texi);
           }
 
 void
@@ -120,21 +111,6 @@ regenerate_master_menu (SV *document_in, SV *use_sections_in=0)
           }
         if (document)
           regenerate_master_menu (document, use_sections);
-
-# The perl function returns the list of added nodes.
-void
-insert_nodes_for_sectioning_commands (SV *document_in)
-    PREINIT:
-        DOCUMENT *document = 0;
-    CODE:
-        document = get_sv_document_document (document_in,
-                               "insert_nodes_for_sectioning_commands");
-        if (document)
-          {
-            ELEMENT_LIST *added_nodes
-              = insert_nodes_for_sectioning_commands (document);
-            destroy_list (added_nodes);
-          }
 
 void
 protect_hashchar_at_line_beginning_in_document (SV *document_in)

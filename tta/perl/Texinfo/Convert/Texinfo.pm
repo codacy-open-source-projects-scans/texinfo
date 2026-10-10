@@ -49,25 +49,20 @@ use Texinfo::Common;
 require Exporter;
 our @ISA = qw(Exporter);
 
+our $VERSION = '7.3dev';
+
 our @EXPORT_OK = qw(
   convert_to_texinfo
   link_element_to_texi
   target_element_to_texi_label
 );
 
-our $VERSION = '7.3dev';
-
 
 BEGIN {
-  my $shared_library_name = "ConvertTexinfoXS";
-  if (!Texinfo::XSLoader::XS_convert_enabled()) {
-    undef $shared_library_name;
-  }
-
   Texinfo::XSLoader::init (
       "Texinfo::Convert::Texinfo",
       "Texinfo::Convert::TexinfoNonXS",
-      $shared_library_name,
+      'ConvertTexinfoXS',
       undef,
       ['texinfo', 'texinfoxs'],
   );
@@ -183,15 +178,14 @@ sub root_heading_command_to_texinfo($) {
                                                            eq 'line_arg'
         and exists(
               $element->{'contents'}->[0]->{'contents'}->[0]->{'contents'})) {
-      $tree = $element->{'contents'}->[0]->{'contents'}->[0];
+      my $heading_content = $element->{'contents'}->[0]->{'contents'}->[0];
+      $tree = Texinfo::Common::non_leading_trailing_tree($heading_content);
     }
   } else {
     return "Not a command";
   }
   if (defined($tree)) {
-    return '@'.$element->{'cmdname'}.' '
-                .convert_to_texinfo(
-               Texinfo::TreeElement::new({'contents' => $tree->{'contents'}}));
+    return '@'.$element->{'cmdname'}.' '. convert_to_texinfo($tree);
   } else {
     return '@'.$element->{'cmdname'};
   }

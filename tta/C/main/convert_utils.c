@@ -22,12 +22,15 @@
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+/* for time_t, ssize_t */
+#include <sys/types.h>
 
 #include "text.h"
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
 #include "options_data.h"
+#include "option_types.h"
 #include "types_data.h"
 #include "builtin_commands.h"
 #include "tree.h"
@@ -59,13 +62,13 @@ setup_convert_utils (void)
   default_asis_command = new_command_element (ET_brace_command, CM_asis);
 }
 
-/* in Texinfo::Common */
+/* ALTIMP Texinfo::Common */
 static const char *
 element_associated_processing_encoding (const ELEMENT *element)
 {
   const char *input_encoding = lookup_extra_string (element,
                                               AI_key_input_encoding_name);
-  return input_encoding;
+  return processing_output_encoding (input_encoding);
 }
 
 
@@ -315,12 +318,8 @@ free_comma_index_subentries_tree (ELEMENT_LIST *element_list)
 }
 
 ELEMENT *
-expand_today (int test, LANG_TRANSLATION *lang_translation,
-              int debug, CONVERTER *converter,
-   ELEMENT * (*cdt_tree_fn) (const char *string, CONVERTER *self,
-                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                             const char *translation_context)
-             )
+expand_today (int test, const LANG_TRANSLATION *lang_translation,
+              int debug, CONVERTER_CDT_TREE *converter_cdt_tree)
 {
   time_t tloc;
   struct tm *time_tm;
@@ -353,7 +352,7 @@ expand_today (int test, LANG_TRANSLATION *lang_translation,
 
   year = time_tm->tm_year + 1900;
 
-  if ((converter && cdt_tree_fn) || lang_translation)
+  if (converter_cdt_tree || lang_translation)
     {
       NAMED_STRING_ELEMENT_LIST *substrings;
       ELEMENT *month_tree;
@@ -365,16 +364,17 @@ expand_today (int test, LANG_TRANSLATION *lang_translation,
       text_printf (day_element->e.text, "%d", time_tm->tm_mday);
       text_printf (year_element->e.text, "%d", year);
 
-      if (converter && cdt_tree_fn)
+      if (converter_cdt_tree)
         {
           month_tree
-          = cdt_tree_fn (convert_utils_month_name[time_tm->tm_mon],
-                         converter, 0, 0);
+            = converter_cdt_tree->cdt_tree_fn (
+                       convert_utils_month_name[time_tm->tm_mon],
+                       converter_cdt_tree->converter, 0, 0);
         }
       else
         {
           month_tree = gdt_tree (convert_utils_month_name[time_tm->tm_mon],
-                                 0, lang_translation, 0, debug, 0);
+                                 0, lang_translation, 0, 0, debug, 0);
         }
       substrings = new_named_string_element_list ();
       add_element_to_named_string_element_list (substrings,
@@ -384,15 +384,17 @@ expand_today (int test, LANG_TRANSLATION *lang_translation,
       add_element_to_named_string_element_list (substrings,
                                                 "year", year_element);
 
-      if (converter && cdt_tree_fn)
+      if (converter_cdt_tree)
         {
-          result = cdt_tree_fn ("{month} {day}, {year}", converter,
-                                substrings, 0);
+          result
+            = converter_cdt_tree->cdt_tree_fn ("{month} {day}, {year}",
+                                     converter_cdt_tree->converter,
+                                     substrings, 0);
         }
       else
         {
           result = gdt_tree ("{month} {day}, {year}", 0, lang_translation,
-                             substrings, debug, 0);
+                             substrings, 0, debug, 0);
         }
       destroy_named_string_element_list (substrings);
     }
@@ -406,28 +408,28 @@ expand_today (int test, LANG_TRANSLATION *lang_translation,
   return result;
 }
 
-char *
-add_heading_number (const ELEMENT *current, char *text,
-                    int numbered, LANG_TRANSLATION *lang_translation)
+/* free TEXT if not reused */
+TEXT
+add_heading_number (const ELEMENT *current, TEXT text,
+                    int numbered, const LANG_TRANSLATION *lang_translation,
+                    int debug_level)
 {
-  TEXT result;
   char *number = 0;
   if (numbered != 0)
     number = lookup_extra_string (current, AI_key_section_heading_number);
-
-  text_init (&result);
 
   if (lang_translation)
     {
       if (number)
         {
-          char *numbered_heading = 0;
+          TEXT numbered_heading;
+          text_init (&numbered_heading);
           NAMED_STRING_ELEMENT_LIST *substrings
                                        = new_named_string_element_list ();
           add_string_to_named_string_element_list (substrings,
                                                   "number", number);
           add_string_to_named_string_element_list (substrings,
-                                             "section_title", text);
+                                             "section_title", text.text);
           if (current->e.c->cmd == CM_appendix)
             {
               int status;
@@ -438,24 +440,28 @@ add_heading_number (const ELEMENT *current, char *text,
                 {
                   numbered_heading
                    = gdt_string ("Appendix {number} {section_title}",
-                                 lang_translation, substrings, 0);
+                                 lang_translation, substrings, 0,
+                                 debug_level, 0);
                 }
             }
-          if (!numbered_heading)
+          if (!numbered_heading.text)
             numbered_heading
               = gdt_string ("{number} {section_title}",
-                            lang_translation, substrings, 0);
+                            lang_translation, substrings, 0,
+                            debug_level, 0);
 
           destroy_named_string_element_list (substrings);
-
-          text_append (&result, numbered_heading);
-          free (numbered_heading);
+          free (text.text);
+          return numbered_heading;
         }
       else
-        text_append (&result, text);
+        return text;
     }
   else
     {
+      TEXT result;
+      text_init (&result);
+
       if (current->e.c->cmd == CM_appendix)
         {
           int status;
@@ -470,21 +476,10 @@ add_heading_number (const ELEMENT *current, char *text,
           text_append (&result, number);
           text_append (&result, " ");
         }
-      text_append (&result, text);
+      text_append_n (&result, text.text, text.end);
+      free (text.text);
+      return result;
     }
-  return result.text;
-}
-
-static char *
-convert_to_utf8_verbatiminclude (char *s,
-                                 const ENCODING_CONVERSION *conversion,
-                                 const SOURCE_INFO *source_info)
-{
-  char *result;
-  if (!conversion)
-    return strdup (s);
-  result = encode_with_iconv (conversion->iconv, s, source_info, ieh_error, 0);
-  return result;
 }
 
 /*
@@ -621,6 +616,7 @@ expand_verbatiminclude (const ELEMENT *current,
   char *file;
   const char *input_encoding;
   int warn;
+  int use_inc_dir;
 
   if (!file_name_text)
     return 0;
@@ -635,7 +631,7 @@ expand_verbatiminclude (const ELEMENT *current,
                                        &file_name_encoding,
                                        &current->e.c->source_info);
 
-  file = locate_include_file (file_name, include_directories);
+  file = locate_include_file (file_name, include_directories, &use_inc_dir);
 
   if (file)
     {
@@ -670,7 +666,7 @@ expand_verbatiminclude (const ELEMENT *current,
             {
               size_t n;
               char *line = 0;
-              char *text;
+              size_t line_len;
               ELEMENT *raw;
               ssize_t status = getline (&line, &n, stream);
               if (status == -1)
@@ -679,13 +675,22 @@ expand_verbatiminclude (const ELEMENT *current,
                   break;
                 }
 
-              text = convert_to_utf8_verbatiminclude
-                       (line, conversion, &current->e.c->source_info);
-              free (line);
+              line_len = strlen (line);
+
               raw = new_text_element (ET_raw);
-              text_append (raw->e.text, text);
+              if (conversion)
+                {
+                  TEXT text = encode_with_iconv (conversion->iconv, line,
+                                              line_len,
+                                              &current->e.c->source_info,
+                                              ieh_error, 0);
+                  text_append_n (raw->e.text, text.text, text.end);
+                  free (text.text);
+                }
+              else
+                text_append_n (raw->e.text, line, line_len);
+              free (line);
               add_to_contents_as_array (verbatiminclude, raw);
-              free (text);
             }
           if (fclose (stream) == EOF)
             {
@@ -752,43 +757,43 @@ converter_expand_verbatiminclude (const ELEMENT *current,
             global_information, debug);
 }
 
+/* ELEMENT should be a @def*x or a @def*line line commands or the
+   def_line type appearing right in the other @def commands. */
 PARSED_DEF *
 definition_arguments_content (const ELEMENT *element)
 {
   PARSED_DEF *result = malloc (sizeof (PARSED_DEF));
   memset (result, 0, sizeof (PARSED_DEF));
-  /* this condition is most probably always true */
-  if (element->e.c->contents.number > 0)
+  size_t i;
+
+  const ELEMENT *def_line_args = element->e.c->contents.list[0];
+
+  if (def_line_args->e.c->contents.number > 0)
     {
-      size_t i;
-      const ELEMENT *def_line = element->e.c->contents.list[0];
-      if (def_line->e.c->contents.number > 0)
+      for (i = 0; i < def_line_args->e.c->contents.number; i++)
         {
-          for (i = 0; i < def_line->e.c->contents.number; i++)
+          ELEMENT *arg = def_line_args->e.c->contents.list[i];
+          if (arg->type == ET_def_class)
+            result->class = arg;
+          else if (arg->type == ET_def_category)
+            result->category = arg;
+          else if (arg->type == ET_def_type)
+            result->type = arg;
+          else if (arg->type == ET_def_name)
+            result->name = arg;
+          else if (arg->type == ET_def_arg || arg->type == ET_def_typearg
+                   || arg->type == ET_delimiter)
             {
-              ELEMENT *arg = def_line->e.c->contents.list[i];
-              if (arg->type == ET_def_class)
-                result->class = arg;
-              else if (arg->type == ET_def_category)
-                result->category = arg;
-              else if (arg->type == ET_def_type)
-                result->type = arg;
-              else if (arg->type == ET_def_name)
-                result->name = arg;
-              else if (arg->type == ET_def_arg || arg->type == ET_def_typearg
-                       || arg->type == ET_delimiter)
-                {
-                  i--;
-                  break;
-                }
+              i--;
+              break;
             }
-          if (i < def_line->e.c->contents.number - 1)
-            {
-              ELEMENT *args = new_element (ET_NONE);
-              insert_slice_into_contents (args, 0, def_line,
-                                          i + 1, def_line->e.c->contents.number);
-              result->args = args;
-            }
+        }
+      if (i < def_line_args->e.c->contents.number - 1)
+        {
+          ELEMENT *args = new_element (ET_NONE);
+          insert_slice_into_contents (args, 0, def_line_args, i + 1,
+                                 def_line_args->e.c->contents.number);
+          result->args = args;
         }
     }
   return result;
@@ -802,47 +807,40 @@ destroy_parsed_def (PARSED_DEF *parsed_def)
   free (parsed_def);
 }
 
-/* the CONVERTER and CDT_TREE_FN arguments allow to use the HTML converter
+/* ELEMENT should be a @def*x or a @def*line line commands or the
+   def_line type appearing right in the other @def commands.
+   the CONVERTER_CDT_TREE argument allows to use the HTML converter
    specific translation function.
-   If they are not specified, LANG_TRANSLATION is used for translations
+   If it is not specified, LANG_TRANSLATION is used for translations
    information.
    If not set, translation is based on information in the element.
-   FIXME COMMAND_LINE_ENCODING is never used.
  */
 ELEMENT *
-definition_category_tree (const ELEMENT *current,
-                          LANG_TRANSLATION *lang_translation,
-                          const char *command_line_encoding,
-                          int debug, CONVERTER *converter,
-   ELEMENT * (*cdt_tree_fn) (const char *string, CONVERTER *self,
-                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                             const char *translation_context)
-                         )
+definition_category_tree (const ELEMENT *element,
+                          const LANG_TRANSLATION *lang_translation,
+                          int debug, CONVERTER_CDT_TREE *converter_cdt_tree)
 {
   ELEMENT *result = 0;
   ELEMENT *arg_category = 0;
   ELEMENT *arg_class = 0;
   ELEMENT *class_copy;
-  char *def_command;
+  const char *def_cmdname;
+  enum command_id def_command;
+  size_t i;
 
-  if (current->e.c->contents.number > 0)
+  const ELEMENT *def_line_args = element->e.c->contents.list[0];
+
+  for (i = 0; i < def_line_args->e.c->contents.number; i++)
     {
-      size_t i;
-      const ELEMENT *def_line = current->e.c->contents.list[0];
-      for (i = 0; i < def_line->e.c->contents.number; i++)
-        {
-          ELEMENT *arg = def_line->e.c->contents.list[i];
-          if (arg->type == ET_def_class)
-            arg_class = arg;
-          else if (arg->type == ET_def_category)
-            arg_category = arg;
-          else if (arg->type == ET_def_arg || arg->type == ET_def_typearg
-                   || arg->type == ET_delimiter)
-            break;
-        }
+      ELEMENT *arg = def_line_args->e.c->contents.list[i];
+      if (arg->type == ET_def_class)
+        arg_class = arg;
+      else if (arg->type == ET_def_category)
+        arg_category = arg;
+      else if (arg->type == ET_def_arg || arg->type == ET_def_typearg
+               || arg->type == ET_delimiter)
+        break;
     }
-  else
-    return 0;
 
   if (!arg_class)
     {
@@ -857,13 +855,10 @@ definition_category_tree (const ELEMENT *current,
 
   class_copy = copy_element_tree (arg_class, 0);
 
-  def_command = lookup_extra_string (current, AI_key_def_command);
+  def_cmdname = lookup_extra_string (element, AI_key_def_command);
+  def_command = lookup_builtin_command (def_cmdname);
 
-  /* do something more efficient */
-  if (!strcmp (def_command, "defop")
-      || !strcmp (def_command, "deftypeop")
-      || !strcmp (def_command, "defmethod")
-      || !strcmp (def_command, "deftypemethod"))
+  if (command_data[def_command].flags & CF_def_class_method)
     {
       ELEMENT *category_copy = copy_element_tree (arg_category, 0);
       NAMED_STRING_ELEMENT_LIST *substrings
@@ -872,10 +867,12 @@ definition_category_tree (const ELEMENT *current,
                                                 "category", category_copy);
       add_element_to_named_string_element_list (substrings,
                                                 "class", class_copy);
-      if (converter && cdt_tree_fn)
+      if (converter_cdt_tree)
         {
-          result = cdt_tree_fn ("{category} on @code{{class}}", converter,
-                                substrings, 0);
+          result
+            = converter_cdt_tree->cdt_tree_fn ("{category} on @code{{class}}",
+                                               converter_cdt_tree->converter,
+                                               substrings, 0);
         }
       else if (lang_translation)
         {
@@ -883,27 +880,20 @@ definition_category_tree (const ELEMENT *current,
      TRANSLATORS: association of a method or operation category with a class
      in descriptions of object-oriented programming methods or operations. */
           result = gdt_tree ("{category} on @code{{class}}", 0,
-                             lang_translation, substrings, debug, 0);
+                             lang_translation, substrings, 0, debug, 0);
         }
       else
         {
-          LANG_TRANSLATION *lang_translation
-            = new_element_language_translation (current);
+          const LANG_TRANSLATION *lang_translation
+           = new_element_language_translation (&converters_translation_cache,
+                                            element, TXI_CONVERT_STRINGS_NR);
 
           result = gdt_tree ("{category} on @code{{class}}", 0,
-                             lang_translation, substrings, 0, 0);
-
-          if (lang_translation)
-            {
-              free_lang_translation (lang_translation);
-              free (lang_translation);
-            }
+                             lang_translation, substrings, 0, debug, 0);
         }
       destroy_named_string_element_list (substrings);
-    } else if (!strcmp (def_command, "defivar")
-      || !strcmp (def_command, "deftypeivar")
-      || !strcmp (def_command, "defcv")
-      || !strcmp (def_command, "deftypecv"))
+    }
+  else if (command_data[def_command].flags & CF_def_class_variable)
     {
       ELEMENT *category_copy = copy_element_tree (arg_category, 0);
       NAMED_STRING_ELEMENT_LIST *substrings
@@ -912,10 +902,13 @@ definition_category_tree (const ELEMENT *current,
                                                 "category", category_copy);
       add_element_to_named_string_element_list (substrings,
                                                 "class", class_copy);
-      if (converter && cdt_tree_fn)
+
+      if (converter_cdt_tree)
         {
-          result = cdt_tree_fn ("{category} of @code{{class}}", converter,
-                                substrings, 0);
+          result
+            = converter_cdt_tree->cdt_tree_fn ("{category} of @code{{class}}",
+                                               converter_cdt_tree->converter,
+                                               substrings, 0);
         }
       else if (lang_translation)
         {
@@ -924,21 +917,16 @@ definition_category_tree (const ELEMENT *current,
       a class in descriptions of object-oriented programming variables
       or instance variable. */
           result = gdt_tree ("{category} of @code{{class}}", 0,
-                             lang_translation, substrings, debug, 0);
+                             lang_translation, substrings, 0, debug, 0);
         }
       else
         {
-          LANG_TRANSLATION *lang_translation
-            = new_element_language_translation (current);
+          const LANG_TRANSLATION *lang_translation
+           = new_element_language_translation (&converters_translation_cache,
+                                            element, TXI_CONVERT_STRINGS_NR);
 
           result = gdt_tree ("{category} of @code{{class}}", 0,
-                             lang_translation, substrings, 0, 0);
-
-          if (lang_translation)
-            {
-              free_lang_translation (lang_translation);
-              free (lang_translation);
-            }
+                             lang_translation, substrings, 0, debug, 0);
         }
       destroy_named_string_element_list (substrings);
     }
@@ -1058,7 +1046,6 @@ itemize_line_prepended_element (const ELEMENT *block_line_arg)
 }
 
 /* in Texinfo::Common */
-/* Unused
 const ELEMENT *
 item_itemize_prepended (const ELEMENT *element)
 {
@@ -1067,7 +1054,6 @@ item_itemize_prepended (const ELEMENT *element)
   return itemize_line_prepended_element (
                       arguments_line->e.c->contents.list[0]);
 }
- */
 
 const ELEMENT *
 item_line_block_line_argument_command (const ELEMENT *block_line_arg)
@@ -1077,7 +1063,7 @@ item_line_block_line_argument_command (const ELEMENT *block_line_arg)
   if (arg)
     {
       enum command_id data_cmd = element_builtin_data_cmd (arg);
-      if (builtin_command_data[data_cmd].data == BRACE_noarg)
+      if (command_data[data_cmd].data == BRACE_noarg)
         arg = 0;
     }
 
@@ -1154,7 +1140,7 @@ table_item_content_tree (CONVERTER *self, const ELEMENT *element)
           if (command_name)
             command->e.c->string_info[sit_command_name] = strdup (command_name);
         }
-      if (builtin_command_data[data_cmd].data == BRACE_context)
+      if (command_data[data_cmd].data == BRACE_context)
         {
     /* This corresponds to a bogus @*table line with command line @footnote
        or @math.  We do not really care about the formatting of the result
@@ -1173,7 +1159,7 @@ table_item_content_tree (CONVERTER *self, const ELEMENT *element)
               add_to_contents_as_array (arg, paragraph);
             }
         }
-      else if (builtin_command_data[data_cmd].data == BRACE_arguments)
+      else if (command_data[data_cmd].data == BRACE_arguments)
         {
           arg = new_element_added (tree, ET_brace_arg);
           add_to_contents_as_array (arg, element->e.c->contents.list[0]);
@@ -1211,9 +1197,9 @@ find_element_authors_internal (const ELEMENT *element,
       || cmd == CM_smallquotation
       || cmd == CM_titlepage
       || cmd == CM_menu
-      || (builtin_command_data[cmd].flags & CF_brace
-          && builtin_command_data[cmd].data == BRACE_context)
-      || builtin_command_data[cmd].flags & CF_line)
+      || (command_data[cmd].flags & CF_brace
+          && command_data[cmd].data == BRACE_context)
+      || command_data[cmd].flags & CF_line)
     return;
 
   if (element->type == ET_arguments_line)
@@ -1235,27 +1221,12 @@ find_element_authors (const ELEMENT *element,
                                    quotation_authors);
 }
 
-ELEMENT *
-cdt_tree (const char *string, CONVERTER *self,
-          NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-          const char *translation_context)
-{
-  int debug_level = self->conf->DEBUG.o.integer;
-
-  return gdt_tree (string, self->document, self->current_lang_translations,
-                   replaced_substrings,
-                   debug_level, translation_context);
-}
-
+/* called from generic converter and conversion to raw text converter */
 ELEMENT *
 translated_command_tree (TRANSLATED_COMMAND_LIST *translated_commands,
                          enum command_id cmd,
-                         LANG_TRANSLATION *lang_translation,
-                         int debug, CONVERTER *converter,
-   ELEMENT * (*cdt_tree_fn) (const char *string, CONVERTER *self,
-                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                             const char *translation_context)
-                        )
+                         const LANG_TRANSLATION *lang_translation,
+                         int debug, CONVERTER_CDT_TREE *converter_cdt_tree)
 {
   size_t i;
   for (i = 0; i < translated_commands->number; i++)
@@ -1266,12 +1237,13 @@ translated_command_tree (TRANSLATED_COMMAND_LIST *translated_commands,
           && translated_command->translation)
         {
           ELEMENT *result;
-          if (converter && cdt_tree_fn)
-            result = cdt_tree_fn (translated_command->translation,
-                                  converter, 0, 0);
+          if (converter_cdt_tree)
+            result = converter_cdt_tree->cdt_tree_fn (
+                                  translated_command->translation,
+                                  converter_cdt_tree->converter, 0, 0);
           else
             result = gdt_tree (translated_command->translation,
-                               0, lang_translation, 0, debug, 0);
+                               0, lang_translation, 0, 0, debug, 0);
           return result;
         }
     }
@@ -1367,7 +1339,7 @@ output_files_open_out (OUTPUT_FILES_INFORMATION *self, const char *file_path,
     {
       register_unclosed_file (self, file_path, stream_handle, 0);
       if (!(*overwritten_file))
-        add_string (file_path, &self->opened_files);
+        add_string (&self->opened_files, file_path);
     }
   return stream_handle;
 }
@@ -1401,6 +1373,23 @@ output_files_register_closed (OUTPUT_FILES_INFORMATION *self,
         }
     }
   fprintf (stderr, "BUG: %s not opened\n", file_path);
+}
+
+/* NOTE nothing is done with 'unclosed_files', assuming that the renamed
+   file was already closed (as is the case for the caller of this function).
+   Also the call to rename could be done in this function if there are more
+   callers, which would also be more consistent with output_files_open_out. */
+void
+output_files_rename_opened (OUTPUT_FILES_INFORMATION *self,
+                            const char *file_path,
+                            const char *new_file_path)
+{
+  size_t number = find_string (&self->opened_files, file_path);
+  if (number)
+    remove_from_strings_list (&self->opened_files, number -1);
+
+  if (!find_string (&self->opened_files, new_file_path))
+    add_string (&self->opened_files, new_file_path);
 }
 
 /* Unused */
@@ -1445,9 +1434,9 @@ find_root_command_next_heading_command (const ELEMENT *root,
 
       if (data_cmd)
         {
-          unsigned long flags = builtin_command_data[data_cmd].flags;
+          unsigned long flags = command_data[data_cmd].flags;
           unsigned long other_flags
-               = builtin_command_data[data_cmd].other_flags;
+               = command_data[data_cmd].other_flags;
           if (flags & CF_sectioning_heading)
             return content;
           if (content->type == ET_index_entry_command)
@@ -1479,10 +1468,10 @@ find_root_command_next_heading_command (const ELEMENT *root,
           else if (flags & CF_block)
             {
               if (other_flags & CF_non_formatted_block
-               || builtin_command_data[data_cmd].data == BLOCK_region
+               || command_data[data_cmd].data == BLOCK_region
                 /* ignored conditional */
-               || builtin_command_data[data_cmd].data == BLOCK_conditional
-               || (builtin_command_data[data_cmd].data == BLOCK_format_raw
+               || command_data[data_cmd].data == BLOCK_conditional
+               || (command_data[data_cmd].data == BLOCK_format_raw
                    && !format_expanded_p
                              (formats, element_command_name (content))))
                 continue;
@@ -1502,3 +1491,4 @@ find_root_command_next_heading_command (const ELEMENT *root,
     }
   return 0;
 }
+

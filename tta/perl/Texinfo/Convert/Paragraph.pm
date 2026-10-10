@@ -19,24 +19,25 @@ use 5.006;
 use strict;
 use warnings;
 
+use Texinfo::XSLoader;
+
 require Exporter;
 our @ISA = qw(Exporter);
+
+our $VERSION = '7.3dev';
 
 our @EXPORT_OK = qw(
     add_text
     add_next
+    set_frenchspacing
+    set_double_width_no_break
     set_space_protection
     remove_end_sentence
     allow_end_sentence
     add_end_sentence
     end_line
     add_pending_word
-    get_pending
   );
-
-our $VERSION = '7.3dev';
-
-use Texinfo::XSLoader;
 
 BEGIN {
   Texinfo::XSLoader::init (
@@ -58,4 +59,3 @@ BEGIN {
 
 
 1;
-__END__

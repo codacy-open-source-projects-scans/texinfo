@@ -48,6 +48,8 @@ BEGIN
 
   # find Perl Texinfo modules in srcdir
   unshift @INC, join('/', ($t2a_srcdir, 'perl'));
+  # find Perl Texinfo generated module(s) in builddir
+  unshift @INC, join('/', ($updir, 'tta', 'perl'));
 
   my $lib_dir = join('/', ($t2a_srcdir, 'maintain'));
   # we ignore --with-external-*
@@ -69,7 +71,8 @@ foreach my $cmdname (sort($accent_command_string, keys(
   if ($cmdname eq $accent_command_string) {
     $args_spec = $Texinfo::Convert::HTML::html_default_commands_args{'^'};
     $item_arg = $accent_command_string;
-  } elsif (exists($Texinfo::Commands::accent_commands{$cmdname})) {
+  } elsif (exists($Texinfo::Commands::brace_commands{$cmdname})
+           and $Texinfo::Commands::brace_commands{$cmdname} eq 'accent') {
     next;
   } else {
     $item_arg = '@code{@@'.$cmdname.'}';

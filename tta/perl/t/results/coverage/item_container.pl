@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'item_container'} = '*document_root C1
- *before_node_section C6
-  {empty_line:\\n}
+ *before_node_section C7
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *@itemize C3 l2
    *arguments_line C1
     *block_line_arg C3
@@ -85,8 +90,7 @@ $result_texis{'item_container'} = '
 ';
 
 
-$result_texts{'item_container'} = '
-i-tem +
+$result_texts{'item_container'} = 'i-tem +
 
 b-ullet
 
@@ -112,8 +116,7 @@ $result_converted{'plaintext'}->{'item_container'} = '   + i-tem +
 ';
 
 
-$result_converted{'html_text'}->{'item_container'} = '
-<ul class="itemize" style="list-style-type: \'+\'">
+$result_converted{'html_text'}->{'item_container'} = '<ul class="itemize" style="list-style-type: \'+\'">
 <li>i&ndash;tem +
 </li></ul>
 
@@ -127,8 +130,8 @@ $result_converted{'html_text'}->{'item_container'} = '
 ';
 
 
-$result_converted{'xml'}->{'item_container'} = '
-<itemize endspaces=" "><itemprepend> +</itemprepend>
+$result_converted{'xml'}->{'item_container'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><itemize endspaces=" "><itemprepend> +</itemprepend>
 <listitem><prepend>+</prepend> <para>i&textndash;tem +
 </para></listitem></itemize>
 
@@ -143,7 +146,7 @@ $result_converted{'xml'}->{'item_container'} = '
 ';
 
 
-$result_converted{'latex_text'}->{'item_container'} = '
+$result_converted{'latex_text'}->{'item_container'} = '\\begin{document}
 \\begin{itemize}[label=+]
 \\item i--tem +
 \\end{itemize}
@@ -158,8 +161,7 @@ $result_converted{'latex_text'}->{'item_container'} = '
 ';
 
 
-$result_converted{'docbook'}->{'item_container'} = '
-<itemizedlist><listitem><para>+ i&#8211;tem +
+$result_converted{'docbook'}->{'item_container'} = '<itemizedlist><listitem><para>+ i&#8211;tem +
 </para></listitem></itemizedlist>
 <itemizedlist><listitem><para>b&#8211;ullet
 </para></listitem></itemizedlist>

@@ -80,10 +80,11 @@ MiscXS_la_LIBADD = $(platform_PERL_LIBADD)
 
 
 # C only convenience library internal for ParagraphXS solely used to set
-# different values than code including Perl headers to include
+# different compilation flags than code including Perl headers to include
 # configure/Gnulib headers but no Perl header.
 noinst_LTLIBRARIES += libparagraph.la
-libparagraph_la_SOURCES = xspara.c xspara.h \
+libparagraph_la_SOURCES = ../../C/convert/plaintext_paragraph.c \
+                 ../../C/convert/plaintext_paragraph.h \
                  ../../C/main/base_utils.c ../../C/main/base_utils.h \
                  ../../C/main/text.c ../../C/main/text.h
 libparagraph_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(srcdir) $(GNULIB_CPPFLAGS)
@@ -93,7 +94,7 @@ libparagraph_la_LDFLAGS = $(perl_conf_LIB_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(
 xs_LTLIBRARIES += ParagraphXS.la
 nodist_ParagraphXS_la_SOURCES = ParagraphXS.c
 CLEANFILES += ParagraphXS.c
-ParagraphXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(srcdir) $(XSLIBS_CPPFLAGS)
+ParagraphXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/convert -I$(srcdir) $(XSLIBS_CPPFLAGS)
 ParagraphXS_la_LIBADD = libparagraph.la $(platform_PERL_LIBADD)
 
 EXTRA_DIST += ParagraphXS.xs MiscXS.xs
@@ -131,6 +132,21 @@ EXTRA_DIST += parser_document/DocumentXS.xs
 # locate include files under out-of-source builds.
 DocumentXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main $(XSLIBS_CPPFLAGS)
 DocumentXS_la_LIBADD = $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
+
+########################## DocumentIndices XS
+
+if USE_SHARED_TXI_LIBRARIES
+xs_LTLIBRARIES += DocumentIndicesXS.la
+endif
+
+nodist_DocumentIndicesXS_la_SOURCES = parser_document/DocumentIndicesXS.c
+CLEANFILES += parser_document/DocumentIndicesXS.c
+
+EXTRA_DIST += parser_document/DocumentIndicesXS.xs
+
+# locate include files under out-of-source builds.
+DocumentIndicesXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main $(XSLIBS_CPPFLAGS)
+DocumentIndicesXS_la_LIBADD = $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
 
 ########################## Translations XS
 
@@ -273,6 +289,42 @@ EXTRA_DIST += convert/ConvertTextXS.xs
 ConvertTextXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/convert $(XSLIBS_CPPFLAGS)
 ConvertTextXS_la_LIBADD = $(top_builddir)/C/libtexinfo-convertxs.la $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo-convert.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
 ConvertTextXS_la_LDFLAGS = $(XSLIBS_LDFLAGS) $(EUIDACCESS_LIBGEN)
+
+########################## ConvertPlaintextXS
+
+if USE_SHARED_TXI_LIBRARIES
+xs_LTLIBRARIES += ConvertPlaintextXS.la
+endif
+
+nodist_ConvertPlaintextXS_la_SOURCES = convert/ConvertPlaintextXS.c
+CLEANFILES += convert/ConvertPlaintextXS.c
+
+ConvertPlaintextXS_la_SOURCES =
+
+EXTRA_DIST += convert/ConvertPlaintextXS.xs
+
+# To locate include files under out-of-source builds.
+ConvertPlaintextXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/convert $(XSLIBS_CPPFLAGS)
+ConvertPlaintextXS_la_LIBADD = $(top_builddir)/C/libtexinfo-convertxs.la $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo-convert.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
+ConvertPlaintextXS_la_LDFLAGS = $(XSLIBS_LDFLAGS) $(EUIDACCESS_LIBGEN)
+
+########################## ConvertInfoXS
+
+if USE_SHARED_TXI_LIBRARIES
+xs_LTLIBRARIES += ConvertInfoXS.la
+endif
+
+nodist_ConvertInfoXS_la_SOURCES = convert/ConvertInfoXS.c
+CLEANFILES += convert/ConvertInfoXS.c
+
+ConvertInfoXS_la_SOURCES =
+
+EXTRA_DIST += convert/ConvertInfoXS.xs
+
+# To locate include files under out-of-source builds.
+ConvertInfoXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/convert $(XSLIBS_CPPFLAGS)
+ConvertInfoXS_la_LIBADD = $(top_builddir)/C/libtexinfo-convertxs.la $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo-convert.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
+ConvertInfoXS_la_LDFLAGS = $(XSLIBS_LDFLAGS) $(EUIDACCESS_LIBGEN)
 
 ########################## ConvertHTMLXS
 

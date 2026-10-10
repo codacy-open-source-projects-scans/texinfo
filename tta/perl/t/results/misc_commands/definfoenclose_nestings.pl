@@ -1,20 +1,24 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'definfoenclose_nestings'} = '*document_root C1
- *before_node_section C9
-  *@definfoenclose C1 l1
-  |EXTRA
-  |misc_args:A{phoo|//|\\}
-   *line_arg C3
-    {spaces_before_argument: }
-    {phoo,//,\\}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C8
+  *preamble_before_content C2
+   *@definfoenclose C1 l1
+   |EXTRA
+   |misc_args:A{phoo|//|\\}
+    *line_arg C3
+     {spaces_before_argument: }
+     {phoo,//,\\}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C2
    *@code C1 l3
     *brace_container C1
@@ -124,6 +128,13 @@ $result_converted{'latex'}->{'definfoenclose_nestings'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -194,6 +205,7 @@ $result_converted{'latex'}->{'definfoenclose_nestings'} = '\\documentclass{book}
 \\pagestyle{single}%
 
 
+\\begin{document}
 \\texttt{in phoo in code}.
 
 \\texttt{in code in phoo}.

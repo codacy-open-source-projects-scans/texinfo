@@ -28,12 +28,12 @@ our %converter_cmdline_options = (
 our %converter_customization_options = (
   'TOP_NODE_UP'                      => '(dir)',
   'BASEFILENAME_LENGTH'              => 255-10,
-  'DOC_ENCODING_FOR_INPUT_FILE_NAME' => 1,
-  'DOC_ENCODING_FOR_OUTPUT_FILE_NAME' => 0,
-  'IMAGE_LINK_PREFIX'                => undef,
   'CASE_INSENSITIVE_FILENAMES'       => 0,
   'DEBUG'                            => 0,
+  'DOC_ENCODING_FOR_INPUT_FILE_NAME' => 1,
+  'DOC_ENCODING_FOR_OUTPUT_FILE_NAME' => 0,
   'HANDLER_FATAL_ERROR_LEVEL'        => 100,
+  'IMAGE_LINK_PREFIX'                => undef,
   'TEST'                             => 0,
   'TEXTCONTENT_COMMENT'              => undef,
   'TEXINFO_DTD_VERSION'              => '7.3',
@@ -81,6 +81,7 @@ our %converter_customization_options = (
   'HEADER_IN_TABLE'                  => undef,
   'HIGHLIGHT_SYNTAX'                 => undef,
   'HIGHLIGHT_SYNTAX_DEFAULT_LANGUAGE' => undef,
+  'HTML_COPY_IMAGES'                 => 0,
   'HTML_MATH'                        => undef,
   'HTML_ROOT_ELEMENT_ATTRIBUTES'     => undef,
   'HTMLXREF_FILE'                    => undef,
@@ -98,6 +99,7 @@ our %converter_customization_options = (
   'JS_WEBLABELS'                     => undef,
   'JS_WEBLABELS_FILE'                => undef,
   'LATEX_FLOATS_FILE_EXTENSION'      => 'tfl',
+  'LATEX_TAGGED_PDF'                 => undef,
   'LOCALE_ENCODING'                  => undef,
   'L2H_CLEAN'                        => undef,
   'L2H_FILE'                         => undef,
@@ -155,7 +157,6 @@ our %converter_customization_options = (
   'USE_NUMERIC_ENTITY'               => undef,
   'USE_SETFILENAME_EXTENSION'        => undef,
   'USE_TITLEPAGE_FOR_TITLE'          => undef,
-  'USE_UNIDECODE'                    => undef,
   'USE_XML_SYNTAX'                   => undef,
   'VERTICAL_HEAD_NAVIGATION'         => undef,
   'WORDS_IN_PAGE'                    => undef,
@@ -202,7 +203,7 @@ our %multiple_at_command_options = (
   'microtype'                        => undef,
   'oddheading'                       => undef,
   'oddfooting'                       => undef,
-  'paragraphindent'                  => '3',
+  'paragraphindent'                  => 3,
   'shortcontents'                    => 0,
   'summarycontents'                  => 0,
   'urefbreakstyle'                   => 'after',
@@ -228,6 +229,7 @@ our %program_cmdline_options = (
 );
 
 our %program_customization_options = (
+  'AUTO_SECTION_NODE'                => undef,
   'CHECK_NORMAL_MENU_STRUCTURE'      => 1,
   'CHECK_MISSING_MENU_ENTRY'         => 1,
   'DUMP_STRUCTURE'                   => undef,
@@ -358,6 +360,19 @@ my %plaintexinfo_converter_regular_options_defaults = (
 );
 
 $regular_options_types{'plaintexinfo_converter'} = \%plaintexinfo_converter_regular_options_defaults;
+
+my %plaintext_regular_options_defaults = (
+  'ENABLE_ENCODING'                  => 1,
+  'ASCII_DASHES_AND_QUOTES'          => 1,
+  'ASCII_GLYPH'                      => 0,
+  'FORMAT_MENU'                      => 'nomenu',
+  'EXTENSION'                        => 'txt',
+  'INFO_SPECIAL_CHARS_WARNING'       => undef,
+  'OUTFILE'                          => '-',
+  'USE_NODES'                        => 1,
+);
+
+$regular_options_types{'plaintext'} = \%plaintext_regular_options_defaults;
 
 my %texi2html_regular_options_defaults = (
   'FORMAT_MENU'                      => 'menu',

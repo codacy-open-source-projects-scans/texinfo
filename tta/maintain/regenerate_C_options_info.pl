@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# regenerate_options_infos.pl: generate perl hashes based on
+# regenerate_C_options_info.pl: generate C data structures based on
 # commands information, structure and code used in XS.
 #
 # Copyright 2022-2026 Free Software Foundation, Inc.
@@ -17,6 +17,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Run on ../data/converter_defaults.txt by rule in ../C/Makefile.am.
 
 use strict;
 
@@ -180,6 +182,7 @@ print HEADER "/* Automatically generated from $program_name */\n\n";
 
 print HEADER "#ifndef OPTIONS_DATA_H\n#define OPTIONS_DATA_H\n\n";
 
+print HEADER "#include <stddef.h>\n\n";
 print HEADER "#include \"option_types.h\"\n\n";
 
 print HEADER "/* Undefine values set from autoconf as we use these as\n";
@@ -217,13 +220,9 @@ print CODE "/* Automatically generated from $program_name */\n\n";
 
 print CODE '#include <config.h>'."\n\n";
 
-print CODE '#include <stdlib.h>'."\n";
-print CODE '#include <string.h>'."\n\n";
-
 print CODE '#include "option_types.h"'."\n";
 print CODE '#include "options_data.h"'."\n";
-print CODE '#include "converter_types.h"'."\n";
-print CODE '#include "customization_options.h"'."\n";
+print CODE '#include "customization_options.h"'."\n\n";
 
 print CODE "void\ninitialize_options (OPTIONS *options)\n{\n";
 print CODE "  options->BIT_user_function_number = 0;\n";
@@ -416,10 +415,12 @@ open(CDCF, ">$converter_defaults_code_file")
 
 print CDCF "/* Automatically generated from $program_name */\n\n";
 
+print CDCF "/*  To include before substituted headers in included files */\n";
 print CDCF '#include <config.h>'."\n\n";
 
 print CDCF '#include "option_types.h"'."\n";
 print CDCF '#include "options_data.h"'."\n";
+print CDCF '#include "converter_types.h"'."\n";
 print CDCF '#include "converters_options.h"'."\n\n";
 print CDCF '/* for html_fill_button_directions_specification_list */'."\n";
 print CDCF '#include "utils.h"'."\n";

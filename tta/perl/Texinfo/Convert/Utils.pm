@@ -26,9 +26,9 @@
 
 package Texinfo::Convert::Utils;
 
-use strict;
-
 use 5.006;
+use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -45,8 +45,9 @@ use Texinfo::Common;
 use Texinfo::Convert::Texinfo;
 
 require Exporter;
-
 our @ISA = qw(Exporter);
+
+our $VERSION = '7.3dev';
 
 # There is no specific reason to export those functions and not
 # other functions of the module.  It could be possible not to
@@ -55,8 +56,6 @@ our @EXPORT_OK = qw(
 expand_verbatiminclude
 add_heading_number
 );
-
-our $VERSION = '7.3dev';
 
 # API to open, set encoding and register files.  Used in main program
 # and converters.
@@ -104,7 +103,7 @@ sub output_files_open_out($$;$$) {
 
   my $encoding;
   if ($self->{'output_encoding_disabled'}) {
-   # leave $encoding undefined
+   # leave $encoding undefined; output text should be already encoded
   } elsif (defined($output_encoding)) {
     $encoding = Texinfo::Common::processing_output_encoding($output_encoding);
   }
@@ -166,15 +165,6 @@ sub output_files_register_closed($$) {
     cluck "BUG: $file_path not opened\n";
   }
 }
-
-#sub output_files_register_opened($$) {
-#  my ($self, $file_path) = @_;
-#
-#  # return something if already opened?
-#  #if (exists($self->{'opened_files'}->{$file_path})) {
-#  #}
-#  $self->{'opened_files'}->{$file_path} = 1;
-#}
 
 # NOTE nothing is done with 'unclosed_files', assuming that the renamed
 # file was already closed (as is the case for the caller of this function).
@@ -360,9 +350,8 @@ sub definition_arguments_content($) {
 # use the cdt method of the specific converter and not the generic cdt,
 # which is equivalent with the use of gdt in the function.  This should
 # only be relevant for the HTML converter which redefines cdt.
-sub definition_category_tree($;$$$$) {
-  my ($current, $lang_translations, $command_line_encoding,
-      $debug, $converter) = @_;
+sub definition_category_tree($;$$$) {
+  my ($current, $lang_translations, $debug, $converter) = @_;
 
   return undef if (!exists($current->{'contents'}->[0]->{'contents'}));
 
@@ -388,10 +377,7 @@ sub definition_category_tree($;$$$$) {
     if (!defined($arg_class));
 
   my $def_command = $current->{'extra'}->{'def_command'};
-  if ($def_command eq 'defop'
-      or $def_command eq 'deftypeop'
-      or $def_command eq 'defmethod'
-      or $def_command eq 'deftypemethod') {
+  if (exists($Texinfo::Commands::def_class_method_commands{$def_command})) {
     my $substrings = {'category' => $arg_category, 'class' => $arg_class};
     if (defined($converter)) {
       return $converter->cdt('{category} on @code{{class}}', $substrings);
@@ -400,18 +386,19 @@ sub definition_category_tree($;$$$$) {
       # in descriptions of object-oriented programming methods or operations.
       my $tree = Texinfo::Translations::gdt('{category} on @code{{class}}',
                                             $lang_translations, $substrings,
-                                            $debug);
+                                            undef, $debug);
     } else {
       my $new_lang_translations
-        = Texinfo::Translations::new_element_language_translation($current);
+        = Texinfo::Translations::new_element_language_translation(
+               $Texinfo::Translations::converters_translation_cache,
+               $current);
       my $tree = Texinfo::Translations::gdt('{category} on @code{{class}}',
-                                 $new_lang_translations, $substrings);
+                                       $new_lang_translations, $substrings,
+                                       undef, $debug);
       return $tree;
     }
-  } elsif ($def_command eq 'defivar'
-           or $def_command eq 'deftypeivar'
-           or $def_command eq 'defcv'
-           or $def_command eq 'deftypecv') {
+  } elsif (exists($Texinfo::Commands::def_class_variable_commands{
+                                                         $def_command})) {
     my $substrings = {'category' => $arg_category, 'class' => $arg_class};
     if (defined($converter)) {
       return $converter->cdt('{category} of @code{{class}}', $substrings);
@@ -421,12 +408,15 @@ sub definition_category_tree($;$$$$) {
       # or instance variable.
       return Texinfo::Translations::gdt('{category} of @code{{class}}',
                                         $lang_translations, $substrings,
-                                        $debug);
+                                        undef, $debug);
     } else {
       my $new_lang_translations
-        = Texinfo::Translations::new_element_language_translation($current);
+        = Texinfo::Translations::new_element_language_translation(
+               $Texinfo::Translations::converters_translation_cache,
+               $current);
       return Texinfo::Translations::gdt('{category} of @code{{class}}',
-                                 $new_lang_translations, $substrings);
+                                   $new_lang_translations, $substrings,
+                                   undef, $debug);
     }
   }
 }
@@ -463,7 +453,7 @@ sub expand_today($;$$$) {
           { 'month' => $month_tree,
             'day' => Texinfo::TreeElement::new({'text' => $mday}),
             'year' => Texinfo::TreeElement::new({'text' => $year}) },
-           $debug);
+           undef, $debug);
   } else {
     $tree = Texinfo::TreeElement::new({'text' =>
              "$Texinfo::Convert::Utils::month_name[$mon] $mday, $year"});
@@ -478,11 +468,11 @@ sub translated_command_tree($$$$;$) {
   if (defined($translated_commands)
       and defined($translated_commands->{$cmdname})) {
     my $to_translate = $translated_commands->{$cmdname};
-    if ($converter) {
+    if (defined($converter)) {
       return $converter->cdt($to_translate);
     } else {
-      return Texinfo::Translations::gdt($to_translate,
-                             $lang_translations, 0, $debug);
+      return Texinfo::Translations::gdt($to_translate, $lang_translations,
+                                        undef, undef, $debug);
     }
   }
   return undef;
@@ -508,8 +498,8 @@ sub expand_verbatiminclude($$$$$;$$) {
                   $doc_encoding_for_input_file_name, $locale_encoding,
                                           $document, $input_encoding);
 
-  my $file = Texinfo::Common::locate_include_file($file_name,
-                                                  $include_directories);
+  my ($file, $use_inc_dir) = Texinfo::Common::locate_include_file($file_name,
+                                                        $include_directories);
 
   my $verbatiminclude;
 
@@ -557,8 +547,9 @@ sub expand_verbatiminclude($$$$$;$$) {
   return $verbatiminclude;
 }
 
-sub add_heading_number($$;$$) {
-  my ($current, $text, $numbered, $lang_translations) = @_;
+sub add_heading_number($$;$$$) {
+  my ($current, $text, $numbered, $lang_translations,
+      $debug_level) = @_;
 
   my $number;
   if (exists($current->{'extra'})
@@ -578,11 +569,13 @@ sub add_heading_number($$;$$) {
           and $current->{'extra'}->{'section_level'} == 1) {
         $result = Texinfo::Translations::gdt_string(
                     'Appendix {number} {section_title}', $lang_translations,
-                    {'number' => $number, 'section_title' => $text});
+                    {'number' => $number, 'section_title' => $text},
+                    undef, $debug_level);
       } else {
         $result = Texinfo::Translations::gdt_string(
                        '{number} {section_title}', $lang_translations,
-                       {'number' => $number, 'section_title' => $text});
+                       {'number' => $number, 'section_title' => $text},
+                       undef, $debug_level);
       }
     } else {
       $result = $text;
@@ -804,18 +797,16 @@ some cases, to call the functions with the converter argument set.
 
 =over
 
-=item $result = add_heading_number($heading_element, $heading_text, $do_number, $lang_translations)
+=item $result = add_heading_number($heading_element, $heading_text, $do_number, $lang_translations, $debug_level)
 X<C<add_heading_number>>
 
 I<$heading_element> is a heading command tree element.  I<$heading_text> is the
 already formatted heading text.  if the I<$do_number> optional argument is
 defined and false, no number is used and the text is returned as is.  The
-I<$lang_translations> optional argument should be an array reference with one
-or two elements.  The first element of the array is the language the resulting
-string is translated to.  The second element, if set, should be an hash
-reference holding translations already done.  If a language is set in
-I<$lang_translations>, the string is translated and the optional I<$debug>
-argument is passed to the translation function.
+I<$lang_translations> optional argument is a reference holding information
+on the current language and the already translated strings.
+If a language is set in I<$lang_translations>, the string is translated and the
+optional I<$debug_level> argument is passed to the translation function.
 
 This function returns the heading with a number and the appendix part if
 needed.
@@ -841,7 +832,7 @@ Arguments correspond to text following the other elements
 on the @-command line.  If there is no argument, I<$arguments>
 will be C<undef>.
 
-=item $tree = definition_category_tree($def_line, $lang_translations, $command_line_encoding, $debug, $converter)
+=item $tree = definition_category_tree($def_line, $lang_translations, $debug, $converter)
 X<C<definition_category_tree>>
 
 I<$def_line> is a C<def_line> Texinfo tree container.  This function returns a
@@ -849,16 +840,11 @@ Texinfo tree corresponding to the category of the I<$def_line> taking the class
 into account, if there is one.  The I<$lang_translations> optional argument
 should be an array reference holding information on the current language and
 translations.  It could be obtained from the converter
-C<current_lang_translations> or be setup by a call to
-L<< C<Texinfo::Translations::new_lang_translations>|Texinfo::Translations/$lang_translations = new_lang_translations($documentlanguage, $documentscript, \@documentlanguagevariants) >>.
-If I<$lang_translations> is set,
-I<$command_line_encoding> should be set to the encoding suitable for
-environment variables, usually obtained from the I<COMMAND_LINE_ENCODING>
-customization variable, and the optional I<$debug> argument is passed to the
-translation function.  If the optional I<$converter> argument is set, the
-translation is done by a converter method.  In that case, I<$lang_translations>
-and I<$debug> are ignored, the converter method uses similar converter
-information.
+C<current_lang_translations>.  If I<$lang_translations> is set, the optional
+I<$debug> argument is passed to the translation function.  If the optional
+I<$converter> argument is set, the translation is done by a converter method.
+In that case, I<$lang_translations> and I<$debug> are ignored, the converter
+method uses similar converter information.
 
 =item ($encoded_name, $encoding) = encoded_input_file_name($character_string_name, $input_file_name_encoding, $doc_encoding_for_input_file_name, $locale_encoding, $document, $input_file_encoding)
 

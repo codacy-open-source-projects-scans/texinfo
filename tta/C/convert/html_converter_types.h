@@ -75,48 +75,5 @@ typedef struct COMMAND_ARGS_SPECIFICATION {
     unsigned long flags[MAX_COMMAND_ARGS_NR];
 } COMMAND_ARGS_SPECIFICATION;
 
-/* in html_conversion_data.c */
-extern const TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[];
-/* SPECIAL_UNIT_INFO_TYPE_NR elements */
-extern const char *special_unit_info_type_names[];
-/* SPECIAL_UNIT_INFO_TREE_NR elements */
-extern const char *special_unit_info_tree_names[];
-
-/* in format_html.c */
-extern const char *direction_string_type_names[];
-extern const char *direction_string_context_names[];
-
-/* in convert_html.c */
-extern const char *html_conversion_context_type_names[];
-extern const char *html_stage_handler_stage_type_names[];
-
-extern COMMAND_ARGS_SPECIFICATION html_command_args_flags[BUILTIN_CMD_NUMBER];
-
-extern HTML_COMMAND_STRUCT html_commands_data[BUILTIN_CMD_NUMBER];
-
-extern SPECIAL_LIST_MARK_CSS_NO_ARGS_CMD
-            special_list_mark_css_string_no_arg_command[];
-
-extern COMMAND_ID_LIST no_arg_formatted_cmd;
-extern COMMAND_ID_LIST style_formatted_cmd;
-extern COMMAND_ID_LIST accent_cmd;
-extern COMMAND_ID_LIST format_raw_cmd;
-
-/* see Texinfo::HTML _prepare_output_units_global_targets
-
-   NOTE the special output units direction names
-   are obtained dynamically from the perl input and stored in
-   special_unit_info and put later on in
-   special_units_direction_name
- */
-
-#include "html_conversion_data.h"
-
-enum global_unit_direction {
-  #define hgdt_name(name) D_ ## name,
-   HTML_GLOBAL_DIRECTIONS_LIST
-  #undef hgdt_name
-};
-
 
 #endif

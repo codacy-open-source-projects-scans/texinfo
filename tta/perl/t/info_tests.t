@@ -3,6 +3,12 @@ use strict;
 use lib '.';
 use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
+use Texinfo::Configure;
+
+use Texinfo::XSLoader;
+
+my $XS_convert = Texinfo::XSLoader::XS_modules_enabled();
+
 require 't/test_utils.pl';
 
 my $invalid_node_name_text = '
@@ -50,7 +56,7 @@ Second para.
 
 @bye
 
-', {'full_document' => 1}],
+',],
 ['two_paragraphindent_in_preamble',
 '@copying
 In copying.
@@ -73,7 +79,7 @@ Second para.
 
 @bye
 
-', {'full_document' => 1}],
+',],
 ['paragraphindent_in_preamble_and_in_document',
 '@copying
 In copying.
@@ -98,7 +104,7 @@ Third para after second paragraphindent.
 
 @bye
 
-', {'full_document' => 1}],
+',],
 ['two_paragraphindent_in_preamble_and_in_document',
 '@copying
 In copying.
@@ -125,7 +131,7 @@ Third para after third paragraphindent.
 
 @bye
 
-', {'full_document' => 1}],
+',],
 ['paragraphindent_not_in_preamble',
 '@copying
 In copying.
@@ -146,7 +152,7 @@ After paragraphindent.
 
 @bye
 
-', {'full_document' => 1}],
+',],
 ['paragraphindent_asis_first',
 '
      bbb
@@ -379,7 +385,7 @@ Two spaces.  @image{words}.
 End line.
 @image{words}.
 '],
-[ 'multitable_anchor_and_index_entry',
+['multitable_anchor_and_index_entry',
 '@node Top
 
 @multitable @columnfractions 0.4 0.6
@@ -937,8 +943,68 @@ after anchor
 Second anchor in text @anchor{second anchor in flushright} after anchor.
 @end flushright
 '],
+['anchor_after_text_in_flushright',
+'@node Top
+
+@flushright
+something
+@anchor{point}
+
+@end flushright
+'],
+['empty_in_flushright_index_entry',
+'@node Top
+
+@flushright
+zz
+@cindex ZA
+aa
+
+
+bb
+@cindex BC
+cc
+
+@flushright
+@end flushright
+
+dd
+@cindex DE
+ee
+
+
+
+ff
+@cindex FG
+gg
+
+@end flushright
+
+@printindex cp
+'],
+# an empty line in flushright only happens in @example, otherwise the empty
+# line is outside of a paragraph, and not flushed.
+# In contrast with a regular example environment, empty lines are merged.
+['flushright_empty_line',
+'@node Top
+
+@example
+@flushright
+in   --- flushright
+
+
+
+@cindex mark
+
+@end flushright
+@end example
+
+@printindex cp
+'],
 # if this test is changed, the corresponding test in t/plaintext_tests.t
 # should be changed too
+# @image{figure} is replaced by the figure.txt text.
+# with @image{figure, , , ,txt} both the image file and text are set.
 ['multiline_image_and_align',
 '@center @image{figure}
 
@@ -974,6 +1040,243 @@ BBB @image{figure, , , ,txt} gggg @image{figure, , , ,txt}
 
 HHH
 @image{figure, , , ,txt} JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
+@end flushright
+'],
+['index_entry_in_multitable_multilines',
+'@node Top
+
+@multitable {aaaaaaaaaa} {bbbbbbbbbbbbb}
+@item
+zz
+@cindex ZA
+aa
+
+
+bb
+@cindex BC
+cc
+
+
+dd
+@cindex DE
+ee
+
+
+
+ff
+@cindex FG
+gg
+
+@tab
+2zz
+@cindex 2ZA
+2aa
+
+
+2bb
+@cindex 2BC
+2cc
+
+
+2dd
+@cindex 2DE
+2ee
+
+
+
+2ff
+@cindex 2FG
+2gg
+@end multitable
+
+@printindex cp
+'],
+['format_in_multitable_index',
+'@node Top
+
+@multitable {aaaaaaaaaa} {bbbbbbbbbbbbb}
+@item
+zz
+@format
+@cindex ZA
+aa
+
+
+bb
+@cindex BC
+cc
+
+
+dd
+@cindex DE
+ee
+
+
+
+ff
+@cindex FG
+@end format
+gg
+
+@tab
+2zz
+@format
+@cindex 2ZA
+2aa
+
+
+2bb
+@cindex 2BC
+2cc
+
+
+2dd
+@cindex 2DE
+2ee
+
+
+
+2ff
+@cindex 2FG
+@end format
+2gg
+@end multitable
+
+@printindex cp
+'],
+['example_in_multitable_index',
+'@node Top
+
+@multitable {aaaaaaaaaa} {bbbbbbbbbbbbb}
+@item
+zz
+@example
+@cindex ZA
+aa
+
+
+bb
+@cindex BC
+cc
+
+
+dd
+@cindex DE
+ee
+
+
+
+ff
+@cindex FG
+@end example
+gg
+
+@tab
+2zz
+@example
+@cindex 2ZA
+2aa
+
+
+2bb
+@cindex 2BC
+2cc
+
+
+2dd
+@cindex 2DE
+2ee
+
+
+
+2ff
+@cindex 2FG
+@end example
+2gg
+@end multitable
+
+@printindex cp
+'],
+['multitable_images',
+'@multitable {aaaaaaaaaaaaaaaaaaaaaaa} {bbbbbbbbbbbbbbbbbbb}
+@item
+@image{figure}
+
+AA @image{figure} BB @image{figure} CC
+
+@tab
+Col2
+
+@image{figure}
+
+2A @image{figure} 2B @image{figure} 2C
+
+@item
+Quoted img
+
+@image{figure, , , ,txt}
+
+ZZ @image{figure, , , ,txt} YY @image{figure, , , ,txt} TT
+
+@tab
+Col2 quoted
+
+@image{figure, , , ,txt}
+
+2Z @image{figure, , , ,txt} 2Y @image{figure, , , ,txt} 2T
+@end multitable
+'],
+['multitable_flushright_image',
+'@multitable {aaaaaaaaaaaaaaaaaaaaaa} {bbbbbbbbbbbbbbbbbbbbbbb}
+@item
+@flushright
+@center CCCC @image{figure}
+
+AAA
+@image{figure, , , ,txt}
+BBB @image{figure, , , ,txt}
+
+@image{figure, , , ,txt}
+@end flushright
+
+@tab
+@center CCCC @image{figure}
+
+AAA
+@image{figure, , , ,txt}
+BBB @image{figure, , , ,txt}
+
+@image{figure, , , ,txt}
+
+@item
+@flushright
+FFFR @image{figure}
+
+@image{figure}
+
+AA @image{figure} BB @image{figure}
+@end flushright
+@tab
+@flushleft
+FFFL @image{figure}
+
+@image{figure}
+
+AA @image{figure} BB @image{figure}
+@end flushleft
+@end multitable
+'],
+['quoted_xref_in_flushright',
+'@node Top
+@top top
+
+@node a:@comma{}b
+@chapter a:@comma{}b
+
+@flushright
+before
+Some @ref{a:@comma{}b} after
+more text
 @end flushright
 '],
 ['empty_copying_not_ended',
@@ -1042,6 +1345,120 @@ Some text.
 @end menu
 ', {'test_formats' => ['html']},
    {'FORMAT_MENU' => 'menu'}],
+['anchor_in_empty_center',
+'@node Top
+
+@center @asis{}@anchor{toto}
+
+a
+
+@center @asis{}@anchor{titi}@w{}
+'],
+# also used in tests/info_tex/tex_math.texi
+['anchor_in_math',
+'@node Top
+
+Some @math{A + B @anchor{in math}} and after.
+
+@displaymath
+f(x) = @anchor{equal point} \frac{a}{b} @anchor{displm point}
+@end displaymath
+
+'],
+['anchor_in_chapter',
+'@node Top
+@top top
+
+@node chap
+@chapter Chapter @anchor{point} after anchor
+'],
+['anchor_in_chapter_no_node',
+'@node Top
+@top top
+
+@chapter Chapter @anchor{point} after anchor
+'],
+['anchor_in_heading',
+'@node Top
+@top top
+
+@heading Heading @anchor{point} after anchor
+'],
+['anchor_in_node',
+'@node Top
+
+@node first @anchor{point} after anchor
+'],
+['anchor_in_menu_entry_name',
+'@node Top
+
+@menu
+* name @anchor{point} after anchor: first.
+@end menu
+
+@node first
+'],
+['form_feeds_in_preamble',
+'@settitle A manual
+
+
+@c comment
+
+@macro cdfRef{field}
+@ref{\field\ (Compact Disc fields)}
+@end macro
+
+
+
+@node Top
+@top The
+'],
+# We need AUTO_SECTION_NODE to have a valid node with
+# parenthesis, as an added node for section, and also to test the default
+# for Info output.
+# We also test a node with : in name, though it may already be tested
+# in other tests.
+['parenthesis_in_node_name_implicit_refs',
+'@node Top
+@top
+
+in top.
+
+@node One:
+@chapter One:
+
+AA.
+
+@chapter (Two)
+
+AA.
+',
+{'AUTO_SECTION_NODE' => 1}],
+# Same comment as previous test.
+['parenthesis_in_node_name_explicit_refs',
+'@node Top
+@top
+
+in top.
+
+@menu
+* One@asis{:}::
+* (Two)::
+@end menu
+
+@node One:, (Two), Top, Top
+@chapter One:
+
+AA.
+
+@chapter (Two)
+
+AA.
+
+@xref{(Two)}.
+',
+{'AUTO_SECTION_NODE' => 1}],
+
 );
 
 my @file_tests = (
@@ -1141,7 +1558,7 @@ text @* f     nl Something? @* After punct
 '],
 ['chinese_mixed_with_en_EUC_CN',
 undef, {'test_file' => 'chinese_mixed_with_en_EUC_CN.texi',
-        'skip' => $Texinfo::ModulePath::conversion_from_euc_cn ne 'yes'
+        'skip' => $Texinfo::Configure::conversion_from_euc_cn ne 'yes'
                    ? 'No conversion from EUC-CN' : undef, }
 ],
 );
@@ -1194,7 +1611,6 @@ foreach my $test (@test_cases) {
 foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_info';
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 run_all('info_tests', [@test_cases, @file_tests]);

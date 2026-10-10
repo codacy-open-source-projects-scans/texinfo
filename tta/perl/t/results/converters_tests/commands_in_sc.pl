@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'commands_in_sc'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -319,7 +323,8 @@ $result_converted_errors{'docbook'}->{'commands_in_sc'} = '* W l7|@image file `m
 ';
 
 
-$result_converted{'latex_text'}->{'commands_in_sc'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'commands_in_sc'} = '\\begin{document}
+\\label{anchor:Top}%
 \\Texinfochapter{{chap}}
 \\label{anchor:chap}%
 
@@ -334,7 +339,7 @@ $result_converted_errors{'latex_text'}->{'commands_in_sc'} = '* W l7|@image file
 ';
 
 
-$result_converted{'info'}->{'commands_in_sc'} = 'This is , produced from .
+$result_converted{'info'}->{'commands_in_sc'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -352,8 +357,8 @@ File: ,  Node: chap,  Prev: Top,  Up: Top
 1 chap
 ******
 
-A Ñ Å TeX [myimage] *note chap:: *Note (f)node:: *note NAME: (argf)ext. inverb ÿ
-MA+TH (1) <la> B (a) LB c E <a@c> AB (D)
+A Ñ Å TeX [myimage] *note chap:: *Note (f)node:: *note NAME: (argf)ext. inverb
+ÿ MA+TH (1) <la> B (a) LB c E <a@c> AB (D)
 
    ---------- Footnotes ----------
 
@@ -363,8 +368,8 @@ MA+TH (1) <la> B (a) LB c E <a@c> AB (D)
 Tag Table:
 Node: Top27
 Node: chap124
-Ref: inanchor262
-Ref: chap-Footnote-1343
+Ref: inanchor265
+Ref: chap-Footnote-1346
 
 End Tag Table
 
@@ -372,7 +377,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'commands_in_sc'} = '* W l7|could not find @image file `myimage.txt\' nor alternate text
  warning: could not find @image file `myimage.txt\' nor alternate text

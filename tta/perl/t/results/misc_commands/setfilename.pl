@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'setfilename'} = '*document_root C1
  *before_node_section C1
@@ -102,6 +105,13 @@ $result_converted{'latex'}->{'setfilename'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -181,7 +191,7 @@ $result_converted{'docbook'}->{'setfilename'} = '
 ';
 
 
-$result_converted{'info'}->{'setfilename'} = 'This is file_comment, produced from .
+$result_converted{'info'}->{'setfilename'} = Encode::encode('utf-8', 'This is file_comment, produced from .
 
 
 Tag Table:
@@ -192,7 +202,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'setfilename'} = '* W |document without nodes
  warning: document without nodes

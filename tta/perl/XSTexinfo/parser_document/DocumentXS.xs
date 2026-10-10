@@ -15,7 +15,8 @@
 
 /* ALTIMP perl/Texinfo/DocumentNonXS.pm */
 
-#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -28,7 +29,7 @@
 #undef context
 
 #include "options_data.h"
-#include "tree_types.h"
+#include "option_types.h"
 #include "document_types.h"
 /* non_perl_* */
 #include "xs_utils.h"
@@ -53,37 +54,43 @@ PROTOTYPES: ENABLE
 # Called from Texinfo::XSLoader.pm.
 # File paths are byte strings and can be in any encoding.
 int
-init (SV *texinfo_uninstalled_sv, SV *datadir_sv, SV *t2a_builddir_sv, SV *t2a_srcdir_sv)
+init (SV *texinfo_uninstalled_sv, SV *datadir_sv, SV *t2a_builddir_sv, SV *t2a_srcdir_sv, SV *mandatory_xs_sv)
       PREINIT:
         const char *t2a_builddir = 0;
         const char *t2a_srcdir = 0;
         const char *datadir = 0;
         int texinfo_uninstalled = 0;
       CODE:
-        if (SvOK (texinfo_uninstalled_sv))
-          texinfo_uninstalled = SvIV (texinfo_uninstalled_sv);
-        if (texinfo_uninstalled)
+        if (!SvOK (mandatory_xs_sv) || !SvIV (mandatory_xs_sv))
           {
-            if (SvOK (t2a_builddir_sv))
-              t2a_builddir = SvPVbyte_nolen (t2a_builddir_sv);
-            if (SvOK (t2a_srcdir_sv))
-              t2a_srcdir = SvPVbyte_nolen (t2a_srcdir_sv);
+            if (SvOK (texinfo_uninstalled_sv))
+              texinfo_uninstalled = SvIV (texinfo_uninstalled_sv);
+            if (texinfo_uninstalled)
+              {
+                if (SvOK (t2a_builddir_sv))
+                  t2a_builddir = SvPVbyte_nolen (t2a_builddir_sv);
+                if (SvOK (t2a_srcdir_sv))
+                  t2a_srcdir = SvPVbyte_nolen (t2a_srcdir_sv);
+              }
+            if (SvOK (datadir_sv))
+              datadir = SvPVbyte_nolen (datadir_sv);
+
+            /* needed by the parser */
+            messages_and_encodings_setup (datadir);
+
+            setup_texinfo_main (texinfo_uninstalled, datadir,
+                                t2a_builddir, t2a_srcdir);
           }
-        if (SvOK (datadir_sv))
-          datadir = SvPVbyte_nolen (datadir_sv);
 
-        /* needed by the parser */
-        messages_and_encodings_setup (datadir);
+        set_use_perl_interpreter (1);
 
-        setup_texinfo_main (texinfo_uninstalled, datadir,
-                            t2a_builddir, t2a_srcdir);
         RETVAL = 1;
     OUTPUT:
         RETVAL
 
 # This XS interface is rarely used, as, in general, a document is available
 # and document_tree can be used instead.  It may be useful for a tree from
-# parse_texi_piece to force the C data to be removed, with no_store set to
+# parse_piece to force the C data to be removed, with no_store set to
 # 1 to ensure that the resulting tree modified by pure Perl functions is not
 # taken unmodified from C again.
 SV *
@@ -372,127 +379,4 @@ labels_list (SV *document_in)
       RETVAL = document_labels_list (document_in);
   OUTPUT:
       RETVAL
-
-# optional argument is converter
-void
-setup_indices_sort_strings (SV *document_in, ...)
-    PROTOTYPE: $$
-    PREINIT:
-        DOCUMENT *document = 0;
-     CODE:
-        document = get_sv_document_document (document_in,
-                                             "setup_indices_sort_strings");
-        if (document)
-          document_indices_sort_strings (document, &document->error_messages,
-                                         document->options);
-
-# optional argument is converter
-SV *
-indices_sort_strings (SV *document_in, ...)
-    PROTOTYPE: $$
-    PREINIT:
-        DOCUMENT *document = 0;
-        const INDICES_SORT_STRINGS *indices_sort_strings = 0;
-        SV *result_sv = 0;
-        const char *key = "index_entries_sort_strings";
-     CODE:
-        document = get_sv_document_document (document_in,
-                                             "indices_sort_strings");
-        if (document)
-          indices_sort_strings
-           = document_indices_sort_strings (document,
-                                            &document->error_messages,
-                                            document->options);
-
-        if (indices_sort_strings)
-          {
-            HV *document_hv = (HV *) SvRV (document_in);
-            /* build Perl data only if needed and cache the built Perl
-               data in the same hash as done in overriden Perl code */
-            if (document->modified_information & F_DOCM_indices_sort_strings)
-              {
-                SV *indices_information_sv
-                 = document_indices_information (document_in);
-                if (indices_information_sv)
-                  {
-                    HV *indices_information_hv
-                        = (HV *) SvRV (indices_information_sv);
-                    HV *indices_sort_strings_hv
-                     = build_indices_sort_strings (indices_sort_strings,
-                                                   indices_information_hv);
-                    hv_store (document_hv, key, strlen (key),
-                              newRV_noinc ((SV *) indices_sort_strings_hv), 0);
-                    result_sv = newRV_inc ((SV *) indices_sort_strings_hv);
-                    document->modified_information
-                                &= ~F_DOCM_indices_sort_strings;
-                  }
-                /* warn if not found? */
-              }
-            else
-              { /* retrieve previously stored result */
-                SV **sv_stored = hv_fetch (document_hv, key, strlen (key), 0);
-                if (sv_stored && SvOK (*sv_stored))
-                  result_sv = newSVsv (*sv_stored);
-                /* error out if not found?  Or rebuild? */
-              }
-          }
-
-        if (result_sv)
-          RETVAL = result_sv;
-        else
-          RETVAL = newSV (0);
-    OUTPUT:
-        RETVAL
-
-SV *
-print_document_indices_information (SV *document_in)
-    PREINIT:
-        DOCUMENT *document = 0;
-     CODE:
-        document = get_sv_document_document (document_in,
-                                       "print_document_indices_information");
-        if (document)
-          {
-            char *indices_information_str
-              = print_document_indices_information (document);
-            if (indices_information_str)
-              {
-                RETVAL = newSVpv_utf8 (indices_information_str, 0);
-                free (indices_information_str);
-              }
-            else
-              RETVAL = newSV (0);
-          }
-        else
-          RETVAL = newSV (0);
-
-    OUTPUT:
-        RETVAL
-
-SV *
-print_document_indices_sort_strings (SV *document_in)
-    PREINIT:
-        DOCUMENT *document = 0;
-     CODE:
-        document = get_sv_document_document (document_in,
-                                       "print_document_indices_sort_strings");
-        if (document)
-          {
-            char *indices_sort_strings_str
-              = print_document_indices_sort_strings (document);
-            if (indices_sort_strings_str)
-              {
-                RETVAL = newSVpv_utf8 (indices_sort_strings_str, 0);
-                free (indices_sort_strings_str);
-              }
-            else
-              RETVAL = newSV (0);
-          }
-        else
-          RETVAL = newSV (0);
-
-    OUTPUT:
-        RETVAL
-
-
 

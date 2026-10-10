@@ -5,7 +5,11 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 require 't/test_utils.pl';
 
-my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
+use Texinfo::XSLoader;
+
+my $XS_convert = Texinfo::XSLoader::XS_modules_enabled();
+
+my $use_XS = ($XS_convert and $Texinfo::XSLoader::core_modules_built);
 
 my $itemize_arguments_text = '
 @itemize ---
@@ -666,10 +670,12 @@ in <b>html</b> in copying ``
 @xref{cnl}
 
 '],
-# the output has nested <a> in @printindex formatting for @item
+# the output had nested <a> in @printindex formatting for @item
 # with @anchor on the line, which is invalid HTML.  However, it
-# is probably better not to consider this output to be a bug as
+# was not considered that this output was a bug as
 # it corresponds to the Texinfo code intention.
+# Now a copy is done, and there is no inside <a> in printindex
+# anymore, presumably because of that.
 ['anchor_on_vtable_item',
 '@node Top
 @top top
@@ -812,7 +818,6 @@ $mathjax_with_texinfo,
 {}, {'HTML_MATH' => 'mathjax'}],
 ['mathjax_with_texinfo_enable_encoding',
 $mathjax_with_texinfo, {'test_formats' => ['latex_text', 'file_latex'],
-                        'full_document' => 1,
        'test_input_file_name' => 'mathjax_with_texinfo_enable_encoding.texi',},
 {'HTML_MATH' => 'mathjax', 'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}],
 ['mathjax_with_texinfo_no_convert_to_latex',
@@ -1256,12 +1261,14 @@ my @file_tests = (
 @end menu
 
 @node @^i
-', {'test_split' => 'section'}, {'SPLIT' => 'chapter',
-                                 'TRANSLITERATE_FILE_NAMES' => 1}],
+', {'test_split' => 'section',
+    'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
+ {'SPLIT' => 'chapter', 'TRANSLITERATE_FILE_NAMES' => 1}],
 ['transliterated_names_conflicts',
   undef,
   {'test_file' => 'transliterated_names_conflicts.texi',
-   'test_split' => 'node'},
+   'test_split' => 'node',
+   'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
   {'SPLIT' => 'node', 'TRANSLITERATE_FILE_NAMES' => 1},
 ],
 ['file_name_conflict_with_section',
@@ -1480,7 +1487,8 @@ $check_htmlxref_text
   undef,
   # also tests for node without section command nor directions after
   # a section, and Top without @top and chapter in menu
-  {'test_file' => 'node_footnote.texi', 'CHECK_NORMAL_MENU_STRUCTURE' => 0,},
+  {'test_file' => 'node_footnote.texi', 'CHECK_NORMAL_MENU_STRUCTURE' => 0,
+   'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
   {'FORMAT_MENU' => 'menu', 'TRANSLITERATE_FILE_NAMES' => 1}
 ],
 ['node_footnote_end',
@@ -1499,7 +1507,8 @@ $check_htmlxref_text
 ],
 ['node_footnote_use_node_separate',
   undef,
-  {'test_file' => 'node_footnote.texi', 'CHECK_NORMAL_MENU_STRUCTURE' => 0},
+  {'test_file' => 'node_footnote.texi', 'CHECK_NORMAL_MENU_STRUCTURE' => 0,
+   'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
   {'footnotestyle' => 'separate', 'FORMAT_MENU' => 'menu',
    # needed to have the three nodes with footnotes end up in the same node
    'TRANSLITERATE_FILE_NAMES' => 1}
@@ -1739,7 +1748,9 @@ $css_init_file_texinfo, {'init_files' => ['test_css_info_functions.pm']}],
 ['simple_only_special_spaces_node',
 undef, {'test_file' => 'simple_only_special_spaces_node.texi',
         'init_files' => ['no_navigation.pm'],
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef,
+         # TODO if Windows condition kept, change the message
+         'skip' => ($] < 5.014 or $XS_convert or $^O eq 'MSWin32') ?
+           '/a flag needed or non reproducible transliteration' : undef,
        },
        # split at node is needed to test for the bug, not sure about
        # TRANSLITERATE_FILE_NAMES, but it is interesting anyway to have
@@ -1751,12 +1762,15 @@ undef, {'test_file' => 'simple_only_special_spaces_node.texi',
 ['simple_only_special_spaces_node_no_translit_files',
 undef, {'test_file' => 'simple_only_special_spaces_node.texi',
         'init_files' => ['no_navigation.pm'],
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef,
+         # TODO if Windows condition kept, change the message
+        'skip' => ($] < 5.014 or $^O eq 'MSWin32') ? 'Perl too old: /a regex flag needed' : undef,
        },
        {'SPLIT' => 'node', 'TRANSLITERATE_FILE_NAMES' => 0}],
 ['simple_only_special_spaces_node_test_split_section',
 undef, {'test_file' => 'simple_only_special_spaces_node.texi',
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef,
+         # TODO if Windows condition kept, change the message
+        'skip' => ($] < 5.014 and not $use_XS or $^O eq 'MSWin32')
+                   ? 'Perl too old: /a regex flag needed' : undef,
         'test_split' => 'section',
        },
 ],
@@ -1848,14 +1862,11 @@ foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_html';
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi'
     unless (exists($test->[2]->{'test_input_file_name'}));
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 foreach my $test (@test_cases_file_text) {
   if (defined($test->[1])) {
     $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-    $test->[2]->{'full_document'} = 1
-       unless (exists($test->[2]->{'full_document'}));
   }
   push @{$test->[2]->{'test_formats'}}, ('html_text', 'file_html');
 }

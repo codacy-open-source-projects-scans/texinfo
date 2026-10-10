@@ -31,12 +31,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "element_types.h"
 #include "types_data.h"
 #include "source_mark_types.h"
 #include "tree_types.h"
 #include "document_types.h"
 #include "swig_error_messages_types.h"
-#include "converter_types.h"
 #include "text.h"
 #include "tree.h"
 #include "extra.h"
@@ -59,7 +59,7 @@ txi_ext_element_command_is_##name (ELEMENT *element) \
   if (type_data[element->type].flags & TF_text) \
     return 0; \
   cmd = element_builtin_data_cmd (element); \
-  return builtin_command_data[cmd].flags & CF_##name; \
+  return command_data[cmd].flags & CF_##name; \
 }
   TXI_CM_FLAGS_LIST
 #undef cm_flag
@@ -73,7 +73,7 @@ txi_ext_element_command_is_##name (ELEMENT *element) \
   if (type_data[element->type].flags & TF_text) \
     return 0; \
   cmd = element_builtin_data_cmd (element); \
-  return builtin_command_data[cmd].other_flags & CF_##name; \
+  return command_data[cmd].other_flags & CF_##name; \
 }
   TXI_CM_OTHER_FLAGS_LIST
 #undef cm_oflag
@@ -120,14 +120,14 @@ txi_ext_element_command_data_type (ELEMENT *element)
   enum command_id cmd = element_builtin_data_cmd (element);
   if (cmd)
     {
-      int cmd_data_type = builtin_command_data[cmd].data;
-      if (builtin_command_data[cmd].flags & CF_brace)
+      int cmd_data_type = command_data[cmd].data;
+      if (command_data[cmd].flags & CF_brace)
         return brace_command_data_type_name[cmd_data_type];
-      else if (builtin_command_data[cmd].flags & CF_line)
+      else if (command_data[cmd].flags & CF_line)
         return line_command_data_type_name[cmd_data_type];
-      else if (builtin_command_data[cmd].flags & CF_nobrace)
+      else if (command_data[cmd].flags & CF_nobrace)
         return nobrace_command_data_type_name[cmd_data_type];
-      else if (builtin_command_data[cmd].flags & CF_block)
+      else if (command_data[cmd].flags & CF_block)
         return block_command_data_type_name[cmd_data_type];
     }
 
@@ -689,7 +689,7 @@ txi_ext_get_section_relations (ELEMENT *element, DOCUMENT *document)
 
   enum command_id data_cmd = element_builtin_data_cmd (element);
 
-  if (!(builtin_command_data[data_cmd].flags & CF_root))
+  if (!(command_data[data_cmd].flags & CF_root))
     return 0;
 
   section_number
@@ -842,6 +842,7 @@ txi_ext_sorted_index_entries_number (const INDEX_SORTED_BY_INDEX *index_sorted)
   return index_sorted->entries_number;
 }
 
+/* function selecting one index by name after sorting the indices */
 const INDEX_SORTED_BY_INDEX *
 txi_ext_get_index_sorted_by_index (DOCUMENT *document, const char *index_name,
                                    int use_unicode_collation,
@@ -851,13 +852,9 @@ txi_ext_get_index_sorted_by_index (DOCUMENT *document, const char *index_name,
   const INDEX_SORTED_BY_INDEX *idx;
   const INDEX_SORTED_BY_INDEX *index_sorted = 0;
 
-  COLLATION_INDICES_SORTED_BY_INDEX *collation_sorted_indices
-    = sorted_indices_by_index (document, &document->error_messages,
-                               document->options, use_unicode_collation,
-                               collation_language, collation_locale);
-
   INDEX_SORTED_BY_INDEX *indices_sorted_by_index
-    = collation_sorted_indices->sorted_indices;
+    = document_sorted_indices_by_index (document, use_unicode_collation,
+                               collation_language, collation_locale);
 
   if (!indices_sorted_by_index)
     return 0;
@@ -911,7 +908,7 @@ txi_ext_get_float_type_floats_information (DOCUMENT *document,
 
   for (i = 0; i < listoffloats->number; i++)
     {
-      LISTOFFLOATS_TYPE *float_types = &listoffloats->float_types[i];
+      LISTOFFLOATS_TYPE *float_types = &listoffloats->list[i];
       if (!strcmp (float_types->type, float_type))
         {
           if (float_types->float_list.number > 0)
@@ -974,6 +971,25 @@ txi_ext_text_options_set_encoding (TEXT_OPTIONS *text_options,
 }
 
 
+
+size_t
+txi_ext_output_parser_error_messages (DOCUMENT *document,
+                                  const char *message_encoding,
+                                  int no_warn, int use_filename)
+{
+  return output_error_messages (&document->parser_error_messages,
+                                message_encoding, no_warn,
+                                use_filename);
+}
+
+size_t
+txi_ext_output_document_error_messages (DOCUMENT *document,
+                                    const char *message_encoding,
+                                    int no_warn, int use_filename)
+{
+  return output_error_messages (&document->error_messages, message_encoding,
+                                no_warn, use_filename);
+}
 
 FORMATTED_ERROR_MESSAGE_LIST *
 txi_ext_get_error_messages_list_messages (ERROR_MESSAGE_LIST *error_messages,

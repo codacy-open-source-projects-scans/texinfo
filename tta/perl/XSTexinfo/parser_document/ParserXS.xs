@@ -16,7 +16,7 @@
 /* for abort */
 #include <stdlib.h>
 #include <stdio.h>
-#include <stddef.h>
+#include <string.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -39,8 +39,9 @@
 
 #undef context
 
-#include "api.h"
-#include "conf.h"
+#include "parser_api.h"
+#include "document_types.h"
+#include "set_parser_conf.h"
 /* register_conf */
 #include "parser_conf.h"
 /* build_minimal_document build_document */
@@ -76,7 +77,7 @@ release (SV *)
 
 
 void
-register_parser_conf (SV *parser_sv)
+_register_parser_conf (SV *parser_sv)
     PREINIT:
         HV *parser_hv;
         const char *key = "parser_conf_descriptor";
@@ -91,7 +92,7 @@ register_parser_conf (SV *parser_sv)
 # the file is already a byte string, taken as is from the command line.
 # The encoding was detected as COMMAND_LINE_ENCODING.
 SV *
-parse_texi_file (SV *parser_sv, input_file_path)
+parse_file (SV *parser_sv, input_file_path)
         const char *input_file_path = SvPVbyte_nolen ($arg);
       CODE:
         if (!SvOK(parser_sv))
@@ -110,7 +111,7 @@ parse_texi_file (SV *parser_sv, input_file_path)
 
 # Used in tests under tta/t.
 SV *
-parse_texi_piece (SV *parser_sv, SV *string_sv, ...)
+parse_piece (SV *parser_sv, SV *string_sv, ...)
     PREINIT:
         int line_nr = 1;
       CODE:
@@ -132,9 +133,8 @@ parse_texi_piece (SV *parser_sv, SV *string_sv, ...)
 
 # Two optional arguments, line number and NO_STORE.  If NO_STORE is set,
 # the C data is removed.
-# TODO add elements_handler_only option?
 SV *
-parse_texi_line (SV *parser_sv, SV *string_sv, ...)
+parse_string (SV *parser_sv, SV *string_sv, ...)
     PREINIT:
         DOCUMENT *document = 0;
         int no_store = 0;
@@ -174,6 +174,7 @@ parse_texi_line (SV *parser_sv, SV *string_sv, ...)
             if (no_store)
               fprintf (stderr, "REMOVED C doc Perl tree '%s'\n", string);
              */
+            /* always build the tree to Perl */
             RETVAL = document_tree (document_sv, 0);
           }
       OUTPUT:
@@ -181,7 +182,7 @@ parse_texi_line (SV *parser_sv, SV *string_sv, ...)
 
 # Used in tests under tta/t.
 SV *
-parse_texi_text (SV *parser_sv, SV *string_sv, ...)
+parse_text (SV *parser_sv, SV *string_sv, ...)
     PREINIT:
         int line_nr = 1;
       CODE:
@@ -202,8 +203,8 @@ parse_texi_text (SV *parser_sv, SV *string_sv, ...)
         RETVAL
 
 void
-parser_store_values (SV *values_sv)
-      CODE:
+_parser_store_values (SV *values_sv)
+       CODE:
         parser_conf_reset_values ();
         if (SvOK (values_sv))
           {
@@ -226,7 +227,7 @@ parser_store_values (SV *values_sv)
           }
 
 void
-parser_store_INCLUDE_DIRECTORIES (SV *directories_sv)
+_parser_store_INCLUDE_DIRECTORIES (SV *directories_sv)
       CODE:
         parser_conf_clear_INCLUDE_DIRECTORIES ();
         if (SvOK (directories_sv))
@@ -250,7 +251,7 @@ parser_store_INCLUDE_DIRECTORIES (SV *directories_sv)
           }
 
 void
-parser_store_EXPANDED_FORMATS (SV *expanded_formats_sv)
+_parser_store_EXPANDED_FORMATS (SV *expanded_formats_sv)
       CODE:
         parser_conf_clear_expanded_formats ();
         if (SvOK (expanded_formats_sv))

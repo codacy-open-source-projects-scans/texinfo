@@ -5,8 +5,6 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 require 't/test_utils.pl';
 
-my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
-
 my @file_tests = (
 # also in *sectioning.t.  Here we are interested by testing spaces
 # in filenames.
@@ -78,13 +76,86 @@ Some content
 Text @inlinefmt{epub, here if EPUB}.
 Format @inlineraw{epub, <section>raw EPUB</section>}.
 ', {'init_files' => ['epub3.pm']},],
+['epub_metadata',
+'@documentinfo
+@title The Title
+@ifepub
+@html
+   <dc:creator
+       id="creator">
+      Some Body
+   </dc:creator>
+   <meta
+       refines="#creator"
+       property="role"
+       scheme="marc:relators"
+       id="role">
+      aut
+   </meta>
+@end html
+@end ifepub
+@ifnotepub
+@html
+<meta name="creator" content="Some Body" />
+@end html
+@end ifnotepub
+@end documentinfo
+
+@node Top
+@top top
+
+@node chapter
+@chapter Chap
+',
+ {'init_files' => ['epub3.pm']},],
+['languages_scripts_variants',
+'@documentlanguage az
+@documentscript Latn
+
+@node top
+@top top
+
+node chap
+@chapter chap
+
+@documentlanguage sr
+@documentscript Latn
+@documentlanguagevariant ekavsk
+
+@documentscript
+
+@documentlanguagevariant ijekavsk
+
+@documentlanguagevariant ,
+
+@documentscript Cyrl
+
+@documentlanguage fr
+
+@documentlanguage az
+
+@documentlanguage az
+@documentscript Cyrl
+
+@documentscript Arab
+
+@documentscript Cyrl
+
+@documentlanguage fr_FR
+
+@documentlanguage oc
+
+@documentlanguagevariant aranes
+
+@documentlanguagevariant auvern
+',
+ {'init_files' => ['epub3.pm']},],
 );
 
 foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_epub';
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi'
     unless (exists($test->[2]->{'test_input_file_name'}));
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 run_all('epub_tests', [@file_tests]);

@@ -1,11 +1,14 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'unnumbered_top_without_node_sections'} = 'U0 unit{S:unnumbered}{n:a node}
+use Encode;
+
+$result_tree_text{'unnumbered_top_without_node_sections'} = 'U0 unit{C3}{S:@unnumbered unnumbered}{n:a node}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
@@ -46,7 +49,7 @@ NodeUp: (dir)
   *paragraph C1
    {in unnumbered\\n}
   {empty_line:\\n}
-U1 unit{S:top section}
+U1 unit{C1}{S:@top top section}
 unit_directions:D[next->[U2]|prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -58,6 +61,8 @@ Next: [U2]
 Prev: [U0]
  *@top C3 l6 {top section}
  |EXTRA
+ |identifier:{top-section}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{2}
   *arguments_line C1
@@ -68,7 +73,7 @@ Prev: [U0]
   *paragraph C1
    {Top section\\n}
   {empty_line:\\n}
-U2 unit{S:1 Chapter}{n:second}
+U2 unit{C2}{S:@chapter 1 Chapter}{n:second}
 unit_directions:D[prev->[U1]]
 UNIT_DIRECTIONS
 This: [U2]
@@ -199,7 +204,7 @@ list:
 $result_headings_list{'unnumbered_top_without_node_sections'} = '';
 
 
-$result_converted{'info'}->{'unnumbered_top_without_node_sections'} = 'This is , produced from .
+$result_converted{'info'}->{'unnumbered_top_without_node_sections'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: a node,  Up: (dir)
@@ -225,6 +230,7 @@ Text of chapter
 
 Tag Table:
 Node: a node27
+Ref: top section102
 Node: second140
 
 End Tag Table
@@ -233,7 +239,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'unnumbered_top_without_node_sections'} = '* W |document without Top node
  warning: document without Top node
@@ -300,6 +306,7 @@ $result_converted{'latex_text'}->{'unnumbered_top_without_node_sections'} = '\\b
 in unnumbered
 
 \\part*{{top section}}
+\\label{anchor:top-section}%
 Top section
 
 \\Texinfochapter{{Chapter}}

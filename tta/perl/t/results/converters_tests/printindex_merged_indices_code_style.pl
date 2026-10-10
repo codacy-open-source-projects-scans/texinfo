@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'printindex_merged_indices_code_style'} = '*document_root C5
  *before_node_section C1
@@ -277,6 +280,14 @@ $result_converted{'plaintext'}->{'printindex_merged_indices_code_style'} = 'top
 * f``g:                                  chap.                  (line 6)
 * v"j:                                   chap.                  (line 6)
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'printindex_merged_indices_code_style'} = 'fn:
+ c"b
+ cdi"h
+ ddi``g
+ f``g
+ v"j
 ';
 
 

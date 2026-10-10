@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'omit_def_space'} = '*document_root C3
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C2 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -41,10 +45,6 @@ $result_tree_text{'omit_def_space'} = '*document_root C3
    *def_line C1 l7
    |EXTRA
    |def_command:{defun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{function}
    |element_node:{chap}
    |index_entry:I{fn,1}
    |omit_def_name_space:{1}
@@ -75,10 +75,6 @@ $result_tree_text{'omit_def_space'} = '*document_root C3
    *@defunx C1 l8
    |EXTRA
    |def_command:{defun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{another}
    |element_node:{chap}
    |index_entry:I{fn,2}
    |omit_def_name_space:{1}
@@ -165,6 +161,11 @@ $result_converted{'plaintext'}->{'omit_def_space'} = ' -- Function: function(arg
      explain
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'omit_def_space'} = 'fn:
+ another
+ function
+';
+
 
 $result_converted{'html'}->{'omit_def_space'} = '<!DOCTYPE html>
 <html>
@@ -213,17 +214,24 @@ strong.def-name {font-family: monospace; font-weight: bold}
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'omit_def_space'} = 'fn:
+ another
+ function
+';
+
 $result_converted_errors{'html'}->{'omit_def_space'} = '* W |must specify a title with a title command or @top
  warning: must specify a title with a title command or @top
 
 ';
 
 
-$result_converted{'latex_text'}->{'omit_def_space'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'omit_def_space'} = '\\begin{document}
+\\label{anchor:Top}%
 \\label{anchor:chap}%
 
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{function\\EmbracOn{}\\textnormal{\\textsl{(arg1, arg2)}}\\EmbracOff{}}& [Function]
@@ -231,6 +239,7 @@ $result_converted{'latex_text'}->{'omit_def_space'} = '\\label{anchor:Top}%
 
 \\index[fn]{function@\\texttt{function}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{another\\EmbracOn{}\\textnormal{\\textsl{(aarg)}}\\EmbracOff{}}& [Function]

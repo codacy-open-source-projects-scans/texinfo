@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stddef.h>
+#include <unitypes.h>
 #include "unictype.h"
 #include "uninorm.h"
 #include "unistr.h"
@@ -84,20 +84,12 @@ uint8_t *
 utf8_from_string (const char *text)
 {
   return (uint8_t *) strdup (text);
-
-  /* With uniconv gnulib module this could be the following, although
-     this pulls in quite a few other gnulib module dependencies. */
-  /* TODO error checking? */
-  /* return u8_strconv_from_encoding (text, "UTF-8", iconveh_question_mark); */
 }
 
 char *
 string_from_utf8 (const uint8_t *encoded_u8)
 {
   return strdup ((char *) encoded_u8);
-  /* With uniconv gnulib module this could be the following, although
-     this pulls in quite a few other gnulib module dependencies. */
-  /* return u8_strconv_to_encoding (encoded_u8, "UTF-8", iconveh_question_mark); */
 }
 
 char *
@@ -136,7 +128,7 @@ normalize_NFKD (const char *text)
 
 char *
 unicode_accent (const char *text, const ELEMENT *e, int index_in_stack,
-                const ELEMENT_STACK *stack)
+                const CONST_ELEMENT_LIST *stack)
 {
   char *result = 0;
 
@@ -152,7 +144,7 @@ unicode_accent (const char *text, const ELEMENT *e, int index_in_stack,
     {
       if (index_in_stack == 0
           || !unicode_diacritics[element_builtin_cmd (
-                                stack->stack[index_in_stack-1])].text)
+                                stack->list[index_in_stack-1])].text)
         {
           if (!strcmp (text, "i"))
             /* dotless i in UTF-8 */
@@ -188,13 +180,12 @@ unicode_accent (const char *text, const ELEMENT *e, int index_in_stack,
                 {
                   char *first_char_text;
                   char *next_text;
-                  uint8_t *first_char_u8 = malloc (7 * sizeof (uint8_t));
+                  uint8_t first_char_u8[7];
                   int first_char_len = u8_uctomb (first_char_u8, first_char, 6);
                   if (first_char_len < 0)
                     fatal ("u8_uctomb returns negative value");
                   first_char_u8[first_char_len] = 0;
                   first_char_text = string_from_utf8 (first_char_u8);
-                  free (first_char_u8);
                   text_init (&accented_text);
                   text_append (&accented_text, first_char_text);
                   free (first_char_text);
@@ -231,17 +222,17 @@ compare_strings (const void *a, const void *b)
 
 char *
 format_eight_bit_accents_stack (CONVERTER *self, const char *text,
-                      const ELEMENT_STACK *stack, int encoding_index,
+                      const CONST_ELEMENT_LIST *stack, int encoding_index,
   char *(*format_accent)(CONVERTER *self, const char *text,
                          const ELEMENT *element, int index_in_stack,
-                         const ELEMENT_STACK *stack, int set_case),
+                         const CONST_ELEMENT_LIST *stack, int set_case),
   int set_case)
 {
   int i, j, k;
   char *result = strdup (text);
   char *prev_eight_bit;
   char *new_eight_bit;
-  int const stack_nr = stack->top;
+  int const stack_nr = stack->number;
   char **results_stack
      = malloc ((stack_nr +1) * sizeof (char *));
 
@@ -251,7 +242,7 @@ format_eight_bit_accents_stack (CONVERTER *self, const char *text,
 
   for (i = stack_nr -1; i >= 0; i--)
     {
-      const ELEMENT *accent_command = stack->stack[i];
+      const ELEMENT *accent_command = stack->list[i];
       results_stack[i] = unicode_accent (results_stack[i+1], accent_command,
                                          i, stack);
       if (!results_stack[i])
@@ -331,7 +322,7 @@ format_eight_bit_accents_stack (CONVERTER *self, const char *text,
     #    underbar.
     */
       if (!strcmp (new_eight_bit, prev_eight_bit)
-          && !(stack->stack[j]->e.c->cmd == CM_dotless
+          && !(stack->list[j]->e.c->cmd == CM_dotless
                && !strcmp (results_stack[j], "i")))
         {
           free (new_eight_bit);
@@ -352,7 +343,7 @@ format_eight_bit_accents_stack (CONVERTER *self, const char *text,
    */
   for (; j >= 0; j--)
     {
-      const ELEMENT *accent_command = stack->stack[j];
+      const ELEMENT *accent_command = stack->list[j];
       char *formatted_result
           = (*format_accent) (self, result, accent_command, i, stack, set_case);
       free (result);
@@ -370,18 +361,18 @@ format_eight_bit_accents_stack (CONVERTER *self, const char *text,
 
 char *
 format_unicode_accents_stack_internal (CONVERTER *self, const char *text,
-  const ELEMENT_STACK *stack,
+  const CONST_ELEMENT_LIST *stack,
   char *(*format_accent)(CONVERTER *self, const char *text,
                          const ELEMENT *element, int index_in_stack,
-                         const ELEMENT_STACK *stack, int set_case),
+                         const CONST_ELEMENT_LIST *stack, int set_case),
   int set_case)
 {
   int i;
   char *result = strdup (text);
 
-  for (i = stack->top - 1; i >= 0; i--)
+  for (i = stack->number - 1; i >= 0; i--)
     {
-      const ELEMENT *accent_command = stack->stack[i];
+      const ELEMENT *accent_command = stack->list[i];
       char *formatted_result = unicode_accent (result, accent_command,
                                                i, stack);
       if (formatted_result)
@@ -402,7 +393,7 @@ format_unicode_accents_stack_internal (CONVERTER *self, const char *text,
 
   for (; i >= 0; i--)
     {
-      const ELEMENT *accent_command = stack->stack[i];
+      const ELEMENT *accent_command = stack->list[i];
       char *formatted_result
           = (*format_accent) (self, result, accent_command, i, stack, set_case);
       free (result);
@@ -412,11 +403,12 @@ format_unicode_accents_stack_internal (CONVERTER *self, const char *text,
 }
 
 char *
-encoded_accents (CONVERTER *self, const char *text, const ELEMENT_STACK *stack,
+encoded_accents (CONVERTER *self, const char *text,
+  const CONST_ELEMENT_LIST *stack,
   const char *encoding,
   char *(*format_accent)(CONVERTER *self, const char *text,
                          const ELEMENT *element, int index_in_stack,
-                         const ELEMENT_STACK *stack, int set_case),
+                         const CONST_ELEMENT_LIST *stack, int set_case),
   int set_case)
 {
   if (encoding)

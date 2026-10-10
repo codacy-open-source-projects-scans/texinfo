@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'index_special_region'} = '*document_root C7
  *before_node_section C2
@@ -166,6 +169,8 @@ $result_tree_text{'index_special_region'} = '*document_root C7
     {spaces_after_argument:\\n}
  *@chapter C15 index_special_region.texi:l35 {Chapter}
  |EXTRA
+ |identifier:{Chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -609,12 +614,48 @@ fn:
  fun
 ';
 
+$result_converted_sort_strings{'file_info'}->{'index_special_region'} = 'cp:
+ Copying appendix
+ Copying this document
+ Public domain
+ Titlepage footnote
+ Titlepage index
+fn:
+ another fun
+ findex entry
+ fun
+';
+
 $result_converted_errors{'file_info'}->{'index_special_region'} = '* E index_special_region.texi:l6|@anchor output more than once: Copying information
  @anchor output more than once: Copying information
 
 * E index_special_region.texi:l9|@anchor output more than once: Public domain reference
  @anchor output more than once: Public domain reference
 
+';
+
+$result_converted_sort_strings{'file_html'}->{'index_special_region'} = 'cp:
+ Copying appendix
+ Copying this document
+ Public domain
+ Titlepage footnote
+ Titlepage index
+fn:
+ another fun
+ findex entry
+ fun
+';
+
+$result_converted_sort_strings{'file_plaintext'}->{'index_special_region'} = 'cp:
+ Copying appendix
+ Copying this document
+ Public domain
+ Titlepage footnote
+ Titlepage index
+fn:
+ another fun
+ findex entry
+ fun
 ';
 
 1;

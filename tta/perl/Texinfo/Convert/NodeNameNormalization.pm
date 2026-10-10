@@ -24,6 +24,7 @@ package Texinfo::Convert::NodeNameNormalization;
 
 use 5.006;
 use strict;
+use warnings;
 
 # stop \s from matching non-ASCII spaces, etc.  \p{...} can still be
 # used to match Unicode character classes.
@@ -51,15 +52,16 @@ use Texinfo::Convert::Unicode;
 require Exporter;
 our @ISA = qw(Exporter);
 
+our $VERSION = '7.3dev';
+
 our @EXPORT_OK = qw(
   convert_to_identifier
   convert_to_node_identifier
+  convert_to_normalized
   normalize_transliterate_texinfo
   transliterate_texinfo
   transliterate_protect_file_name
 );
-
-our $VERSION = '7.3dev';
 
 
 my %normalize_node_brace_no_arg_commands
@@ -74,8 +76,6 @@ my %normalize_node_nobrace_symbol_text
   = %Texinfo::CommandsValues::nobrace_symbol_text;
 $normalize_node_nobrace_symbol_text{'*'} = ' ';
 $normalize_node_nobrace_symbol_text{'today'} = '';
-
-my %accent_commands = %Texinfo::Commands::accent_commands;
 
 my %ignored_brace_commands;
 foreach my $ignored_brace_command ('anchor', 'namedanchor', 'footnote',
@@ -125,31 +125,31 @@ sub convert_to_identifier($) {
   return $result;
 }
 
-sub normalize_transliterate_texinfo($;$$) {
-  my ($element, $in_test, $no_unidecode) = @_;
+sub normalize_transliterate_texinfo($) {
+  my $element = shift;
 
   my $result = _convert($element);
   $result = Unicode::Normalize::NFC($result);
   $result = _unicode_to_protected(
-                _unicode_to_transliterate($result, $in_test, $no_unidecode));
+                _unicode_to_transliterate($result));
   return $result;
 }
 
-sub transliterate_texinfo($;$$) {
-  my ($element, $in_test, $no_unidecode) = @_;
+sub transliterate_texinfo($) {
+  my $element = shift;
 
   my $result = _convert($element);
   $result = Unicode::Normalize::NFC($result);
-  $result = _unicode_to_transliterate($result, $in_test, $no_unidecode);
+  $result = _unicode_to_transliterate($result);
   return $result;
 }
 
-sub transliterate_protect_file_name($;$$) {
-  my ($input_text, $in_test, $no_unidecode) = @_;
+sub transliterate_protect_file_name($) {
+  my $input_text = shift;
 
   my $result = Unicode::Normalize::NFC($input_text);
   $result = _unicode_to_file_name(
-                _unicode_to_transliterate($result, $in_test, $no_unidecode));
+                _unicode_to_transliterate($result));
   return $result;
 }
 
@@ -162,14 +162,10 @@ sub convert_to_normalized($) {
 sub _protect_unicode_char($) {
   my $char = shift;
 
-  if (exists($Texinfo::UnicodeData::unicode_simple_character_map{$char})) {
-    return '_' . lc($Texinfo::UnicodeData::unicode_simple_character_map{$char});
+  if (ord($char) <= hex(0xFFFF)) {
+    return '_' . lc(sprintf("%04x",ord($char)));
   } else {
-    if (ord($char) <= hex(0xFFFF)) {
-      return '_' . lc(sprintf("%04x",ord($char)));
-    } else {
-      return '__' . lc(sprintf("%06x",ord($char)));
-    }
+    return '__' . lc(sprintf("%06x",ord($char)));
   }
 }
 
@@ -216,71 +212,14 @@ sub _unicode_to_file_name($) {
   return $result;
 }
 
-sub _unicode_to_transliterate($;$$) {
-  my ($text, $in_test, $no_unidecode) = @_;
+# called from C/main/call_perl_function.c
+sub _unicode_to_transliterate($) {
+  my $text = shift;
 
   if (chomp($text)) {
     warn "Bug: end of line to transliterate: $text\n";
   }
-  my $result = '';
-  while ($text ne '') {
-    if ($text =~ s/^([A-Za-z0-9 ]+)//) {
-      $result .= $1;
-    } elsif ($text =~ s/^(.)//s) {
-      my $char = $1;
-      if (exists(
-           $Texinfo::UnicodeData::unicode_simple_character_map{$char})) {
-        $result .= $char;
-      } else {
-        my $hex_repr;
-        if (ord($char) <= hex(0xFFFF)) {
-          $hex_repr = uc(sprintf("%04x",ord($char)));
-        } else {
-          $hex_repr = '';
-        }
-        if ($hex_repr and $in_test and exists(
-             $Texinfo::Convert::Unicode::tests_transliterate_map{$hex_repr})) {
-          $result
-           .= $Texinfo::Convert::Unicode::tests_transliterate_map{$hex_repr};
-        } elsif ($hex_repr and exists(
-                 $Texinfo::Convert::Unicode::transliterate_map{$hex_repr})) {
-          $result .= $Texinfo::Convert::Unicode::transliterate_map{$hex_repr};
-        } elsif ($hex_repr and exists(
-           $Texinfo::Convert::Unicode::diacritics_accent_commands{$hex_repr})) {
-          $result .= '';
-      # in those cases, we want to avoid calling unidecode, as there is no
-      # useful transliteration of the unicode character, instead we want to
-      # keep it as is such that it is protected as itself.
-      # This is the case, for example, for @exclamdown, it corresponds
-      # with x00a1, but unidecode transliterates it to a !, which ends up
-      # as _0021, we want to avoid that and keep _00a1 in the transliterated
-      # file name.  These case also do not have a good transliteration with
-      # iconv, although this could also depend on the locale.
-        } elsif ($hex_repr and exists(
-            $Texinfo::Convert::Unicode::no_transliterate_map{$hex_repr})) {
-          $result .= $char;
-        } else {
-          if ($no_unidecode) {
-            if ($hex_repr and exists(
-          $Texinfo::Convert::Unicode::transliterate_accent_map{$hex_repr})) {
-              $result .=
-               $Texinfo::Convert::Unicode::transliterate_accent_map{$hex_repr};
-            } else {
-              $result .= $char;
-            }
-          } else {
-            $result .= unidecode($char);
-          }
-        }
-      }
-      #print STDERR " ($no_unidecode) $text -> CHAR: ".ord($char)." ".uc(sprintf("%04x",ord($char)))."\n$result\n";
-    } else {
-      warn "Bug: unknown character _unicode_to_transliterate (likely in infinite loop)\n";
-      print STDERR "Text: !!$text!!\n";
-      sleep 1;
-    }
-  }
-  return $result;
+  return unidecode($text);
 }
 
 
@@ -321,7 +260,8 @@ sub _convert($) {
       my $result = $normalize_node_brace_no_arg_commands{$cmdname};
       return $result;
     # commands with braces
-    } elsif (exists($accent_commands{$cmdname})) {
+    } elsif (exists($Texinfo::Commands::brace_commands{$cmdname})
+             and $Texinfo::Commands::brace_commands{$cmdname} eq 'accent') {
       my ($contents_element, $stack)
         = Texinfo::Common::find_innermost_accent_contents($element);
       return '' if (!defined($contents_element));
@@ -434,30 +374,25 @@ The result will be poor for Texinfo trees which are not @-command arguments
 (on an @-command line or in braces), for instance if the tree contains
 C<@node> or block commands.
 
-=item $transliterated = normalize_transliterate_texinfo($tree, $no_unidecode)
+=item $transliterated = normalize_transliterate_texinfo($tree)
 X<C<normalize_transliterate_texinfo>>
 
 The Texinfo I<$tree> is returned as a string, with non-ASCII letters
 transliterated as ASCII, but otherwise similar with C<convert_to_identifier>
-output.  If the optional I<$no_unidecode> argument is set, C<Text::Unidecode>
-is not used for characters whose transliteration is not built-in.
+output.
 
-=item $transliterated = transliterate_texinfo($tree, $no_unidecode)
+=item $transliterated = transliterate_texinfo($tree)
 X<C<transliterate_texinfo>>
 
 The Texinfo I<$tree> is returned as a string, with non-ASCII letters
-transliterated as ASCII.  If the optional I<$no_unidecode> argument is set,
-C<Text::Unidecode> is not used for characters whose transliteration is not
-built-in.
+transliterated as ASCII.
 
-=item $file_name = transliterate_protect_file_name($string, $no_unidecode)
+=item $file_name = transliterate_protect_file_name($string)
 X<C<transliterate_protect_file_name>>
 
 The string I<$string> is returned with non-ASCII letters transliterated as
 ASCII, and ASCII characters not safe in file names protected as in
-node normalization.  If the optional I<$no_unidecode> argument is set,
-C<Text::Unidecode> is not used for characters whose transliteration is not
-built-in.
+node normalization.
 
 =back
 

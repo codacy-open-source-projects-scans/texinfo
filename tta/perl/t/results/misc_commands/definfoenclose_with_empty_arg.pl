@@ -1,21 +1,26 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'definfoenclose_with_empty_arg'} = '*document_root C1
- *before_node_section C5
-  {empty_line:\\n}
-  *@definfoenclose C1 l2
-  |EXTRA
-  |misc_args:A{headword||:}
-   *line_arg C3
-    {spaces_before_argument: }
-    {headword, , :}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C4
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C2
+   *@definfoenclose C1 l2
+   |EXTRA
+   |misc_args:A{headword||:}
+    *line_arg C3
+     {spaces_before_argument: }
+     {headword, , :}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C3
    {My }
    *definfoenclose_command@headword C1 l4
@@ -38,7 +43,6 @@ My @headword{something}.
 
 
 $result_texts{'definfoenclose_with_empty_arg'} = '
-
 My something.
 
 ';
@@ -63,7 +67,6 @@ $result_converted{'plaintext'}->{'definfoenclose_with_empty_arg'} = 'My somethin
 
 
 $result_converted{'html_text'}->{'definfoenclose_with_empty_arg'} = '
-
 <p>My something:.
 </p>
 ';
@@ -74,6 +77,13 @@ $result_converted{'latex'}->{'definfoenclose_with_empty_arg'} = '\\documentclass
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -144,15 +154,15 @@ $result_converted{'latex'}->{'definfoenclose_with_empty_arg'} = '\\documentclass
 \\pagestyle{single}%
 
 
-
+\\begin{document}
 My something.
 
 \\end{document}
 ';
 
 
-$result_converted{'xml'}->{'definfoenclose_with_empty_arg'} = '
-<definfoenclose command="headword" open="" close=":" line=" headword, , :"></definfoenclose>
+$result_converted{'xml'}->{'definfoenclose_with_empty_arg'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><definfoenclose command="headword" open="" close=":" line=" headword, , :"></definfoenclose>
 
 <para>My <infoenclose command="headword" begin="" end=":">something</infoenclose>.
 </para>

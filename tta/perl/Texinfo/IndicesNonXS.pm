@@ -21,8 +21,6 @@
 
 package Texinfo::Indices;
 
-use 5.006;
-
 # See comment at start of HTML.pm
 use if $] >= 5.012, feature => 'unicode_strings';
 
@@ -37,15 +35,11 @@ use Texinfo::Common;
 
 use Texinfo::Convert::Text;
 
-our $VERSION = '7.3dev';
-
-# There is a full coverage by the C implementation.
-# Relevant XS interfaces are all implemented.
-# index_entry_first_letter_text_or_command has a C implementation, but no
-# XS override, because it is only a helper function, if needed the calling
-# functions should have XS interfaces.
-
-# Only called from converters.  Has an XS override
+# Only called from converters.  Called directly, not through index sorting
+# functions.
+# The options setup are typically used in calls to
+# index_entry_element_sort_string.
+# Has an XS override.
 sub setup_index_entry_keys_formatting($) {
   my $customization_information = shift;
 
@@ -66,20 +60,37 @@ sub setup_index_entry_keys_formatting($) {
   return $text_options;
 }
 
-# can be used for subentries.
-# $DOCUMENT_INFO is used in XS to retrieve the document.
-sub index_entry_element_sort_string($$$$;$) {
+# Format a sort string for an index entry.  Can also be used on a subentry.
+# Could be called internally by index sorting functions.
+# Can also be called directly by converters to get a string relevant for sorting
+# that could also be output, independently of index sorting functions.
+# $DOCUMENT_INFO is only used in XS to retrieve the document and can either be
+# a Document or a Converter.
+# $DEBUG_LEVEL and $CONVERTER are not used if there is no translation,
+# if $PREFER_REFERENCE_ELEMENT is set.
+# $CONVERTER is used for translations if set; it is really relevant if
+# there are modified translations as in HTML, otherwise the results
+# should be the same as with direct call to translation functions
+# as the translated strings are the same.
+sub index_entry_element_sort_string($$$$;$$$) {
   my ($document_info, $main_entry, $index_entry_element, $options,
-      $prefer_reference_element) = @_;
+      $prefer_reference_element, $converter, $debug_level) = @_;
 
   my $sort_string;
   if (exists($index_entry_element->{'extra'})
       and exists($index_entry_element->{'extra'}->{'sortas'})) {
     $sort_string = $index_entry_element->{'extra'}->{'sortas'};
   } else {
-    my $entry_tree_element
-      = Texinfo::Common::index_content_element($index_entry_element,
-                                               $prefer_reference_element);
+    my $entry_tree_element;
+    if (defined($converter)) {
+      $entry_tree_element
+        = $converter->converter_index_content_element($index_entry_element,
+                                                $prefer_reference_element);
+    } else {
+      $entry_tree_element
+        = element_index_content_element($index_entry_element,
+                                   $prefer_reference_element, $debug_level);
+    }
     $sort_string = Texinfo::Convert::Text::convert_to_text(
                               $entry_tree_element, $options);
     # Not done for @sortas, in particular to be able to still sort using

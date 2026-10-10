@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'multiple_in_preamble_before_node'} = '*document_root C5
  *before_node_section C5
@@ -25,24 +28,6 @@ $result_tree_text{'multiple_in_preamble_before_node'} = '*document_root C5
      *def_line C1 l4
      |EXTRA
      |def_command:{defivar}
-     |def_index_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{a}
-       |{ de }
-       |* C1
-        |*def_line_arg C1
-         |{copying}
-     |def_index_ref_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{a}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{copying}
      |documentlanguage:{fr}
      |element_region:{copying}
      |index_entry:I{vr,1}
@@ -156,24 +141,6 @@ $result_tree_text{'multiple_in_preamble_before_node'} = '*document_root C5
    *def_line C1 l21
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ von }
-     |* C1
-      |*def_line_arg C1
-       |{c}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c}
    |documentlanguage:{de}
    |element_node:{chapter}
    |index_entry:I{vr,2}
@@ -315,8 +282,13 @@ top section
      error→
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'multiple_in_preamble_before_node'} = 'vr:
+ a de copying
+ BBB von c
+';
 
-$result_converted{'info'}->{'multiple_in_preamble_before_node'} = 'This is , produced from .
+
+$result_converted{'info'}->{'multiple_in_preamble_before_node'} = Encode::encode('utf-8', 'This is , produced from .
 
  -- Primjerak varijable od copying: a b
      greška→
@@ -344,16 +316,21 @@ File: ,  Node: chapter,  Prev: Top,  Up: Top
 
 
 Tag Table:
-Node: Top110
-Node: chapter207
+Node: Top113
+Node: chapter210
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
-Info-documentlanguage: de
+Info-documentlanguage: hr
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'multiple_in_preamble_before_node'} = 'vr:
+ a de copying
+ BBB von c
 ';
 
 
@@ -406,7 +383,7 @@ strong.def-name {font-family: monospace; font-weight: bold}
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">
 <dt class="defcv defivar-alias-defcv def-line" id="index-BBB-of-c"><span class="category-def">Instanzvariable of <code class="code">c</code>: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-c"> &para;</a></span></dt>
-<dd><p>error&rarr;
+<dd><p>error<span class="arrow">&rarr;</span>
 </p></dd></dl>
 </div>
 </div>
@@ -415,6 +392,11 @@ strong.def-name {font-family: monospace; font-weight: bold}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'multiple_in_preamble_before_node'} = 'vr:
+ a de copying
+ BBB von c
 ';
 
 

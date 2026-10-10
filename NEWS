@@ -14,12 +14,33 @@ X.Y ()
   . new commands @ifepub, @ifnotepub for EPUB.
   . the @clickstyle command has been removed.
   . @xml, @ifxml and @ifnotxml are deprecated.
+  . new commands @documentscript and @documentlanguagevariant for the
+    rare cases where @documentlanguage is not enough.
 
 * texi2any
   . Texinfo XML deprecated as an output format.  Remove options --xml,
-     --ifxml and --no-ifxml.
+    --ifxml and --no-ifxml.  Remove TXI_MARKUP_NO_SECTION_EXTENT
+    and TEXINFO_DTD_VERSION.
     Can still be selected by setting TEXINFO_OUTPUT_FORMAT=texinfoxml
     until fully removed.
+  . -o/--output is a directory if output format are split HTML or
+    plaintext, a file otherwise.
+    If you want to specify a directory for an output file, set the SUBDIR
+    customization variable.
+  . add AUTO_SECTION_NODE customization variable, replacing the
+    insert_nodes_for_sectioning_commands tree transformation.
+  . remove COLLATION_LANGUAGE and DOCUMENTLANGUAGE_COLLATION customization
+    variables.
+  . Info and plaintext C converters.
+  . Build and install Python and Perl modules with Texinfo Parser, Reader,
+    and Document information by default, if SWIG is found.
+  . USE_UNIDECODE removed.  former effect is now always on.
+  . Do not heed separate variables TEXINFO_XS_PARSER, TEXINFO_XS_STRUCTURE
+    or TEXINFO_XS_CONVERT when deciding whether to load XS modules.
+  . HTML output:
+      .  add HTML_COPY_IMAGES customization variable.  If on, copy image
+         files to destination directory, unless image begins with . or ..
+         or is an absolute file name.
 
 * Distribution
   . Remove --enable-refcounts-checks, --enable-perl-api-texi-build

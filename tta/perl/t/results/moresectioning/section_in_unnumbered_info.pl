@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'section_in_unnumbered_info'} = '*document_root C65
  *before_node_section C2
@@ -1999,7 +2002,7 @@ list:
 $result_headings_list{'section_in_unnumbered_info'} = '';
 
 
-$result_converted{'info'}->{'section_in_unnumbered_info'} = 'This is , produced from section_in_unnumbered_text.texi.
+$result_converted{'info'}->{'section_in_unnumbered_info'} = Encode::encode('utf-8', 'This is , produced from section_in_unnumbered_text.texi.
 
 
 File: ,  Node: Top,  Next: chapter,  Up: (dir)
@@ -2306,7 +2309,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'section_in_unnumbered_info'} = '<!DOCTYPE html>

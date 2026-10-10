@@ -1,36 +1,41 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'commands_and_spaces'} = '*document_root C2
- *before_node_section C6
-  *@set C1
-  |EXTRA
-  |misc_args:A{foo|some @value}
-   *line_arg C3
-    {spaces_before_argument:  }
-    {rawline_text:foo   some @value}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  *@setfilename C1 l3
-  |EXTRA
-  |text_arg:{commands_and_spaces.info}
-   *line_arg C3
-    {spaces_before_argument:  }
-    {commands_and_spaces.info}
-    {spaces_after_argument:  \\n}
-  {empty_line:\\n}
-  *@unmacro C1
-  |EXTRA
-  |misc_args:A{ggg}
-   *line_arg C3
-    {spaces_before_argument:  }
-    {rawline_text:ggg}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_setfilename C2
+   *@set C1
+   |EXTRA
+   |misc_args:A{foo|some @value}
+    *line_arg C3
+     {spaces_before_argument:  }
+     {rawline_text:foo   some @value}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
+  *preamble_before_content C4
+   *@setfilename C1 l3
+   |EXTRA
+   |text_arg:{commands_and_spaces.info}
+    *line_arg C3
+     {spaces_before_argument:  }
+     {commands_and_spaces.info}
+     {spaces_after_argument:  \\n}
+   {empty_line:\\n}
+   *@unmacro C1
+   |EXTRA
+   |misc_args:A{ggg}
+    *line_arg C3
+     {spaces_before_argument:  }
+     {rawline_text:ggg}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C46 l7 {a}
  |EXTRA
  |identifier:{a}
@@ -327,12 +332,6 @@ $result_tree_text{'commands_and_spaces'} = '*document_root C2
    *def_line C1 l62
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C3
-      |{spaces_before_argument: }
-      |{machin}
-      |{spaces_after_argument: }
    |element_node:{a}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
@@ -451,7 +450,6 @@ T
 
 
 $result_texts{'commands_and_spaces'} = '
-
 
 
 centered

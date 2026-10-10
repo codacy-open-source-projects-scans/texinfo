@@ -42,8 +42,11 @@ if BUILD_PERL_API_TEXI
 # for the included section is therefore determined by the information
 # in the Pod file NAME section.
 # Since Pod::Simple::Texinfo is not in CPAN, the @url first argument
-# is post-processed by a sed one liner to point to the GNU web site. 
+# is post-processed by a sed one liner to point to the GNU web site.
+# Note: we need to build in tta/ first to make sure the texi2any XS
+# modules are built.
 $(srcdir)/pod2texi.texi: $(pod2texi_pl)
+	cd $(top_builddir)/tta && $(MAKE) $(AM_MAKEFLAGS)
 	$(MAKEINFO_ENVIRONMENT) $(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=subsubsection --no-section-nodes --headings-as-sections --subdir=$(srcdir) $(pod2texi_pl) > /dev/null
 	mv $(srcdir)/pod2texi.texi $(srcdir)/pod2texi_tmp.texi
 	sed 's;https://metacpan.org/pod/Pod::Simple::Texinfo;https://www.gnu.org/software/texinfo/manual/Pod/Simple/Texinfo.html;' $(srcdir)/pod2texi_tmp.texi > $(srcdir)/pod2texi.texi
@@ -163,10 +166,6 @@ manual2_title = "GNU Texinfo manual"
 manual3 = texi2any_api
 manual3_title = "GNU Texinfo texi2any Output Customization"
 manual3_flags = --common "-c INFO_SPECIAL_CHARS_WARNING=0"
-#
-manual4 = texi2any_internals
-manual4_title = "GNU Texinfo texi2any modules documentation"
-manual4_flags = --split chapter --common "-c INFO_SPECIAL_CHARS_WARNING=0"
 
 # We also make little HTML documents for pod2texi script and
 # Pod::Simple::Texinfo documentation.  Texinfo.pm is linked to
@@ -177,6 +176,8 @@ manual4_flags = --split chapter --common "-c INFO_SPECIAL_CHARS_WARNING=0"
 doctemp = wwwtemp
 www_target = $(HOME)/gnu/www/texinfo/manual
 #
+# We copy all the Texinfo manuals, but we call gendoc on and distribute
+# a selection only.
 # Beware that the beginning of the --outfile pod2html option and --htmldir
 # must match in order to have --htmldir actually used.
 wwwdoc-build:
@@ -192,8 +193,6 @@ wwwdoc-build:
 	&& $(gendocs_invoke) -o $(manual2) $(manual2) $(manual2_title) \
 	&& $(gendocs_invoke) $(manual3_flags) \
 	                     -o $(manual3) $(manual3) $(manual3_title) \
-	&& $(gendocs_invoke) $(manual4_flags) \
-	                     -o $(manual4) $(manual4) $(manual4_title) \
 	&& pod2html --podpath . --htmldir='.' --quiet $(pod2texi_pl) --outfile=./pod2texi.html \
 	&& pod2html --quiet Pod/Simple/Texinfo.pm >Pod/Simple/Texinfo.html \
 	&& echo "Manuals ready for web distribution under: $(doctemp)/"
@@ -202,7 +201,7 @@ wwwdoc-build:
 # https://www.gnu.org/software/texinfo/manual/
 wwwdoc-install:
 	cp -arf $(doctemp)/$(manual1) $(doctemp)/$(manual2) \
-	        $(doctemp)/$(manual3) $(doctemp)/$(manual4) \
+	        $(doctemp)/$(manual3) \
 	        $(doctemp)/pod2texi.html \
 	        $(www_target)
 	$(MKDIR_P) $(www_target)/Pod/Simple

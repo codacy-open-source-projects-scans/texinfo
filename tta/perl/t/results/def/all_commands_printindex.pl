@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'all_commands_printindex'} = '*document_root C3
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -41,10 +45,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l5
    |EXTRA
    |def_command:{defvr}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efvr_name}
    |element_node:{chap}
    |index_entry:I{vr,1}
    |original_def_cmdname:{defvr}
@@ -73,10 +73,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l9
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{n--ame}
    |element_node:{chap}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
@@ -109,10 +105,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l13
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{n--ame}
    |element_node:{chap}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffn}
@@ -141,10 +133,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l17
    |EXTRA
    |def_command:{deftypefn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypefn_name}
    |element_node:{chap}
    |index_entry:I{fn,3}
    |original_def_cmdname:{deftypefn}
@@ -181,10 +169,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l21
    |EXTRA
    |def_command:{deftypefn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypefn_name}
    |element_node:{chap}
    |index_entry:I{fn,4}
    |original_def_cmdname:{deftypefn}
@@ -217,24 +201,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l25
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{fn,5}
    |original_def_cmdname:{deftypeop}
@@ -275,24 +241,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l29
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{fn,6}
    |original_def_cmdname:{deftypeop}
@@ -329,10 +277,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l33
    |EXTRA
    |def_command:{deftypevr}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypevr_name}
    |element_node:{chap}
    |index_entry:I{vr,2}
    |original_def_cmdname:{deftypevr}
@@ -365,10 +309,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l37
    |EXTRA
    |def_command:{defcv}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efcv_name}
    |element_node:{chap}
    |index_entry:I{vr,3}
    |original_def_cmdname:{defcv}
@@ -401,10 +341,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l41
    |EXTRA
    |def_command:{defcv}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efcv_name}
    |element_node:{chap}
    |index_entry:I{vr,4}
    |original_def_cmdname:{defcv}
@@ -441,24 +377,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l45
    |EXTRA
    |def_command:{deftypecv}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{vr,5}
    |original_def_cmdname:{deftypecv}
@@ -495,24 +413,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l49
    |EXTRA
    |def_command:{deftypecv}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{vr,6}
    |original_def_cmdname:{deftypecv}
@@ -553,24 +453,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l53
    |EXTRA
    |def_command:{defop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{fn,7}
    |original_def_cmdname:{defop}
@@ -607,24 +489,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l57
    |EXTRA
    |def_command:{defop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{fn,8}
    |original_def_cmdname:{defop}
@@ -657,10 +521,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l61
    |EXTRA
    |def_command:{deftp}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftp_name}
    |element_node:{chap}
    |index_entry:I{tp,1}
    |original_def_cmdname:{deftp}
@@ -693,10 +553,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l65
    |EXTRA
    |def_command:{defun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efun_name}
    |element_node:{chap}
    |index_entry:I{fn,9}
    |original_def_cmdname:{defun}
@@ -731,10 +587,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l69
    |EXTRA
    |def_command:{defmac}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efmac_name}
    |element_node:{chap}
    |index_entry:I{fn,10}
    |original_def_cmdname:{defmac}
@@ -769,10 +621,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l73
    |EXTRA
    |def_command:{defspec}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efspec_name}
    |element_node:{chap}
    |index_entry:I{fn,11}
    |original_def_cmdname:{defspec}
@@ -807,10 +655,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l77
    |EXTRA
    |def_command:{defvar}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efvar_name}
    |element_node:{chap}
    |index_entry:I{vr,7}
    |original_def_cmdname:{defvar}
@@ -841,10 +685,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l81
    |EXTRA
    |def_command:{defvar}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efvar_name}
    |element_node:{chap}
    |index_entry:I{vr,8}
    |original_def_cmdname:{defvar}
@@ -883,10 +723,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l85
    |EXTRA
    |def_command:{defopt}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--efopt_name}
    |element_node:{chap}
    |index_entry:I{vr,9}
    |original_def_cmdname:{defopt}
@@ -917,10 +753,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l89
    |EXTRA
    |def_command:{deftypefun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypefun_name}
    |element_node:{chap}
    |index_entry:I{fn,12}
    |original_def_cmdname:{deftypefun}
@@ -959,10 +791,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l93
    |EXTRA
    |def_command:{deftypevar}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypevar_name}
    |element_node:{chap}
    |index_entry:I{vr,10}
    |original_def_cmdname:{deftypevar}
@@ -997,24 +825,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l97
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efivar_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efivar_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{vr,11}
    |original_def_cmdname:{defivar}
@@ -1049,24 +859,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l101
    |EXTRA
    |def_command:{deftypeivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeivar_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeivar_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{vr,12}
    |original_def_cmdname:{deftypeivar}
@@ -1105,24 +897,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l105
    |EXTRA
    |def_command:{defmethod}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efmethod_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--efmethod_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{fn,13}
    |original_def_cmdname:{defmethod}
@@ -1161,24 +935,6 @@ $result_tree_text{'all_commands_printindex'} = '*document_root C3
    *def_line C1 l109
    |EXTRA
    |def_command:{deftypemethod}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypemethod_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypemethod_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chap}
    |index_entry:I{fn,14}
    |original_def_cmdname:{deftypemethod}
@@ -1528,8 +1284,8 @@ $result_indices_sort_strings{'all_commands_printindex'} = 'fn:
 tp:
  d--eftp_name
 vr:
- d--efcv_name
- d--efcv_name
+ d--efcv_name of c--lass
+ d--efcv_name of c--lass
  d--efivar_name of c--lass
  d--efopt_name
  d--eftypecv_name of c--lass
@@ -1543,7 +1299,7 @@ vr:
 ';
 
 
-$result_converted{'info'}->{'all_commands_printindex'} = 'This is , produced from .
+$result_converted{'info'}->{'all_commands_printindex'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -1667,8 +1423,8 @@ Variables
  [index ]
 * Menu:
 
-* d--efcv_name:                          chap.                 (line 27)
-* d--efcv_name <1>:                      chap.                 (line 30)
+* d--efcv_name of c--lass:               chap.                 (line 27)
+* d--efcv_name of c--lass <1>:           chap.                 (line 30)
 * d--efivar_name of c--lass:             chap.                 (line 72)
 * d--efopt_name:                         chap.                 (line 63)
 * d--eftypecv_name of c--lass:           chap.                 (line 33)
@@ -1691,6 +1447,38 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'all_commands_printindex'} = 'fn:
+ d--efmac_name
+ d--efmethod_name on c--lass
+ d--efop_name on c--lass
+ d--efop_name on c--lass
+ d--efspec_name
+ d--eftypefn_name
+ d--eftypefn_name
+ d--eftypefun_name
+ d--eftypemethod_name on c--lass
+ d--eftypeop_name on c--lass
+ d--eftypeop_name on c--lass
+ d--efun_name
+ n--ame
+ n--ame
+tp:
+ d--eftp_name
+vr:
+ d--efcv_name of c--lass
+ d--efcv_name of c--lass
+ d--efivar_name of c--lass
+ d--efopt_name
+ d--eftypecv_name of c--lass
+ d--eftypecv_name of c--lass
+ d--eftypeivar_name of c--lass
+ d--eftypevar_name
+ d--eftypevr_name
+ d--efvar_name
+ d--efvar_name
+ d--efvr_name
 ';
 
 
@@ -1772,12 +1560,12 @@ th.index-letter-header-printindex {text-align: left}
 </p></dd></dl>
 
 <dl class="first-defcv def-block">
-<dt class="defcv def-line" id="index-d_002d_002defcv_005fname"><span class="category-def">c&ndash;ategory of <code class="code">c--lass</code>: </span><span><strong class="def-name">d--efcv_name</strong><a class="copiable-link" href="#index-d_002d_002defcv_005fname"> &para;</a></span></dt>
+<dt class="defcv def-line" id="index-d_002d_002defcv_005fname-of-c_002d_002dlass"><span class="category-def">c&ndash;ategory of <code class="code">c--lass</code>: </span><span><strong class="def-name">d--efcv_name</strong><a class="copiable-link" href="#index-d_002d_002defcv_005fname-of-c_002d_002dlass"> &para;</a></span></dt>
 <dd><p>d&ndash;efcv
 </p></dd></dl>
 
 <dl class="first-defcv def-block">
-<dt class="defcv def-line" id="index-d_002d_002defcv_005fname-1"><span class="category-def">c&ndash;ategory of <code class="code">c--lass</code>: </span><span><strong class="def-name">d--efcv_name</strong> <var class="def-var-arguments">a&ndash;rguments...</var><a class="copiable-link" href="#index-d_002d_002defcv_005fname-1"> &para;</a></span></dt>
+<dt class="defcv def-line" id="index-d_002d_002defcv_005fname-of-c_002d_002dlass-1"><span class="category-def">c&ndash;ategory of <code class="code">c--lass</code>: </span><span><strong class="def-name">d--efcv_name</strong> <var class="def-var-arguments">a&ndash;rguments...</var><a class="copiable-link" href="#index-d_002d_002defcv_005fname-of-c_002d_002dlass-1"> &para;</a></span></dt>
 <dd><p>d&ndash;efcv with arguments
 </p></dd></dl>
 
@@ -1916,8 +1704,8 @@ th.index-letter-header-printindex {text-align: left}
 <table class="index-entries-printindex vr-entries-printindex">
 <tr><td colspan="2"><hr></td></tr>
 <tr><th class="index-letter-header-printindex vr-letter-header-printindex" colspan="2" id="chap_vr_letter-D">D</th></tr>
-<tr><td class="printindex-index-entry"><a href="#index-d_002d_002defcv_005fname"><code>d--efcv_name</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
-<tr><td class="printindex-index-entry"><a href="#index-d_002d_002defcv_005fname-1"><code>d--efcv_name</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
+<tr><td class="printindex-index-entry"><a href="#index-d_002d_002defcv_005fname-of-c_002d_002dlass"><code>d--efcv_name of c--lass</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
+<tr><td class="printindex-index-entry"><a href="#index-d_002d_002defcv_005fname-of-c_002d_002dlass-1"><code>d--efcv_name of c--lass</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
 <tr><td class="printindex-index-entry"><a href="#index-d_002d_002defivar_005fname-of-c_002d_002dlass"><code>d--efivar_name of c--lass</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
 <tr><td class="printindex-index-entry"><a href="#index-d_002d_002defopt_005fname"><code>d--efopt_name</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
 <tr><td class="printindex-index-entry"><a href="#index-d_002d_002deftypecv_005fname-of-c_002d_002dlass"><code>d--eftypecv_name of c--lass</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
@@ -1936,6 +1724,38 @@ th.index-letter-header-printindex {text-align: left}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'all_commands_printindex'} = 'fn:
+ d--efmac_name
+ d--efmethod_name on c--lass
+ d--efop_name on c--lass
+ d--efop_name on c--lass
+ d--efspec_name
+ d--eftypefn_name
+ d--eftypefn_name
+ d--eftypefun_name
+ d--eftypemethod_name on c--lass
+ d--eftypeop_name on c--lass
+ d--eftypeop_name on c--lass
+ d--efun_name
+ n--ame
+ n--ame
+tp:
+ d--eftp_name
+vr:
+ d--efcv_name of c--lass
+ d--efcv_name of c--lass
+ d--efivar_name of c--lass
+ d--efopt_name
+ d--eftypecv_name of c--lass
+ d--eftypecv_name of c--lass
+ d--eftypeivar_name of c--lass
+ d--eftypevar_name
+ d--eftypevr_name
+ d--efvar_name
+ d--efvar_name
+ d--efvr_name
 ';
 
 $result_converted_errors{'html'}->{'all_commands_printindex'} = '* W |must specify a title with a title command or @top

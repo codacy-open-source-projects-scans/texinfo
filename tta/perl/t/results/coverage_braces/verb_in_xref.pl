@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'verb_in_xref'} = '*document_root C1
- *before_node_section C4
+ *before_node_section C5
+  *preamble_before_content
   *@anchor C1 l1
   |EXTRA
   |identifier:{point}
@@ -75,7 +79,8 @@ $result_converted{'html_text'}->{'verb_in_xref'} = '<a class="anchor" id="point"
 </p>';
 
 
-$result_converted{'latex_text'}->{'verb_in_xref'} = '\\label{anchor:point}%
+$result_converted{'latex_text'}->{'verb_in_xref'} = '\\begin{document}
+\\label{anchor:point}%
 
 See \\hyperref[anchor:point]{[point], page~\\pageref*{anchor:point}}.
 ';

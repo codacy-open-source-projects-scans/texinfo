@@ -1,87 +1,91 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'direntry_dircategory_and_commands'} = '*document_root C3
- *before_node_section C7
-  *@dircategory C1 l1
-   *line_arg C5
-    {spaces_before_argument: }
-    {``category---}
-    *@var C1 l1
-     *brace_container C1
-      {th  ere}
-    {?\'\'}
-    {spaces_after_argument:\\n}
-  *@direntry C3 l2
-   *arguments_line C1
-    *block_line_arg C1
-     {spaces_before_argument:\\n}
-   *menu_entry C6 l3
-    {menu_entry_leading_text:* }
-    *menu_entry_name C1
-     {foo}
-    {menu_entry_separator:: }
-    *menu_entry_node C3
+ *before_node_section C1
+  *preamble_before_content C7
+   *@dircategory C1 l1
+    *line_arg C5
+     {spaces_before_argument: }
+     {``category---}
+     *@var C1 l1
+      *brace_container C1
+       {th  ere}
+     {?\'\'}
+     {spaces_after_argument:\\n}
+   *@direntry C3 l2
+    *arguments_line C1
+     *block_line_arg C1
+      {spaces_before_argument:\\n}
+    *menu_entry C6 l3
+     {menu_entry_leading_text:* }
+     *menu_entry_name C1
+      {foo}
+     {menu_entry_separator:: }
+     *menu_entry_node C3
+     |EXTRA
+     |manual_content:{foo}
+      {(}
+      {foo}
+      {)}
+     {menu_entry_separator:.   }
+     *menu_entry_description C1
+      *preformatted C3
+       {``hello---}
+       *@var C1 l3
+        *brace_container C1
+         {there}
+       {?\'\'\\n}
+    *@end C1 l4
     |EXTRA
-    |manual_content:{foo}
-     {(}
-     {foo}
-     {)}
-    {menu_entry_separator:.   }
-    *menu_entry_description C1
-     *preformatted C3
-      {``hello---}
-      *@var C1 l3
-       *brace_container C1
-        {there}
-      {?\'\'\\n}
-   *@end C1 l4
-   |EXTRA
-   |text_arg:{direntry}
+    |text_arg:{direntry}
+     *line_arg C3
+      {spaces_before_argument: }
+      {direntry}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
+   *@dircategory C1 l6
     *line_arg C3
      {spaces_before_argument: }
-     {direntry}
+     {cat2}
      {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  *@dircategory C1 l6
-   *line_arg C3
-    {spaces_before_argument: }
-    {cat2}
-    {spaces_after_argument:\\n}
-  *@direntry C4 l7
-   *arguments_line C1
-    *block_line_arg C1
-     {spaces_before_argument:\\n}
-   *menu_entry C4 l8
-    {menu_entry_leading_text:* }
-    *menu_entry_node C2
-    |EXTRA
-    |node_content:{aaa }
-    |normalized:{aaa}
-     {aaa}
-     {space_at_end_menu_node: }
-    {menu_entry_separator:::               }
-    *menu_entry_description C1
+   *@direntry C4 l7
+    *arguments_line C1
+     *block_line_arg C1
+      {spaces_before_argument:\\n}
+    *menu_entry C4 l8
+     {menu_entry_leading_text:* }
+     *menu_entry_node C2
+     |EXTRA
+     |node_content:{aaa }
+     |normalized:{aaa}
+      {aaa}
+      {space_at_end_menu_node: }
+     {menu_entry_separator:::               }
+     *menu_entry_description C1
+      *preformatted C2
+       {aaaa\\n}
+       {                   bbbbb\\n}
+    *menu_comment C1
      *preformatted C2
-      {aaaa\\n}
-      {                   bbbbb\\n}
-   *menu_comment C1
-    *preformatted C2
-     {after_menu_description_line:\\n}
-     {menutitle\\n}
-   *@end C1 l12
-   |EXTRA
-   |text_arg:{direntry}
-    *line_arg C3
-     {spaces_before_argument: }
-     {direntry}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  {empty_line:\\n}
+      {after_menu_description_line:\\n}
+      {menutitle\\n}
+    *@end C1 l12
+    |EXTRA
+    |text_arg:{direntry}
+     *line_arg C3
+      {spaces_before_argument: }
+      {direntry}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
+   {empty_line:\\n}
  *@node C1 l15 {Top}
  |EXTRA
  |identifier:{Top}
@@ -162,7 +166,7 @@ list:
 $result_headings_list{'direntry_dircategory_and_commands'} = '';
 
 
-$result_converted{'info'}->{'direntry_dircategory_and_commands'} = 'This is , produced from .
+$result_converted{'info'}->{'direntry_dircategory_and_commands'} = Encode::encode('utf-8', 'This is , produced from .
 
 INFO-DIR-SECTION "category--TH ERE?"
 START-INFO-DIR-ENTRY
@@ -195,6 +199,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

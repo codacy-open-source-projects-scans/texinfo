@@ -25,6 +25,8 @@
 #include "element_types.h"
 #include "converter_types.h"
 #include "html_converter_types.h"
+#include "html_prepare_converter.h"
+#include "list_macros.h"
 /* fatal */
 #include "base_utils.h"
 #include "command_stack.h"
@@ -45,28 +47,28 @@ static void
 push_html_formatting_context (HTML_FORMATTING_CONTEXT_STACK *stack,
                               char *context_name)
 {
-  if (stack->top >= stack->space)
+  if (stack->number >= stack->space)
     {
-      stack->stack
-        = realloc (stack->stack,
+      stack->list
+        = realloc (stack->list,
                    (stack->space += 5) * sizeof (HTML_FORMATTING_CONTEXT));
     }
 
-  memset (&stack->stack[stack->top], 0, sizeof (HTML_FORMATTING_CONTEXT));
+  memset (&stack->list[stack->number], 0, sizeof (HTML_FORMATTING_CONTEXT));
 
-  stack->stack[stack->top].context_name = strdup (context_name);
+  stack->list[stack->number].context_name = strdup (context_name);
 
-  stack->top++;
+  stack->number++;
 }
 
 static void
 pop_html_formatting_context (HTML_FORMATTING_CONTEXT_STACK *stack)
 {
-  if (stack->top == 0)
+  if (stack->number == 0)
     fatal ("HTML formatting context stack empty");
 
-  free (stack->stack[stack->top - 1].context_name);
-  stack->top--;
+  free (stack->list[stack->number - 1].context_name);
+  stack->number--;
 }
 
 void
@@ -75,22 +77,23 @@ html_new_document_context (CONVERTER *self,
         const char *document_global_context,
         enum command_id block_command)
 {
-  HTML_DOCUMENT_CONTEXT_STACK *stack = &self->html_document_context;
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  HTML_DOCUMENT_CONTEXT_STACK *stack = &self_html->html_document_context;
   HTML_DOCUMENT_CONTEXT *doc_context;
 
-  if (stack->top >= stack->space)
+  if (stack->number >= stack->space)
     {
-      stack->stack
-        = realloc (stack->stack,
+      stack->list
+        = realloc (stack->list,
                    (stack->space += 5) * sizeof (HTML_DOCUMENT_CONTEXT));
     }
 
-  doc_context = &stack->stack[stack->top];
+  doc_context = &stack->list[stack->number];
   memset (doc_context, 0, sizeof (HTML_DOCUMENT_CONTEXT));
 
   if (context_name)
     doc_context->context = strdup (context_name);
-  push_integer_stack_integer (&doc_context->preformatted_context, 0);
+  add_(integer) (&doc_context->preformatted_context, 0);
   push_command_or_type (&doc_context->composition_context, 0, 0);
   push_html_formatting_context (&doc_context->formatting_context,
                                 "_format");
@@ -100,18 +103,18 @@ html_new_document_context (CONVERTER *self,
 
   if (document_global_context)
     {
-      self->document_global_context_counter++;
+      self_html->document_global_context_counter++;
     }
 
   if (context_type & CTXF_code)
-    push_integer_stack_integer (&doc_context->monospace, 1);
+    add_(integer) (&doc_context->monospace, 1);
   else
-    push_integer_stack_integer (&doc_context->monospace, 0);
+    add_(integer) (&doc_context->monospace, 0);
 
   if (block_command)
-    push_command (&doc_context->block_commands, block_command);
+    add_(command) (&doc_context->block_commands, block_command);
 
-  stack->top++;
+  stack->number++;
 
   if (context_type & CTXF_string)
     html_set_string_context (self);
@@ -120,32 +123,34 @@ html_new_document_context (CONVERTER *self,
 void
 html_pop_document_context (CONVERTER *self)
 {
-  HTML_DOCUMENT_CONTEXT_STACK *stack = &self->html_document_context;
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+
+  HTML_DOCUMENT_CONTEXT_STACK *stack = &self_html->html_document_context;
   HTML_DOCUMENT_CONTEXT *document_ctx;
 
-  if (stack->top == 0)
+  if (stack->number == 0)
     fatal ("HTML document context stack empty for pop");
 
-  document_ctx = &stack->stack[stack->top -1];
+  document_ctx = &stack->list[stack->number -1];
 
   free (document_ctx->context);
   free (document_ctx->document_global_context);
-  free (document_ctx->monospace.stack);
-  free (document_ctx->preformatted_context.stack);
-  free (document_ctx->composition_context.stack);
-  free (document_ctx->preformatted_classes.stack);
-  if (document_ctx->block_commands.top > 0)
-    pop_command (&document_ctx->block_commands);
-  free (document_ctx->block_commands.stack);
+  free (document_ctx->monospace.list);
+  free (document_ctx->preformatted_context.list);
+  free (document_ctx->composition_context.list);
+  free (document_ctx->preformatted_classes.list);
+  if (document_ctx->block_commands.number > 0)
+    pop_(command) (&document_ctx->block_commands);
+  free (document_ctx->block_commands.list);
   pop_html_formatting_context (&document_ctx->formatting_context);
-  free (document_ctx->formatting_context.stack);
+  free (document_ctx->formatting_context.list);
 
   if (document_ctx->document_global_context)
     {
-      self->document_global_context_counter--;
+      self_html->document_global_context_counter--;
     }
 
-  stack->top--;
+  stack->number--;
 }
 
 int
@@ -157,12 +162,13 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   HTML_FORMATTING_CONTEXT *top_formating_ctx;
 
-  if (builtin_command_data[data_cmd].flags & CF_brace
-      && (builtin_command_data[data_cmd].data == BRACE_context
-          || builtin_command_data[data_cmd].flags & CF_math))
+  if ((command_data[data_cmd].flags & CF_brace
+       && (command_data[data_cmd].data == BRACE_context
+           || command_data[data_cmd].flags & CF_math))
+      || data_cmd == CM_printindex)
     {
       html_new_document_context (self,
-                   builtin_command_data[data_cmd].cmdname, 0, 0, 0);
+                   command_data[data_cmd].cmdname, 0, 0, 0);
 
     }
   top_document_ctx = html_top_document_context (self);
@@ -171,7 +177,7 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
     {
       char *context_str;
       xasprintf (&context_str, "@%s",
-                 builtin_command_data[data_cmd].cmdname);
+                 command_data[data_cmd].cmdname);
       push_html_formatting_context (
                  &top_document_ctx->formatting_context,
                  context_str);
@@ -181,21 +187,21 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
   top_formating_ctx
     = html_top_formatting_context (&top_document_ctx->formatting_context);
 
-  if (builtin_command_data[data_cmd].flags & CF_block)
+  if (command_data[data_cmd].flags & CF_block)
     {
-      push_command (&top_document_ctx->block_commands, data_cmd);
+      add_(command) (&top_document_ctx->block_commands, data_cmd);
     }
 
   if (html_commands_data[data_cmd].flags & HF_pre_class)
     {
       push_command_or_type (&top_document_ctx->preformatted_classes,
                             html_commands_data[data_cmd].pre_class_cmd, 0);
-      if (builtin_command_data[data_cmd].flags & CF_preformatted)
+      if (command_data[data_cmd].flags & CF_preformatted)
         {
           preformatted = 1;
           top_document_ctx->inside_preformatted++;
         }
-      else if (builtin_command_data[data_cmd].data == BLOCK_menu
+      else if (command_data[data_cmd].data == BLOCK_menu
                && top_document_ctx->inside_preformatted)
         preformatted = 1;
     }
@@ -204,7 +210,7 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
     {
       push_command_or_type (&top_document_ctx->composition_context,
                             data_cmd, 0);
-      push_integer_stack_integer (&top_document_ctx->preformatted_context,
+      add_(integer) (&top_document_ctx->preformatted_context,
                                 preformatted);
     }
 
@@ -217,21 +223,21 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
       top_document_ctx->verbatim_ctx++;
     }
 
-  if (builtin_command_data[data_cmd].other_flags & CF_brace_code
-      || builtin_command_data[data_cmd].flags & CF_preformatted_code)
+  if (command_data[data_cmd].other_flags & CF_brace_code
+      || command_data[data_cmd].other_flags & CF_preformatted_code)
     {
-      push_integer_stack_integer (&top_document_ctx->monospace, 1);
+      add_(integer) (&top_document_ctx->monospace, 1);
     }
-  else if (builtin_command_data[data_cmd].flags & CF_brace
-           && builtin_command_data[data_cmd].data == BRACE_style_no_code)
+  else if (command_data[data_cmd].flags & CF_brace
+           && command_data[data_cmd].data == BRACE_style_no_code)
     {
-      push_integer_stack_integer (&top_document_ctx->monospace, 0);
+      add_(integer) (&top_document_ctx->monospace, 0);
     }
   else if (self->upper_case[data_cmd])
     {
       top_formating_ctx->upper_case_ctx++;
     }
-  else if (builtin_command_data[data_cmd].flags & CF_math)
+  else if (command_data[data_cmd].flags & CF_math)
     {
       top_document_ctx->math_ctx++;
       if (self->conf->CONVERT_TO_LATEX_IN_MATH.o.integer > 0)
@@ -262,13 +268,13 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
   if (html_commands_data[data_cmd].flags & HF_composition_context)
     {
       pop_command_or_type (&top_document_ctx->composition_context);
-      pop_integer_stack (&top_document_ctx->preformatted_context);
+      pop_(integer) (&top_document_ctx->preformatted_context);
     }
 
   if (html_commands_data[data_cmd].flags & HF_pre_class)
     {
       pop_command_or_type (&top_document_ctx->preformatted_classes);
-      if (builtin_command_data[data_cmd].flags & CF_preformatted)
+      if (command_data[data_cmd].flags & CF_preformatted)
         top_document_ctx->inside_preformatted--;
     }
 
@@ -281,18 +287,18 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
       top_formating_ctx->no_break--;
     }
 
-  if (builtin_command_data[data_cmd].flags & CF_preformatted_code
-      || (builtin_command_data[data_cmd].flags & CF_brace
-          && builtin_command_data[data_cmd].data == BRACE_style_no_code)
-      || builtin_command_data[data_cmd].other_flags & CF_brace_code)
+  if (command_data[data_cmd].other_flags & CF_preformatted_code
+      || (command_data[data_cmd].flags & CF_brace
+          && command_data[data_cmd].data == BRACE_style_no_code)
+      || command_data[data_cmd].other_flags & CF_brace_code)
     {
-      pop_integer_stack (&top_document_ctx->monospace);
+      pop_(integer) (&top_document_ctx->monospace);
     }
   else if (self->upper_case[data_cmd])
     {
       top_formating_ctx->upper_case_ctx--;
     }
-  else if (builtin_command_data[data_cmd].flags & CF_math)
+  else if (command_data[data_cmd].flags & CF_math)
     {
       top_document_ctx->math_ctx--;
     }
@@ -306,9 +312,9 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
       top_document_ctx->verbatim_ctx--;
     }
 
-  if (builtin_command_data[data_cmd].flags & CF_block)
+  if (command_data[data_cmd].flags & CF_block)
     {
-      pop_command (&top_document_ctx->block_commands);
+      pop_(command) (&top_document_ctx->block_commands);
     }
 
   if (html_commands_data[data_cmd].flags & HF_format_context)
@@ -317,9 +323,10 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
                  &top_document_ctx->formatting_context);
     }
 
-  if (builtin_command_data[data_cmd].flags & CF_brace
-      && (builtin_command_data[data_cmd].data == BRACE_context
-          || builtin_command_data[data_cmd].flags & CF_math))
+  if ((command_data[data_cmd].flags & CF_brace
+       && (command_data[data_cmd].data == BRACE_context
+           || command_data[data_cmd].flags & CF_math))
+      || data_cmd == CM_printindex)
     {
       html_pop_document_context (self);
     }
@@ -328,6 +335,8 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
 void
 html_open_type_update_context (CONVERTER *self, enum element_type type)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+
   HTML_DOCUMENT_CONTEXT *top_document_ctx = html_top_document_context (self);
   HTML_FORMATTING_CONTEXT *top_formating_ctx
     = html_top_formatting_context (&top_document_ctx->formatting_context);
@@ -340,35 +349,36 @@ html_open_type_update_context (CONVERTER *self, enum element_type type)
     {
       top_formating_ctx->preformatted_number++;
     }
-  else if (self->pre_class_types[type])
+  else if (self_html->pre_class_types[type])
     {
       push_command_or_type (&top_document_ctx->preformatted_classes, 0, type);
       push_command_or_type (&top_document_ctx->composition_context,
                             0, type);
-      push_integer_stack_integer (&top_document_ctx->preformatted_context, 1);
+      add_(integer) (&top_document_ctx->preformatted_context, 1);
     }
 
-  if (self->code_types[type])
+  if (self_html->code_types[type])
     {
-      push_integer_stack_integer (&top_document_ctx->monospace, 1);
+      add_(integer) (&top_document_ctx->monospace, 1);
     }
 }
 
 void
 html_convert_type_update_context (CONVERTER *self, enum element_type type)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   HTML_DOCUMENT_CONTEXT *top_document_ctx = html_top_document_context (self);
 
-  if (self->code_types[type])
+  if (self_html->code_types[type])
     {
-      pop_integer_stack (&top_document_ctx->monospace);
+      pop_(integer) (&top_document_ctx->monospace);
     }
 
-  if (self->pre_class_types[type])
+  if (self_html->pre_class_types[type])
     {
       pop_command_or_type (&top_document_ctx->preformatted_classes);
       pop_command_or_type (&top_document_ctx->composition_context);
-      pop_integer_stack (&top_document_ctx->preformatted_context);
+      pop_(integer) (&top_document_ctx->preformatted_context);
     }
 }
 
@@ -410,7 +420,7 @@ html_in_code (const CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
-  return top_integer_stack (&top_document_ctx->monospace);
+  return *top_(integer) (&top_document_ctx->monospace);
 }
 
 int
@@ -426,7 +436,7 @@ html_in_preformatted_context (const CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
-  return top_integer_stack (&top_document_ctx->preformatted_context);
+  return *top_(integer) (&top_document_ctx->preformatted_context);
 }
 
 int
@@ -521,9 +531,9 @@ html_top_block_command (const CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
-  if (top_document_ctx->block_commands.top <= 0)
+  if (top_document_ctx->block_commands.number <= 0)
     return 0;
-  return top_command (&top_document_ctx->block_commands);
+  return *top_(command) (&top_document_ctx->block_commands);
 }
 
 const COMMAND_OR_TYPE_STACK *
@@ -555,7 +565,7 @@ html_set_code_context (CONVERTER *self, int code)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
-  push_integer_stack_integer (&top_document_ctx->monospace, code);
+  add_(integer) (&top_document_ctx->monospace, code);
 }
 
 void
@@ -563,7 +573,7 @@ html_pop_code_context (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
-  pop_integer_stack (&top_document_ctx->monospace);
+  pop_(integer) (&top_document_ctx->monospace);
 }
 
 void
@@ -601,8 +611,9 @@ html_unset_raw_context (CONVERTER *self)
 const char *
 html_multi_expanded_region (CONVERTER *self)
 {
-  if (self->multiple_pass.top > 0)
-    return top_string_stack (&self->multiple_pass);
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  if (self_html->multiple_pass.number > 0)
+    return *top_(string) (&self_html->multiple_pass);
 
   return 0;
 }
@@ -610,19 +621,22 @@ html_multi_expanded_region (CONVERTER *self)
 void
 html_set_multiple_conversions (CONVERTER *self, const char *multiple_pass)
 {
-  push_string_stack_string (&self->multiple_pass, multiple_pass);
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  push_string_stack_string (&self_html->multiple_pass, multiple_pass);
 }
 
 void
 html_unset_multiple_conversions (CONVERTER *self)
 {
-  pop_string_stack (&self->multiple_pass);
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  pop_string_stack (&self_html->multiple_pass);
 }
 
 size_t
 html_in_multiple_conversions (const CONVERTER *self)
 {
-  return self->multiple_pass.top;
+  const HTML_CONVERTER_STATE *self_html = self->html_converter;
+  return self_html->multiple_pass.number;
 }
 
 void
@@ -630,24 +644,25 @@ html_register_footnote (CONVERTER *self, const ELEMENT *command,
      const char *footid, const char *docid, int number_in_doc,
      const char *footnote_location_filename, const char *multi_expanded_region)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   HTML_PENDING_FOOTNOTE_STACK *stack;
   HTML_PENDING_FOOTNOTE *pending_footnote;
 
-  if (self->shared_conversion_state.in_skipped_node_top == 1)
+  if (self_html->shared_conversion_state.in_skipped_node_top == 1)
     return;
 
-  stack = &self->pending_footnotes;
+  stack = &self_html->pending_footnotes;
 
-  if (stack->top >= stack->space)
+  if (stack->number >= stack->space)
     {
-      stack->stack
-        = realloc (stack->stack,
+      stack->list
+        = realloc (stack->list,
                    (stack->space += 5) * sizeof (HTML_PENDING_FOOTNOTE *));
     }
   pending_footnote = (HTML_PENDING_FOOTNOTE *)
                       malloc (sizeof (HTML_PENDING_FOOTNOTE));
-  stack->stack[stack->top] = pending_footnote;
-  stack->top++;
+  stack->list[stack->number] = pending_footnote;
+  stack->number++;
 
   pending_footnote->command = command;
   pending_footnote->footid = strdup (footid);
@@ -676,36 +691,37 @@ void
 html_clear_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack)
 {
   size_t i;
-  for (i = 0; i < stack->top; i++)
+  for (i = 0; i < stack->number; i++)
     {
-      html_free_pending_footnote (stack->stack[i]);
+      html_free_pending_footnote (stack->list[i]);
     }
-  stack->top = 0;
+  stack->number = 0;
 }
 
 void
 html_register_pending_formatted_inline_content (CONVERTER *self,
                              const char *category, const char *inline_content)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   HTML_INLINE_CONTENT *pending_content;
   HTML_INLINE_CONTENT_STACK *stack;
 
   if (!inline_content)
     return;
 
-  stack = &self->pending_inline_content;
-  if (stack->top >= stack->space)
+  stack = &self_html->pending_inline_content;
+  if (stack->number >= stack->space)
     {
-      stack->stack
-        = realloc (stack->stack,
+      stack->list
+        = realloc (stack->list,
                    (stack->space += 5) * sizeof (HTML_INLINE_CONTENT));
     }
-  pending_content = &stack->stack[stack->top];
+  pending_content = &stack->list[stack->number];
 
   pending_content->category = strdup (category);
   pending_content->string = strdup (inline_content);
 
-  stack->top++;
+  stack->number++;
 }
 
 /* cancel only the first pending content for the category */
@@ -713,26 +729,27 @@ char *
 html_cancel_pending_formatted_inline_content (CONVERTER *self,
                                               const char *category)
 {
-  HTML_INLINE_CONTENT_STACK *stack = &self->pending_inline_content;
-  if (stack->top)
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  HTML_INLINE_CONTENT_STACK *stack = &self_html->pending_inline_content;
+  if (stack->number)
     {
-      size_t current_position = stack->top;
+      size_t current_position = stack->number;
       size_t current_idx;
       while (current_position > 0)
         {
           current_idx = current_position - 1;
-          if (!strcmp (stack->stack[current_idx].category, category))
+          if (!strcmp (stack->list[current_idx].category, category))
             {
-              char *inline_content = stack->stack[current_idx].string;
-              free (stack->stack[current_idx].category);
-              if (current_position < stack->top)
+              char *inline_content = stack->list[current_idx].string;
+              free (stack->list[current_idx].category);
+              if (current_position < stack->number)
                 {
-                  memmove (&stack->stack[current_idx],
-                           &stack->stack[current_idx+1],
+                  memmove (&stack->list[current_idx],
+                           &stack->list[current_idx+1],
                            sizeof (HTML_INLINE_CONTENT)
-                               * (stack->top - (current_idx +1)));
+                               * (stack->number - (current_idx +1)));
                 }
-              stack->top--;
+              stack->number--;
               return inline_content;
             }
         }
@@ -743,19 +760,20 @@ html_cancel_pending_formatted_inline_content (CONVERTER *self,
 char *
 html_get_pending_formatted_inline_content (CONVERTER *self)
 {
-  HTML_INLINE_CONTENT_STACK *stack = &self->pending_inline_content;
-  if (stack->top)
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  HTML_INLINE_CONTENT_STACK *stack = &self_html->pending_inline_content;
+  if (stack->number)
     {
       TEXT result;
       size_t i;
       text_init (&result);
-      for (i = 0; i < stack->top; i++)
+      for (i = 0; i < stack->number; i++)
         {
-          text_append (&result, stack->stack[i].string);
-          free (stack->stack[i].string);
-          free (stack->stack[i].category);
+          text_append (&result, stack->list[i].string);
+          free (stack->list[i].string);
+          free (stack->list[i].category);
         }
-      stack->top = 0;
+      stack->number = 0;
       return result.text;
     }
   else
@@ -795,8 +813,9 @@ html_associate_pending_formatted_inline_content (CONVERTER *self,
                                             const void *hv,
                                             const char *inline_content)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   HTML_ASSOCIATED_INLINE_CONTENT_LIST *associated_content_list
-    = &self->associated_inline_content;
+    = &self_html->associated_inline_content;
   HTML_ASSOCIATED_INLINE_CONTENT *element_associated_content = 0;
   size_t number = get_associated_inline_content_number (associated_content_list,
                                                                    element, hv);
@@ -853,8 +872,9 @@ html_get_associated_formatted_inline_content (CONVERTER *self,
                                               const ELEMENT *element,
                                               const void *hv)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   HTML_ASSOCIATED_INLINE_CONTENT_LIST *associated_content_list
-    = &self->associated_inline_content;
+    = &self_html->associated_inline_content;
   HTML_ASSOCIATED_INLINE_CONTENT *element_associated_content = 0;
   size_t number = get_associated_inline_content_number (associated_content_list,
                                                                    element, hv);
@@ -917,8 +937,9 @@ void
 html_register_file_information (CONVERTER *self, const char *key,
                                 int value)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   FILE_ASSOCIATED_INFO *associated_info
-    = &self->html_files_information.list[self->current_filename.file_number];
+    = &self_html->html_files_information.list[self_html->current_filename.file_number];
   add_associated_file_info_integer (associated_info, key, value);
 }
 
@@ -939,6 +960,7 @@ int
 html_get_file_information (const CONVERTER *self, const char *key,
                            const char *filename, int *status)
 {
+  const HTML_CONVERTER_STATE *self_html = self->html_converter;
   size_t page_number;
   const FILE_ASSOCIATED_INFO *associated_info;
   const FILE_INFO_KEY_PAIR *k;
@@ -955,9 +977,9 @@ html_get_file_information (const CONVERTER *self, const char *key,
         }
     }
   else
-    page_number = self->current_filename.file_number;
+    page_number = self_html->current_filename.file_number;
 
-  associated_info = &self->html_files_information.list[page_number];
+  associated_info = &self_html->html_files_information.list[page_number];
   k = lookup_associated_file_info (associated_info, key);
   if (!k)
     {
@@ -971,15 +993,16 @@ void
 html_register_opened_section_level (CONVERTER *self, size_t file_number,
                                     int level, const char *close_string)
 {
-  STRING_STACK *file_pending_closes 
-    = &self->pending_closes.list[file_number -1];
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  STRING_LIST *file_pending_closes
+    = &self_html->pending_closes.list[file_number -1];
 
-  while ((int) file_pending_closes->top < level)
+  while ((int) file_pending_closes->number < level)
     {
       push_string_stack_string (file_pending_closes, "");
     }
   push_string_stack_string (file_pending_closes, close_string);
-}  
+}
 
 /* called from Perl */
 void
@@ -1000,16 +1023,17 @@ STRING_LIST *
 html_close_registered_sections_level (CONVERTER *self, size_t file_number,
                                       int level)
 {
-  STRING_STACK *file_pending_closes
-    = &self->pending_closes.list[file_number -1];
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+  STRING_LIST *file_pending_closes
+    = &self_html->pending_closes.list[file_number -1];
   STRING_LIST *closed_elements = new_string_list ();
 
-  while ((int) file_pending_closes->top > level)
+  while ((int) file_pending_closes->number > level)
     {
-      const char *close_string = top_string_stack (file_pending_closes);
+      const char *close_string = *top_(string) (file_pending_closes);
       if (strlen (close_string))
         {
-          add_string (close_string, closed_elements);
+          add_string (closed_elements, close_string);
         }
       pop_string_stack (file_pending_closes);
     }
@@ -1097,8 +1121,9 @@ size_t
 html_check_htmlxref_already_warned (CONVERTER *self, const char *manual_name,
                                     const SOURCE_INFO *source_info)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   STRING_LIST *htmlxref_warned_list
-    = &self->check_htmlxref_already_warned;
+    = &self_html->check_htmlxref_already_warned;
   char *node_manual_key;
   char *info_id;
   size_t entry_nr;
@@ -1119,7 +1144,7 @@ html_check_htmlxref_already_warned (CONVERTER *self, const char *manual_name,
       return entry_nr;
     }
 
-  add_string (node_manual_key, htmlxref_warned_list);
+  add_string (htmlxref_warned_list, node_manual_key);
   free (node_manual_key);
 
   return 0;
@@ -1140,13 +1165,14 @@ const OUTPUT_UNIT *
 html_find_direction_name_global_unit (const CONVERTER *self,
                                       const char *direction_name)
 {
+  const HTML_CONVERTER_STATE *self_html = self->html_converter;
   SPECIAL_UNIT_DIRECTION *result = 0;
   static SPECIAL_UNIT_DIRECTION searched_direction;
 
   searched_direction.direction = direction_name;
   result = (SPECIAL_UNIT_DIRECTION *) bsearch (&searched_direction,
-                self->global_units_direction_names.list,
-                self->global_units_direction_names.number,
+                self_html->global_units_direction_names.list,
+                self_html->global_units_direction_names.number,
                 sizeof (SPECIAL_UNIT_DIRECTION),
                 compare_global_units_direction_name);
   if (!result)
@@ -1176,35 +1202,37 @@ void
 html_css_add_info (CONVERTER *self, enum css_info_type type,
                    const char *css_info)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   if (type == CI_css_info_rules)
-    add_string (css_info, &self->css_rule_lines);
+    add_string (&self_html->css_rule_lines, css_info);
   else if (type == CI_css_info_imports)
-    add_string (css_info, &self->css_import_lines);
+    add_string (&self_html->css_import_lines, css_info);
 }
 
 const STRING_LIST *
 html_css_get_info (CONVERTER *self, enum css_info_type type)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   if (type == CI_css_info_rules)
-    return &self->css_rule_lines;
+    return &self_html->css_rule_lines;
   else if (type == CI_css_info_imports)
-    return &self->css_import_lines;
+    return &self_html->css_import_lines;
   else
     {
-      clear_strings_list (&self->css_element_class_list);
-      if (self->css_element_class_styles.number > 0)
+      clear_strings_list (&self_html->css_element_class_list);
+      if (self_html->css_element_class_styles.number > 0)
         {
           size_t i;
 
-          for (i = 0; i < self->css_element_class_styles.number; i++)
+          for (i = 0; i < self_html->css_element_class_styles.number; i++)
             {
               const CSS_SELECTOR_STYLE *selector_style
-                = &self->css_element_class_styles.list[i];
-              add_string (selector_style->selector,
-                          &self->css_element_class_list);
+                = &self_html->css_element_class_styles.list[i];
+              add_string (&self_html->css_element_class_list,
+                          selector_style->selector);
             }
         }
-      return &self->css_element_class_list;
+      return &self_html->css_element_class_list;
     }
 }
 
@@ -1306,10 +1334,12 @@ html_css_set_selector_style (CSS_SELECTOR_STYLE_LIST *css_element_class_styles,
 }
 
 const char *
-html_css_get_selector_style (CONVERTER* self, const char *css_info)
+html_css_get_selector_style (CONVERTER *self, const char *css_info)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
+
   const CSS_SELECTOR_STYLE *selector_style
-   = find_css_selector_style (&self->css_element_class_styles, css_info);
+   = find_css_selector_style (&self_html->css_element_class_styles, css_info);
 
   if (selector_style)
     return selector_style->style;
@@ -1330,16 +1360,17 @@ compare_strings (const void *a, const void *b)
 STRING_LIST *
 html_get_css_elements_classes (CONVERTER *self, const char *filename)
 {
+  HTML_CONVERTER_STATE *self_html = self->html_converter;
   size_t j;
   size_t page_number;
   STRING_LIST *result;
   const char **selectors;
   size_t selector_nr = 0;
 
-  if (self->page_css.number <= 0)
+  if (self_html->page_css.number <= 0)
     return 0;
 
-  const CSS_LIST *global_context_css_list = &self->page_css.list[0];
+  const CSS_LIST *global_context_css_list = &self_html->page_css.list[0];
 
   if (filename)
     {
@@ -1347,14 +1378,14 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
                                       filename);
       if (!page_number)
         {
-          if (self->page_css.number > 1)
+          if (self_html->page_css.number > 1)
             {
               const CSS_LIST *last_css_page
-               = &self->page_css.list[self->page_css.number -1];
+               = &self_html->page_css.list[self_html->page_css.number -1];
               if (last_css_page->page_name
                   && !strcmp (filename, last_css_page->page_name))
                 {
-                  page_number = self->page_css.number -1;
+                  page_number = self_html->page_css.number -1;
                 }
              }
           if (!page_number)
@@ -1375,13 +1406,13 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
         }
       if (page_number)
         {
-          const CSS_LIST *css_list;
-          css_list = &self->page_css.list[page_number];
+          const STRING_LIST *css_list;
+          css_list = &self_html->page_css.list[page_number].selectors;
           if (css_list->number)
             {
               /* +1 for 'span:hover a.copiable-link' */
               size_t space
-               = css_list->number + global_context_css_list->number +1;
+               = css_list->number + global_context_css_list->selectors.number +1;
               selectors = (const char **) malloc (sizeof (char *) * space);
               memcpy (selectors, css_list->list,
                       css_list->number * sizeof (char *));
@@ -1392,27 +1423,31 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
 
   if (selector_nr <= 0)
     {
-      if (global_context_css_list->number)
+      if (global_context_css_list->selectors.number)
         {
+          const STRING_LIST *global_selectors
+             = &global_context_css_list->selectors;
           /* +1 for 'span:hover a.copiable-link' */
-          size_t space = global_context_css_list->number +1;
+          size_t space = global_selectors->number +1;
           selectors = (const char **) malloc (sizeof (char *) * space);
-          memcpy (selectors, global_context_css_list->list,
-                  global_context_css_list->number * sizeof (char *));
-          selector_nr = global_context_css_list->number;
+          memcpy (selectors, global_selectors->list,
+                  global_selectors->number * sizeof (char *));
+          selector_nr = global_selectors->number;
         }
       else
         return 0;
     }
-  else if (global_context_css_list->number)
+  else if (global_context_css_list->selectors.number)
     {
       size_t i;
       size_t file_selector_nr = selector_nr;
+      const STRING_LIST *global_selectors
+             = &global_context_css_list->selectors;
       /* add global context selectors if not already present */
-      for (i = 0; i < global_context_css_list->number; i++)
+      for (i = 0; i < global_selectors->number; i++)
         {
           size_t j;
-          const char *global_selector = global_context_css_list->list[i];
+          const char *global_selector = global_selectors->list[i];
           int found = 0;
           for (j = 0; j < file_selector_nr; j++)
             {
@@ -1444,7 +1479,7 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
 
   result = new_string_list ();
   for (j = 0; j < selector_nr; j++)
-    add_string (selectors[j], result);
+    add_string (result, selectors[j]);
 
   free (selectors);
 

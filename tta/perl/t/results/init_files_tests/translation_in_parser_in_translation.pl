@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'translation_in_parser_in_translation'} = '*document_root C5
  *before_node_section C1
@@ -62,24 +65,6 @@ $result_tree_text{'translation_in_parser_in_translation'} = '*document_root C5
    *def_line C1 l9
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{dd}
-     |{ de }
-     |* C1
-      |*def_line_arg C1
-       |{db}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{dd}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{db}
    |documentlanguage:{fr}
    |element_node:{chap}
    |index_entry:I{fn,1}
@@ -188,6 +173,20 @@ $result_headings_list{'translation_in_parser_in_translation'} = '';
 
 $result_indices_sort_strings{'translation_in_parser_in_translation'} = 'fn:
  dd de db
+';
+
+$result_converted_sort_strings{'file_html'}->{'translation_in_parser_in_translation'} = 'fn:
+ m on n: o p q r
+CC dd
+
+
+Method on s: t u v w x
+DD db
+
+ entry
+
+
+
 ';
 
 1;

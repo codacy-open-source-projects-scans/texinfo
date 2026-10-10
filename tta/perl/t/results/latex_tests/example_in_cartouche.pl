@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'example_in_cartouche'} = '*document_root C1
  *before_node_section C4
@@ -88,20 +91,20 @@ $result_headings_list{'example_in_cartouche'} = '';
 
 
 $result_converted{'latex_text'}->{'example_in_cartouche'} = '\\begin{document}
-\\begin{mdframed}[style=Texinfocartouche]
+\\begin{Texinfocartouche}
 Normal cartouche
 
 New para
-\\end{mdframed}
+\\end{Texinfocartouche}
 
-\\begin{mdframed}[style=Texinfocartouche]
+\\begin{Texinfocartouche}
 \\begin{Texinfoindented}
 \\begin{Texinfopreformatted}%
 \\ttfamily \\% pwd
 /usr/local/share/emacs
 \\end{Texinfopreformatted}
 \\end{Texinfoindented}
-\\end{mdframed}
+\\end{Texinfocartouche}
 ';
 
 1;

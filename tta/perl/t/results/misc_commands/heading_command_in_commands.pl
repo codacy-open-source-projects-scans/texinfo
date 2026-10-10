@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'heading_command_in_commands'} = '*document_root C1
- *before_node_section C6
-  {empty_line:\\n}
+ *before_node_section C7
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *paragraph C2
    *@code C1 l2
     *brace_container C2
@@ -75,7 +80,6 @@ $result_texts{'heading_command_in_commands'} = '
 
 
 
-
 ';
 
 $result_errors{'heading_command_in_commands'} = '* W l3|@everyheading should not appear in @code
@@ -103,8 +107,7 @@ $result_converted{'plaintext'}->{'heading_command_in_commands'} = '‘ ’
 ';
 
 
-$result_converted{'html_text'}->{'heading_command_in_commands'} = '
-<p><code class="code">
+$result_converted{'html_text'}->{'heading_command_in_commands'} = '<p><code class="code">
 </code>
 </p>
 
@@ -118,6 +121,13 @@ $result_converted{'latex'}->{'heading_command_in_commands'} = '\\documentclass{b
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -188,7 +198,7 @@ $result_converted{'latex'}->{'heading_command_in_commands'} = '\\documentclass{b
 \\makeatother
 \\pagestyle{single}%
 
-
+\\begin{document}
 \\texttt{
 \\newpagestyle{custom}{%
 \\sethead[in code][][]%

@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'image_and_spaces_formatting'} = '*document_root C2
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C27 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -231,7 +235,7 @@ $result_sectioning_root{'image_and_spaces_formatting'} = '';
 $result_headings_list{'image_and_spaces_formatting'} = '';
 
 
-$result_converted{'info'}->{'image_and_spaces_formatting'} = 'This is , produced from .
+$result_converted{'info'}->{'image_and_spaces_formatting'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -240,13 +244,15 @@ This is an image words. This is an image words. This is an image words. This is 
 
 Some text This is an image words. This is an image words. This is an image words. This is an image words. This is an image words. This is an image words. This is an image words..
 
-   Some text This is an image words. text aaaaaaaaa This is an image words. text bbbbbbbbbbb This is an image words. text ccccccccccccc This is an image words. text
-ddddddddddddd This is an image words. text eeeeeeeeeeeeeee This is an image words. text fffffffffff This is an image words..
+   Some text This is an image words. text aaaaaaaaa This is an image words. text bbbbbbbbbbb This is an image words. text
+ccccccccccccc This is an image words. text ddddddddddddd This is an image words. text eeeeeeeeeeeeeee This is an image words. text
+fffffffffff This is an image words..
 
    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA This is an image words.
 
    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBB
 This is an image words.
+
    Text.  This is an image words.  This is an image words..
 
 
@@ -259,6 +265,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

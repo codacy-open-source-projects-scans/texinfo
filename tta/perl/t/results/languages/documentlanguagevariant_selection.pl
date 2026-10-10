@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'documentlanguagevariant_selection'} = '*document_root C5
  *before_node_section C2
@@ -18,24 +21,6 @@ $result_tree_text{'documentlanguagevariant_selection'} = '*document_root C5
      *def_line C1 l3
      |EXTRA
      |def_command:{defivar}
-     |def_index_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{BBB}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{SSS}
-     |def_index_ref_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{BBB}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{SSS}
      |element_region:{copying}
      |index_entry:I{vr,1}
      |original_def_cmdname:{defivar}
@@ -144,24 +129,6 @@ $result_tree_text{'documentlanguagevariant_selection'} = '*document_root C5
    *def_line C1 l16
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{other}
-     |{ од }
-     |* C1
-      |*def_line_arg C1
-       |{some}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{other}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{some}
    |documentlanguage:{sr}
    |documentlanguagevariant:A{1959acad|1694acad}
    |element_node:{chap}
@@ -209,24 +176,6 @@ $result_tree_text{'documentlanguagevariant_selection'} = '*document_root C5
    *def_line C1 l21
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{reset}
-     |{ од }
-     |* C1
-      |*def_line_arg C1
-       |{after}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{reset}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{after}
    |documentlanguage:{sr}
    |element_node:{chap}
    |index_entry:I{vr,3}
@@ -286,24 +235,6 @@ $result_tree_text{'documentlanguagevariant_selection'} = '*document_root C5
    *def_line C1 l27
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{before}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{script}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{before}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{script}
    |documentlanguage:{az}
    |element_node:{chap}
    |index_entry:I{vr,4}
@@ -355,24 +286,6 @@ $result_tree_text{'documentlanguagevariant_selection'} = '*document_root C5
    *def_line C1 l32
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{after}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{one}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{after}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{one}
    |documentlanguage:{az}
    |documentlanguagevariant:A{aluku}
    |element_node:{chap}
@@ -538,6 +451,14 @@ $result_converted{'plaintext'}->{'documentlanguagevariant_selection'} = 'top
  -- Instance Variable of script: before change
 
  -- Instance Variable of one: after change
+';
+
+$result_converted_sort_strings{'plaintext'}->{'documentlanguagevariant_selection'} = 'vr:
+ after of one
+ BBB of SSS
+ before of script
+ other од some
+ reset од after
 ';
 
 1;

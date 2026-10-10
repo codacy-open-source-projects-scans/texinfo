@@ -47,6 +47,11 @@ AM_LDFLAGS = $(perl_conf_LDFLAGS)
 
 librarydir = $(converterlibdir)/lib
 
+# path from libraries directory to bin directory such that libtool can
+# install libraries in bin on platforms where thay may only be found in
+# that place (Windows).
+library_bindir = -bindir=$(librarydir)/../../../bin
+
 # -------------------------------------------------------
 
 noinst_LTLIBRARIES =
@@ -61,8 +66,7 @@ noinst_LTLIBRARIES += libperlcall_utils.la
 
 libperlcall_utils_la_SOURCES = \
 		main/xs_utils.c \
-		main/xs_utils.h \
-		main/use_interpreter_types.h
+		main/xs_utils.h
 
 if ! DISABLE_XS
 libperlcall_utils_la_SOURCES += main/set_perl_interpreter.c
@@ -76,6 +80,10 @@ libperlcall_utils_la_LIBADD = $(top_builddir)/gnulib/lib/libgnu.la
 ########################## shared common, parser and structure library
 
 library_LTLIBRARIES += libtexinfo.la
+if SWIG_INTERFACES
+# do a static library for the SWIG interface without embedded Perl.
+noinst_LTLIBRARIES += libtexinfo-static.la
+endif
 
 # The files in the main directory correspond to code used both
 # by the parser, by converters and by C code used for interfacing with
@@ -96,11 +104,11 @@ C_libtexinfo_sources = \
 		      main/text.h \
 		      main/base_utils.c \
 		      main/base_utils.h \
-		      main/element_types.c \
 		      main/element_types.h \
 		      main/command_ids.h \
 		      main/builtin_commands.c \
 		      main/builtin_commands.h \
+		      main/types_data.c \
 		      main/types_data.h \
 		      main/debug.c \
 		      main/debug.h \
@@ -150,6 +158,7 @@ C_libtexinfo_sources = \
 		      main/utils.h \
 		      main/system.h \
 		      main/converter_types.h \
+		      main/html_converter_state.h \
 		      main/unicode.c \
 		      main/unicode.h \
 		      main/hashmap.c \
@@ -167,16 +176,23 @@ C_libtexinfo_sources = \
 		      main/txi_documentlanguage_languages.c \
 		      main/txi_documentlanguage_regions.c \
 		      main/txi_documentlanguage_scripts.c \
+		      main/txi_documentlanguage_script_names.c \
 		      main/txi_documentlanguage_variants.c \
-		      parsetexi/api.c \
-		      parsetexi/api.h \
+		      main/unicode-collation/collation_data_lookup.c \
+		      main/unicode-collation/collation_data_lookup.h \
+		      main/unicode-collation/collation_key.c \
+		      main/unicode-collation/collation_key.h \
+		      main/unicode-collation/uN_make_key_streaming.inc \
+		      main/list_macros.h \
+		      parsetexi/parser_api.c \
+		      parsetexi/parser_api.h \
 		      parsetexi/parser.c \
 		      parsetexi/parser.h \
 		      parsetexi/input.c \
 		      parsetexi/input.h \
 		      parsetexi/close.c \
-		      parsetexi/conf.c \
-		      parsetexi/conf.h \
+		      parsetexi/set_parser_conf.c \
+		      parsetexi/set_parser_conf.h \
 		      parsetexi/context_stack.c \
 		      parsetexi/context_stack.h \
 		      parsetexi/debug_parser.c \
@@ -214,6 +230,9 @@ EXTRA_DIST += main/cmd_unicode.c
 EXTRA_DIST += main/cmd_text.c
 EXTRA_DIST += main/global_multi_commands_case.c
 EXTRA_DIST += main/global_unique_commands_case.c
+EXTRA_DIST += main/unicode-collation/collation-table.c
+
+EXTRA_DIST += main/unicode-collation/README
 
 libtexinfo_la_SOURCES = \
    $(C_libtexinfo_sources)
@@ -250,8 +269,23 @@ libcallperl_libtexinfo_la_LDFLAGS = $(perl_conf_LIB_LDFLAGS)
 # locate include files under out-of-source builds.
 libtexinfo_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 libtexinfo_la_LIBADD = libcallperl_libtexinfo.la $(platform_PERL_LIBADD)
-libtexinfo_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
-#libtexinfo_la_LDFLAGS = -version-info 1:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(perl_conf_LIBS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+# $(LIBPTHREAD) $(LIBTHREAD) and $(PTHREAD_ONCE_LIB) are needed by
+# uchar-h-c23 gnulib module, which is needed by Unicode collation code
+# and could be replaced by uchar-h in other code.  If Unicode collation code
+# is moved to another library it could be possible to use uchar-h although
+# it is probably better for future uses to have uchar-h-c23.
+C_libtexinfo_LIBS = $(HARD_LOCALE_LIB) $(LIBPTHREAD) $(LIBTHREAD) $(LTLIBC32CONV) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING) $(MBRTOWC_LIB) $(PTHREAD_ONCE_LIB) $(SETLOCALE_NULL_LIB)
+libtexinfo_la_LDFLAGS = $(library_bindir) -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS) $(C_libtexinfo_LIBS)
+
+#libtexinfo_la_LDFLAGS = -version-info 1:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(perl_conf_LIBS) $(C_libtexinfo_LIBS)
+
+# static internal library without Perl at all
+libtexinfo_static_la_SOURCES = $(libtexinfo_la_SOURCES)
+libtexinfo_static_la_SOURCES += main/replace_set_perl_interpreter.c \
+		      main/replace_perl_api_call.c
+libtexinfo_static_la_CPPFLAGS = $(libtexinfo_la_CPPFLAGS)
+libtexinfo_static_la_LIBADD = $(top_builddir)/gnulib/lib/libgnu.la
+libtexinfo_static_la_LDFLAGS = $(C_libtexinfo_LIBS)
 
 BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
                 convert/cmd_converter.c \
@@ -266,7 +300,7 @@ BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
                 main/html_conversion_data.h \
                 main/html_css_data.c \
                 main/html_css_data.h \
-                main/element_types.c \
+                main/types_data.c \
                 main/element_types.h \
                 main/global_commands_types.h \
                 main/global_multi_commands_case.c \
@@ -281,7 +315,7 @@ BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
 EXTRA_DIST += main/element_types.txt main/element_types.awk \
 	       main/command_data.awk
 
-products_element_types = $(srcdir)/main/element_types.c \
+products_element_types = $(srcdir)/main/types_data.c \
                          $(srcdir)/main/element_types.h
 
 # See "Multiple Outputs" in the automake manual for this and following
@@ -434,8 +468,8 @@ libtexinfoxs_la_SOURCES= \
 
 # locate include files under out-of-source builds.
 libtexinfoxs_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(perl_conf_CPPFLAGS)
-libtexinfoxs_la_LIBADD = libtexinfo.la libperlcall_utils.la $(platform_PERL_LIBADD)
-libtexinfoxs_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS)
+libtexinfoxs_la_LIBADD = libtexinfo.la $(platform_PERL_LIBADD)
+libtexinfoxs_la_LDFLAGS = $(library_bindir) -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS)
 # example to trigger errors associated with no undefined
 #libtexinfoxs_la_LDFLAGS = -version-info 1:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(perl_conf_LIBS)
 
@@ -445,13 +479,23 @@ libtexinfoxs_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS)
 # share converter data among the XS objects used for conversion.
 
 library_LTLIBRARIES += libtexinfo-convert.la
+if SWIG_INTERFACES
+# do a static library for the SWIG interface without embedded Perl.
+noinst_LTLIBRARIES += libtexinfo-convert-static.la
+endif
 
 C_libtexinfo_convert_sources = \
                        convert/converter.c \
                        convert/converter.h \
+                       convert/convert_indices.c \
+                       convert/convert_indices.h \
                        convert/cmd_converter.c \
                        convert/converters_options.c \
                        convert/converters_options.h \
+                       convert/convert_to_plaintext.c \
+                       convert/convert_to_plaintext.h \
+                       convert/convert_to_info.c \
+                       convert/convert_to_info.h \
                        convert/convert_html.h \
                        convert/convert_html.c \
                        convert/format_html.h \
@@ -468,6 +512,9 @@ C_libtexinfo_convert_sources = \
                        convert/html_converter_api.h \
                        convert/plaintexinfo_converter_api.c \
                        convert/plaintexinfo_converter_api.h \
+                       main/plaintext_converter_state.h \
+                       convert/plaintext_paragraph.h \
+                       convert/plaintext_paragraph.c \
                        convert/rawtext_converter_api.c \
                        convert/rawtext_converter_api.h
 
@@ -483,16 +530,19 @@ noinst_LTLIBRARIES += libcallperl_libtexinfo_convert.la
 
 libcallperl_libtexinfo_convert_la_SOURCES = \
                        convert/call_html_perl_function.h \
+                       convert/call_plaintext_perl_function.h \
                        convert/call_conversion_perl.h
 if ! DISABLE_XS
 libcallperl_libtexinfo_convert_la_SOURCES += \
                        convert/build_html_perl_state.h \
                        convert/build_html_perl_state.c \
                        convert/call_html_perl_function.c \
+                       convert/call_plaintext_perl_function.c \
                        convert/call_conversion_perl.c
 else
 libcallperl_libtexinfo_convert_la_SOURCES += \
                        convert/replace_perl_call_html_function.c \
+                       convert/replace_perl_call_plaintext_function.c \
                        convert/replace_call_conversion_perl.c
 endif
 
@@ -506,9 +556,19 @@ libtexinfo_convert_la_SOURCES = \
 # locate include files under out-of-source builds.
 libtexinfo_convert_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 libtexinfo_convert_la_LIBADD = $(libtexinfoxs_la_as_dependency) libtexinfo.la libcallperl_libtexinfo_convert.la $(platform_PERL_LIBADD)
-libtexinfo_convert_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+libtexinfo_convert_la_LDFLAGS = $(library_bindir) -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 # example to trigger errors associated with no undefined
 #libtexinfo_convert_la_LDFLAGS = -version-info 1:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(perl_conf_LIBS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+
+# static internal library
+libtexinfo_convert_static_la_SOURCES = $(libtexinfo_convert_la_SOURCES)
+libtexinfo_convert_static_la_SOURCES +=  \
+                       convert/replace_perl_call_html_function.c \
+                       convert/replace_perl_call_plaintext_function.c \
+                       convert/replace_call_conversion_perl.c
+libtexinfo_convert_static_la_CPPFLAGS = $(libtexinfo_convert_la_CPPFLAGS)
+libtexinfo_convert_static_la_LIBADD = libtexinfo-static.la
+libtexinfo_convert_static_la_LDFLAGS = $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 ################################# common Perl C code shared library used
 # to call libtexinfo-convert from Perl XS *.xs interfaces
@@ -533,7 +593,7 @@ EXTRA_DIST +=          tree_elements/build_perl_tree_elements.h \
 # locate include files under out-of-source builds.
 libtexinfo_convertxs_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert $(AM_CPPFLAGS) $(perl_conf_CPPFLAGS)
 libtexinfo_convertxs_la_LIBADD = libtexinfo-convert.la libtexinfoxs.la libtexinfo.la $(platform_PERL_LIBADD)
-libtexinfo_convertxs_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS)
+libtexinfo_convertxs_la_LDFLAGS = $(library_bindir) -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS)
 # example to trigger errors associated with no undefined
 #libtexinfo_convertxs_la_LDFLAGS = -version-info 1:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(perl_conf_LIBS)
 
@@ -551,6 +611,10 @@ libtexinfo_convertxs_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS)
 # ctexi2any cannot be built in that situation.
 
 library_LTLIBRARIES += libtexinfo-main.la
+if SWIG_INTERFACES
+# do a static library for the SWIG interface without embedded Perl.
+noinst_LTLIBRARIES += libtexinfo-main-static.la
+endif
 
 # convenience library for embedded Perl called from libtexinfo-main C code,
 # to be able to use specific flags for compilation and linking different from
@@ -595,9 +659,7 @@ C_libtexinfo_main_sources = \
                        api_for_swig/swig_interface.c \
                        api_for_swig/swig_interface.h \
                        api_for_swig/swig_parser_api.c \
-                       api_for_swig/swig_parser_api.h \
-                       convert/texinfo.c \
-                       convert/texinfo.h
+                       api_for_swig/swig_parser_api.h
 
 libtexinfo_main_la_SOURCES = \
    $(C_libtexinfo_main_sources)
@@ -611,10 +673,17 @@ if PERL_EMBEDDED
 libtexinfo_main_la_LIBADD += $(perl_conf_LIBS)
 endif
 # contains part of ExtUtils::Embed ldopts corresponding to LDFLAGS
-libtexinfo_main_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LIB_LDFLAGS) $(LTLIBINTL)
+libtexinfo_main_la_LDFLAGS = $(library_bindir) -version-info 0:0:0 $(perl_conf_LIB_LDFLAGS) $(LTLIBINTL)
 # example to trigger errors associated with no undefined
 #libtexinfo_main_la_LDFLAGS = -version-info 0:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(LTLIBINTL) $(perl_conf_LIBS)
 
+# convenience static library
+libtexinfo_main_static_la_SOURCES = $(libtexinfo_main_la_SOURCES)
+libtexinfo_main_static_la_SOURCES += convert/replace_call_embed_perl.c
+libtexinfo_main_static_la_CPPFLAGS = $(libtexinfo_main_la_CPPFLAGS)
+# libtexinfo is already in libtexinfo-convert-static
+libtexinfo_main_static_la_LIBADD = libtexinfo-convert-static.la
+libtexinfo_main_static_la_LDFLAGS = $(LTLIBINTL)
 
 ############################################### main program in C
 
@@ -644,14 +713,15 @@ ctexi2any_SOURCES = \
 # Gnulib is directly needed on some platforms for getopt-gnu.
 # The Gnulib link variables are needed at least on Solaris and not added
 # by libtool.
-ctexi2any_LDADD = libtexinfo-main.la libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(perl_conf_LIBS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+ctexi2any_LDADD = libtexinfo-main.la libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(perl_conf_LIBS) $(EUIDACCESS_LIBGEN) $(HARD_LOCALE_LIB) $(LIBPTHREAD) $(LIBTHREAD) $(LTLIBC32CONV) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING) $(MBRTOWC_LIB) $(PTHREAD_ONCE_LIB) $(SETLOCALE_NULL_LIB)
 
+# Perl LDFLAGS are brought in by AM_LDFLAGS
 # NOTE it is important to use perl_conf_CFLAGS here to match
 # with perl_conf_LDFLAGS used for linking, or in some platforms where
 # the compiling and linking flags must match there will be a failure to
 # build (for example AlmaLinux).
 ctexi2any_CFLAGS = $(perl_conf_CFLAGS)
-ctexi2any_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) -DEMBED_PERL
+ctexi2any_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 
 # in configure.ac, it is checked that Perl is embedded (and that shared
 # libraries are built)
@@ -670,17 +740,17 @@ install-exec-hook:
 	-makeinfo_f=`echo makeinfo$(EXEEXT) | sed -e '$(transform)'`; texi2any_f=`echo texi2any$(EXEEXT)| sed -e '$(transform)'`; (cd $(DESTDIR)$(bindir)/ && $(LN_S) $$texi2any_f $$makeinfo_f)
 endif
 
-################################# C only static main program demonstrator
-# The same effect can be obtained with the main program in C with
-# XS disabled at configure time or the interpreter disabled at runtime.
-# Not really useful nowadays besides making sure that the replacement functions
-# required for linking are provided.
+################################# C only static main program
+# The same can be obtained with ctexi2any with XS disabled at configure time
+# or the interpreter disabled at runtime.
+# Not useful besides making sure that the replacement functions
+# required for linking are provided without needing to disable XS.
 
 if ! DISABLE_ADDITIONAL_CHECKS
-noinst_PROGRAMS += teximakehtml
+noinst_PROGRAMS += texistatic
 endif
 
-teximakehtml_SOURCES = \
+texistatic_SOURCES = \
                        $(C_libtexinfo_sources) \
                        $(C_libtexinfo_convert_sources) \
                        $(C_libtexinfo_main_sources) \
@@ -688,15 +758,17 @@ teximakehtml_SOURCES = \
                        main/replace_set_perl_interpreter.c \
                        main/replace_perl_api_call.c \
                        convert/replace_perl_call_html_function.c \
+                       convert/replace_perl_call_plaintext_function.c \
                        convert/replace_call_conversion_perl.c \
                        convert/replace_call_embed_perl.c
 
 # Perl flags are not useful, but we use the same flags as for
 # configure checks, such that they are consistent for detected
 # libraries flags such as LTLIBINTL.
-teximakehtml_CFLAGS = $(perl_conf_CFLAGS)
-teximakehtml_LDADD = $(top_builddir)/gnulib/lib/libgnu.la $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+# Perl LDFLAGS are brought in by AM_LDFLAGS
+texistatic_CFLAGS = $(perl_conf_CFLAGS)
+texistatic_LDADD = $(top_builddir)/gnulib/lib/libgnu.la $(EUIDACCESS_LIBGEN) $(HARD_LOCALE_LIB) $(LIBPTHREAD) $(LIBTHREAD) $(LTLIBC32CONV) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING) $(MBRTOWC_LIB) $(PTHREAD_ONCE_LIB) $(SETLOCALE_NULL_LIB)
 
-teximakehtml_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
+texistatic_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 
 

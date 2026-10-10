@@ -1,21 +1,22 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'end_of_line_protect_at_end'} = '*document_root C1
- *before_node_section C2
-  {empty_line:\\n}
+ *before_node_section C3
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *@deffn C1 l2
    *def_line C1 l2
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{deffn_name2}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
     *block_line_arg C7
@@ -39,8 +40,7 @@ $result_texis{'end_of_line_protect_at_end'} = '
 @deffn category2 deffn_name2 arguments2 ';
 
 
-$result_texts{'end_of_line_protect_at_end'} = '
-category2: deffn_name2 arguments2
+$result_texts{'end_of_line_protect_at_end'} = 'category2: deffn_name2 arguments2
 ';
 
 $result_errors{'end_of_line_protect_at_end'} = '* E l2|unexpected @
@@ -67,8 +67,8 @@ $result_indices_sort_strings{'end_of_line_protect_at_end'} = 'fn:
 ';
 
 
-$result_converted{'xml'}->{'end_of_line_protect_at_end'} = '
-<deffn><definitionterm><indexterm index="fn" number="1">deffn_name2</indexterm> <defcategory>category2</defcategory> <deffunction>deffn_name2</deffunction> <defparam>arguments2</defparam> </definitionterm>
+$result_converted{'xml'}->{'end_of_line_protect_at_end'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><deffn><definitionterm><indexterm index="fn" number="1">deffn_name2</indexterm> <defcategory>category2</defcategory> <deffunction>deffn_name2</deffunction> <defparam>arguments2</defparam> </definitionterm>
 </deffn>
 ';
 

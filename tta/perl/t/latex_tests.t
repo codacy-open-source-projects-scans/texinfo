@@ -524,6 +524,13 @@ Something about the life.
 In chapter
 
 '],
+['protection_in_pdftitle',
+'@node Top
+@top top @{but really ? protected@} and percent %
+
+@node chap
+@chapter Chap
+'],
 ['float_and_refs',
 '@node Top
 @top top
@@ -834,19 +841,42 @@ CCC
 ['vbar_in_index',
 '@findex A|B
 @cindex C|D
-']
+'],
+['latex_tagged_pdf_default',
+'@documentlanguage sr
+@documentscript Latn
+
+@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+',{},{'LATEX_TAGGED_PDF' => ''},
+],
+['latex_tagged_pdf_customized',
+'@documentlanguage sr
+@documentscript Latn
+
+@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+',{},{'LATEX_TAGGED_PDF' => 'pdfstandard={UA-2,A-4f}, 
+ tagging-setup={math/setup=mathml-SE}'},
+],
+
 );
 
 foreach my $test (@test_cases) {
   $test->[2]->{'test_formats'} = ['latex_text'];
-
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 foreach my $test (@file_tests) {
   $test->[2]->{'test_formats'} = ['latex_text', 'file_latex'];
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 run_all('latex_tests', [@test_cases, @file_tests]);

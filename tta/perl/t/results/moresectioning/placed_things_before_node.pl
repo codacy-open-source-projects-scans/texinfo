@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'placed_things_before_node'} = '*document_root C5
  *before_node_section C18
@@ -316,7 +319,7 @@ $result_indices_sort_strings{'placed_things_before_node'} = 'cp:
 ';
 
 
-$result_converted{'info'}->{'placed_things_before_node'} = 'This is , produced from .
+$result_converted{'info'}->{'placed_things_before_node'} = Encode::encode('utf-8', 'This is , produced from .
 
 Ref to the anchor: *note An anchor::
 
@@ -374,6 +377,10 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'placed_things_before_node'} = 'cp:
+ index entry
 ';
 
 $result_converted_errors{'info'}->{'placed_things_before_node'} = '* W l1|@anchor outside of any node
@@ -467,6 +474,10 @@ span:hover a.copiable-link {visibility: visible}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'placed_things_before_node'} = 'cp:
+ index entry
 ';
 
 

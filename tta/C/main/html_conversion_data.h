@@ -1,7 +1,7 @@
 /* Automatically generated from generate_code_convert_data.pl */
 
-#ifndef CONVERSION_DATA_H
-#define CONVERSION_DATA_H
+#ifndef HTML_CONVERSION_DATA_H
+#define HTML_CONVERSION_DATA_H
 
 typedef struct HTML_DEFAULT_DIRECTION_STRING_TRANSLATED {
     const char *converted;
@@ -24,12 +24,22 @@ enum special_unit_info_type {
 
 #define CUSTOMIZED_SPECIAL_UNIT_INFO_TYPE_NR (SPECIAL_UNIT_INFO_TYPE_NR + SPECIAL_UNIT_INFO_TREE_NR)
 
+extern const char *special_unit_info_type_names[CUSTOMIZED_SPECIAL_UNIT_INFO_TYPE_NR];
+extern const char *special_unit_info_tree_names[SPECIAL_UNIT_INFO_TREE_NR];
+
 /* translated */
 enum special_unit_info_tree {
    SUIT_type_none = -1,
 
    SUIT_type_heading,
 };
+
+typedef struct TRANSLATED_SUI_ASSOCIATION {
+      enum special_unit_info_tree tree_type;
+          enum special_unit_info_type string_type;
+} TRANSLATED_SUI_ASSOCIATION;
+
+extern const TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[];
 
 extern const char * const default_special_unit_info[SPECIAL_UNIT_INFO_TYPE_NR][4];
 
@@ -60,6 +70,17 @@ extern const char *direction_type_translation_context[];
    hgdt_name(Last) \
    hgdt_name(Space) \
 
+
+enum global_unit_direction {
+#define hgdt_name(name) D_ ## name,
+HTML_GLOBAL_DIRECTIONS_LIST
+#undef hgdt_name
+};
+
+/* NOTE the special output units direction names
+   are obtained dynamically from the perl input and stored in
+   special_unit_info and put later on in
+   special_units_direction_name */
 
 /* relative output unit directions */
 #define RUD_DIRECTIONS_TYPES_LIST \

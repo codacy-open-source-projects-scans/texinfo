@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'index_command_before_end_table'} = '*document_root C1
- *before_node_section C2
-  {empty_line:\\n}
+ *before_node_section C3
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *@table C3 l2
    *arguments_line C1
     *block_line_arg C3
@@ -58,8 +63,7 @@ aaaaa
 ';
 
 
-$result_texts{'index_command_before_end_table'} = '
-in item
+$result_texts{'index_command_before_end_table'} = 'in item
 in itemx
 aaaaa
 
@@ -89,9 +93,12 @@ $result_converted{'plaintext'}->{'index_command_before_end_table'} = '‘in item
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'index_command_before_end_table'} = 'vr:
+ var
+';
 
-$result_converted{'html_text'}->{'index_command_before_end_table'} = '
-<dl class="table">
+
+$result_converted{'html_text'}->{'index_command_before_end_table'} = '<dl class="table">
 <dt><code class="code">in item</code></dt>
 <dt><code class="code">in itemx</code></dt>
 <dd><p>aaaaa
@@ -102,8 +109,8 @@ $result_converted{'html_text'}->{'index_command_before_end_table'} = '
 ';
 
 
-$result_converted{'xml'}->{'index_command_before_end_table'} = '
-<table commandarg="code" endspaces=" ">
+$result_converted{'xml'}->{'index_command_before_end_table'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><table commandarg="code" endspaces=" ">
 <tableentry><tableterm><item><itemformat command="code"> in item</itemformat></item>
 <itemx><itemformat command="code"> in itemx</itemformat></itemx>
 </tableterm><tableitem><para>aaaaa
@@ -113,8 +120,7 @@ $result_converted{'xml'}->{'index_command_before_end_table'} = '
 ';
 
 
-$result_converted{'docbook'}->{'index_command_before_end_table'} = '
-<variablelist><varlistentry><term><literal>in item</literal>
+$result_converted{'docbook'}->{'index_command_before_end_table'} = '<variablelist><varlistentry><term><literal>in item</literal>
 </term><term><literal>in itemx</literal>
 </term><listitem><para>aaaaa
 </para>

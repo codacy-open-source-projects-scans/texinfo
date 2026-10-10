@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'table'} = '*document_root C1
- *before_node_section C6
-  {empty_line:\\n}
+ *before_node_section C7
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *@table C3 l2
    *arguments_line C1
     *block_line_arg C3
@@ -154,8 +159,7 @@ In table
 ';
 
 
-$result_texts{'table'} = '
-table item
+$result_texts{'table'} = 'table item
 table itemx
 
 In table
@@ -214,9 +218,17 @@ table itemx
 *unknown command after indicating command*
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'table'} = 'cp:
+ index entry
+ky:
+ key
+vr:
+ itemx vtable
+ vtable item
+';
 
-$result_converted{'html_text'}->{'table'} = '
-<dl class="table">
+
+$result_converted{'html_text'}->{'table'} = '<dl class="table">
 <dt>table item</dt>
 <dt>table itemx</dt>
 <dd>
@@ -239,8 +251,8 @@ $result_converted{'html_text'}->{'table'} = '
 ';
 
 
-$result_converted{'xml'}->{'table'} = '
-<table commandarg="asis" endspaces=" ">
+$result_converted{'xml'}->{'table'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><table commandarg="asis" endspaces=" ">
 <tableentry><tableterm><item><itemformat command="asis"> table item</itemformat></item>
 <itemx><itemformat command="asis"> table itemx</itemformat></itemx>
 </tableterm><tableitem>
@@ -264,7 +276,7 @@ $result_converted{'xml'}->{'table'} = '
 ';
 
 
-$result_converted{'latex_text'}->{'table'} = '
+$result_converted{'latex_text'}->{'table'} = '\\begin{document}
 \\begin{description}
 \\item[{\\parbox[b]{\\linewidth}{%
 table item\\\\
@@ -293,8 +305,7 @@ In table
 ';
 
 
-$result_converted{'docbook'}->{'table'} = '
-<variablelist><varlistentry><term>table item
+$result_converted{'docbook'}->{'table'} = '<variablelist><varlistentry><term>table item
 </term><term>table itemx
 </term><listitem>
 <para>In table
@@ -305,7 +316,8 @@ $result_converted{'docbook'}->{'table'} = '
 <varlistentry><term><indexterm role="vr"><primary>vtable item</primary></indexterm>&#8216;<literal>vtable item</literal>&#8217;
 </term><!-- after item -->
 <indexterm role="ky"><primary>key</primary></indexterm>
-<term><indexterm role="vr"><primary>itemx vtable</primary></indexterm>&#8216;<literal>itemx vtable</literal>&#8217;
+<term><indexterm role="vr"><primary>itemx vtable</primary></indexterm>&#8216;<literal>itemx vtable<!-- comment in itemx line -->
+</literal>&#8217;
 </term><listitem>
 </listitem></varlistentry></variablelist>
 <variablelist><varlistentry><term><emphasis role="bold">unknown command after indicating command</emphasis>

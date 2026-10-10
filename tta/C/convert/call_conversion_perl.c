@@ -23,13 +23,15 @@
 
 #undef context
 
-#include "tree_types.h"
-#include "converter_types.h"
+#include <stdio.h>
+#include <string.h>
+
 #include "document_types.h"
+#include "converter_types.h"
+#include "xs_utils.h"
 #include "build_perl_info.h"
 #include "get_perl_info.h"
 #include "get_converter_perl_info.h"
-#include "xs_utils.h"
 /* retrieve_converter */
 #include "converter.h"
 #include "call_conversion_perl.h"
@@ -62,7 +64,14 @@ call_config_GNUT_load_init_file (const char *file_path)
 
   SPAGAIN;
 
+  /* NOTE On Solaris 11 with Perl 5.10.1, count can be 1, which should not be.
+   The perlcall documentation for that version says about G_VOID:
+   The value returned by the call_* function indicates how many items
+   have been returned by the Perl subroutine - in this case it will be 0. */
+  /* the correct check:
   if (count != 0)
+   */
+  if (count > 1)
     croak ("Texinfo::Config::GNUT_load_init_file should not return anything\n");
 
   PUTBACK;
@@ -116,7 +125,7 @@ call_module_converter_defaults (const char *module_name,
   dTHX;
 
   options_list_sv
-    = build_sv_options_from_options_list (customizations, 0);
+    = build_sv_options_from_options_list (customizations);
 
   dSP;
 
@@ -162,7 +171,7 @@ call_module_converter (const char *module_name,
   dTHX;
 
   converter_info_sv
-    = build_sv_converter_info_from_converter_initialization_info (conf, 0);
+    = build_sv_converter_info_from_converter_initialization_info (conf);
 
   dSP;
 
@@ -312,7 +321,10 @@ call_converter_output (CONVERTER *self, DOCUMENT *document)
 
   result_sv = POPs;
   result_ret = SvPVutf8 (result_sv, len);
-  result->text = non_perl_strndup (result_ret, len);
+  /* result->text = non_perl_strndup (result_ret, len); */
+  result->text = malloc (sizeof (char) * (len + 1));
+  memcpy (result->text, result_ret, sizeof (char) * (len + 1));
+  result->len = len;
   result->output_files_information = 0;
 
   PUTBACK;

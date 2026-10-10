@@ -3,6 +3,13 @@
 \usepackage{amsmath}
 \usepackage[gen]{eurosym}
 \usepackage{textcomp}
+% This is used to provide a default no-operation 'keyval' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\makeatletter
+\providecommand\KV@Gin@alt{}
+\makeatother
 \usepackage{graphicx}
 \usepackage{etoolbox}
 \usepackage{titleps}
@@ -12,6 +19,8 @@
 \usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
 \usepackage[hidelinks]{hyperref}
+
+\hypersetup{pdftitle={section top}}
 
 \makeatletter
 \newcommand{\Texinfothechapterheading}{}
@@ -81,20 +90,25 @@
 \label{anchor:chapter}%
 
 \section{{section}}
+\label{anchor:section}%
 
 \subsection{{Subsection 10pts}}
+\label{anchor:Subsection-10pts}%
 In 10pts
 
 \changefontsize{11}
 \subsection{{Subsection 11pts}}
+\label{anchor:Subsection-11pts}%
 
 In 11pts
 
 \subsection{{Subsection 8pts}}
+\label{anchor:Subsection-8pts}%
 
 In 8pts
 
 \subsection{{Subsection 15pts}}
+\label{anchor:Subsection-15pts}%
 
 In 15pts
 \end{document}

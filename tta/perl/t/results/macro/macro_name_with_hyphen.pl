@@ -1,27 +1,31 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'macro_name_with_hyphen'} = '*document_root C1
- *before_node_section C3
-  *@macro C3 l1
-  |EXTRA
-  |formal_args:A{arg-one|arg2}
-  |macro_name:{macro-one}
-   *arguments_line C1
-    {macro_line: macro-one {arg-one, arg2}\\n}
-   {raw:This \\arg-one\\ and that \\arg2\\.\\n}
-   *@end C1 l3
+ *before_node_section C2
+  *preamble_before_content C2
+   *@macro C3 l1
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
+   |formal_args:A{arg-one|arg2}
+   |macro_name:{macro-one}
+    *arguments_line C1
+     {macro_line: macro-one {arg-one, arg2}\\n}
+    {raw:This \\arg-one\\ and that \\arg2\\.\\n}
+    *@end C1 l3
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C3
    {This blah and that }
    >SOURCEMARKS

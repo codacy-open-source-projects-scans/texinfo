@@ -1,5 +1,5 @@
 #! /bin/sh
-# Output HTML with texi2any.pl
+# Output with texi2any.pl
 #
 # Copyright 2024-2026 Free Software Foundation, Inc.
 #
@@ -14,21 +14,41 @@
 
 set -e
 
-dir=$1
+format=$1
 
-test -z $dir && exit 1
+test -z $format && exit 1
+
+shift
+
+input_dir=$1
+
+test -z $input_dir && exit 1
+
+dir=${input_dir}_${format}
 
 shift
 
 one_test=no
 if test -n "$1"; then
-  one_test=yes
-  the_test=$1
+  if test "z$1" != zno ; then
+    one_test=yes
+    the_test=$1
+  fi
+  shift
 fi
 
 mkdir -p $dir
 
 #set -x
+
+# prepended to path to go back from the directory where the command tested is
+# called to the directory the current script is called from.
+to_current=../../../../
+
+format_output_option=
+if test $format = html ; then
+  format_output_option='-o.'
+fi
 
 for manual_proj_dir in manuals/*/ ; do
   proj_dir=`basename $manual_proj_dir`
@@ -45,18 +65,26 @@ for manual_proj_dir in manuals/*/ ; do
           continue
         fi
 
-        echo "doing $file"
+        echo "doing ${format} $file"
         mkdir -p $dir/$proj_dir
 
         out_dir=$dir/$proj_dir/$bfile
         rm -rf $out_dir
         mkdir $out_dir
-        err_file=${out_dir}/${bfile}-html_nodes.err
-        # the -I directory is for gcc, could add more
-        if test $one_test = 'yes' ; then
-          echo "../../tta/perl/texi2any.pl -I manuals/$proj_dir/include/ --force --error-limit=10000 -c TEST=1 --html -o ${out_dir}/html_nodes/ $file"
+        mkdir $out_dir/${format}_nodes/
+        err_file_name=${bfile}-${format}_nodes.err
+        err_file=${out_dir}/${err_file_name}
+        file_output_option=
+        if test $format = plaintext ; then
+          file_output_option="-o ${bfile}.txt"
         fi
-        ../../tta/perl/texi2any.pl -I manuals/$proj_dir/include/ --force --error-limit=10000 -c TEST=1 --html -o ${out_dir}/html_nodes/ $file 2>$err_file
+        # the -I directory is for gcc, could add more
+        cmd="(cd ${out_dir}/${format}_nodes/ && ${to_current}../../tta/perl/texi2any.pl -I ${to_current}manuals/$proj_dir/include/ --force --error-limit=10000 -c TEST=1 --${format} ${format_output_option} ${file_output_option} ${to_current}$file 2>../$err_file_name)"
+        if test $one_test = 'yes' ; then
+          echo "$cmd"
+        fi
+        eval $cmd
+        #../../tta/perl/texi2any.pl -I manuals/$proj_dir/include/ --force --error-limit=10000 -c TEST=1 --${format} -o ${out_dir}/${format}_nodes/ $file 2>$err_file
         if test -s $err_file ; then :
         else rm -f $err_file
         fi

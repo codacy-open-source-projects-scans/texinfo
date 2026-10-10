@@ -13,7 +13,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
-#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -28,15 +29,16 @@
 #include "text.h"
 #include "command_ids.h"
 #include "tree_types.h"
+#include "option_types.h"
 #include "options_data.h"
 #include "document_types.h"
 #include "converter_types.h"
+/* HTML_CONVERTER_STATE */
+#include "html_converter_state.h"
 /* non_perl_* */
 #include "xs_utils.h"
 /* fatal */
 #include "base_utils.h"
-#include "tree.h"
-#include "extra.h"
 #include "builtin_commands.h"
 #include "debug.h"
 /* add_include_directory add_string ... */
@@ -349,7 +351,7 @@ add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
           if (type == svt_dir)
             add_include_directory (string, string_list);
           else
-            add_string (string, string_list);
+            add_string (string_list, string);
         }
     }
 }
@@ -404,23 +406,23 @@ get_line_message (CONVERTER *self, enum error_type type, int continuation,
   SOURCE_INFO *source_info = get_source_info (error_location_info);
   if (source_info->file_name)
     {
-      char *saved_string = add_string (source_info->file_name,
-                                       &self->small_strings);
+      char *saved_string = add_string (&self->small_strings,
+                                       source_info->file_name);
       non_perl_free (source_info->file_name);
       source_info->file_name = saved_string;
     }
 
   if (source_info->macro)
     {
-      char *saved_string = add_string (source_info->macro,
-                                       &self->small_strings);
+      char *saved_string = add_string (&self->small_strings,
+                                       source_info->macro);
       non_perl_free (source_info->macro);
       source_info->macro = saved_string;
     }
 
-  message_list_line_formatted_message (&self->error_messages,
-                                       type, continuation, source_info,
-                                       message, do_warn);
+  message_list_format_line_message (&self->error_messages,
+                                    type, continuation, source_info,
+                                    message, do_warn);
 
   non_perl_free (source_info);
 }
@@ -1040,8 +1042,10 @@ find_element_extra_index_entry_sv (const DOCUMENT *document,
         return 0;
     }
   else
-   index_entry = find_sorted_index_names_index_entry_extra_index_entry_sv (
-                    &converter->sorted_index_names, extra_index_entry_sv);
+   {
+     index_entry = find_sorted_index_names_index_entry_extra_index_entry_sv (
+                      &converter->sorted_index_names, extra_index_entry_sv);
+   }
 
   return index_entry;
 }
@@ -1271,7 +1275,7 @@ find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
       const char *cmdname = SvPVutf8_nolen (*cmdname_sv);
       cmd = lookup_builtin_command (cmdname);
 
-      if (builtin_command_data[cmd].flags & CF_root
+      if (command_data[cmd].flags & CF_root
           && cmd != CM_node)
         {
           const ELEMENT *element = find_root_command (document,
@@ -1427,15 +1431,20 @@ get_language_document_hv_sorted_indices (HV *document_hv, const char *key,
 
 
 
-/* Note that it is not really possible to get FILE from a filehandle associated
-   to a file to be closed in unclosed_files.  If the file was opened in C,
-   it is not possible to directly associate the unclosed stream to a SV
-   to transit through Perl, see comment in build_output_files_unclosed_files.
+/* Note that it is not really possible to get a FILE stream from a Perl
+   filehandle associated to a file to be closed (stored in unclosed_files).
+   If the file was opened in C, it is not possible to directly associate
+   the unclosed stream to a SV to transit through Perl, see comment in
+   build_output_files_unclosed_files.  It should be possible to find the
+   FILE stream opened is C and stored in
+   converter->self->output_files_information->unclosed_files based on the
+   file name.
    If the file was opened in Perl, it is possible to get a PerlIO, as done
-   below in code, but not a FILE to be closed.  A file obtained with
+   in the code below, but not a FILE to be closed.  A file obtained with
    PerlIO_exportFILE is a new FILE and should be released before closed and
-   do not close the PerlIO.  The PerlIO can be closed, though, or be carried
-   around to be closed later on.
+   closing this FILE does not close the PerlIO.  The PerlIO can be closed,
+   though, or be carried around to be closed later on, which is what is done
+   in the code below.
  */
  /*
    NOTE clears Perl output files information, as if
@@ -1474,15 +1483,7 @@ get_output_files_information (SV *output_files_sv)
           HE *next = hv_iternext (opened_files_hv);
           SV *file_name_sv = hv_iterkeysv (next);
           const char *file_name = SvPVutf8_nolen (file_name_sv);
-          add_string (file_name, &output_files_information->opened_files);
-          /* no real need for the value, still check that it is 1 */
-          SV *value_sv = HeVAL(next);
-          if (!SvOK (value_sv) || !looks_like_number (value_sv)
-              || SvIV (value_sv) != 1)
-            {
-              fprintf (stderr, "BUG? Unexpected opened_files value for `%s'\n",
-                                file_name);
-            }
+          add_string (&output_files_information->opened_files, file_name);
         }
 
       hv_clear (opened_files_hv);
@@ -1497,6 +1498,8 @@ get_output_files_information (SV *output_files_sv)
       I32 hv_number;
       I32 i;
 
+      /* Should actually be 0, as the files are all closed (maybe except
+         STDOUT) */
       hv_number = hv_iterinit (unclosed_files_hv);
 
       for (i = 0; i < hv_number; i++)
@@ -1515,12 +1518,15 @@ get_output_files_information (SV *output_files_sv)
            */
           if (!SvOK (value_sv))
             {
-          /* TODO It could be possible to find the FILE, by adding
+          /* NOTE It could be possible to find the FILE, by adding
              a converter argument to the function, and using code similar
-             to get_unclosed_stream.
-             However, since the files are all closed (maybe except STDOUT)
-             this situation probably never happens, so it is not important
-             to fix this issue.
+             to get_unclosed_stream. However, this code should never be
+             called, because:
+             * if there is a C implementation of the converter all the files
+               are opened and closed in C and get_output_files_information
+               is not called.
+             * if there is only a Perl converter implementation, all the
+               files are opened in Perl and value_sv is defined.
            */
               fprintf (stderr, "REMARK: unclosed C stream for `%s'\n",
                        file_name);
@@ -1636,17 +1642,21 @@ release_output_units_list_built (OUTPUT_UNIT_LIST *output_units)
 void
 converter_release_output_units_built (CONVERTER *converter)
 {
+  HTML_CONVERTER_STATE *self_html = converter->html_converter;
   int i;
 
-  for (i = 0; i < OUDT_external_nodes_units+1; i++)
+  if (self_html)
     {
-      if (converter->output_units_descriptors[i])
+      for (i = 0; i < OUDT_external_nodes_units+1; i++)
         {
-          OUTPUT_UNIT_LIST *output_unit_list
-            = retrieve_output_units (converter->document,
-                                     converter->output_units_descriptors[i]);
-          if (output_unit_list)
-            release_output_units_list_built (output_unit_list);
+          if (self_html->output_units_descriptors[i])
+            {
+              OUTPUT_UNIT_LIST *output_unit_list
+                = retrieve_output_units (converter->document,
+                                  self_html->output_units_descriptors[i]);
+              if (output_unit_list)
+                release_output_units_list_built (output_unit_list);
+            }
         }
     }
 }
@@ -1669,13 +1679,16 @@ release_output_units_lists_built (OUTPUT_UNIT_LISTS *output_units_lists)
 
 
 #define FETCH(key) key##_sv = hv_fetch (lang_info_hv, #key, strlen (#key), 0);
-DOCUMENT_LANG_INFO *
+static DOCUMENT_LANG_INFO *
 get_lang_info_hv (HV *lang_info_hv)
 {
   SV **lang_sv;
   SV **region_sv;
   SV **script_sv;
   SV **variants_sv;
+   /*
+  SV **bcp47_locale_sv;
+    */
   DOCUMENT_LANG_INFO *lang_info;
 
   dTHX;
@@ -1699,12 +1712,39 @@ get_lang_info_hv (HV *lang_info_hv)
       add_svav_to_string_list (*variants_sv,
                                &lang_info->variants, svt_byte);
     }
-
-  lang_info->bcp47_locale = lang_info_bcp47_locale (lang_info);
+ /* No bcp47_locale, it will be set in set_lang_info_translation
+  FETCH(bcp47_locale)
+  if (bcp47_locale_sv && SvOK (*bcp47_locale_sv))
+    lang_info->bcp47_locale = strdup (SvPV_nolen (*bcp47_locale_sv));
+  */
 
   return lang_info;
 }
 #undef FETCH
+
+const LANG_TRANSLATION *
+get_lang_translation_sv (SV *current_lang_translations_sv)
+{
+  AV *lang_translations_av;
+  SV **lang_info_sv;
+  const LANG_TRANSLATION *lang_translations = 0;
+
+  dTHX;
+
+  lang_translations_av = (AV *) SvRV (current_lang_translations_sv);
+  lang_info_sv = av_fetch (lang_translations_av, 0, 0);
+
+  if (lang_info_sv && SvOK (*lang_info_sv))
+    {
+      HV *lang_info_hv = (HV *) SvRV (*lang_info_sv);
+      DOCUMENT_LANG_INFO *info = get_lang_info_hv (lang_info_hv);
+      lang_translations
+           = set_lang_info_translation (
+                      &converters_translation_cache, info,
+                      TXI_CONVERT_STRINGS_NR);
+    }
+  return lang_translations;
+}
 
 
 

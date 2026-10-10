@@ -25,6 +25,7 @@ package Texinfo::Common;
 use 5.008001;
 
 use strict;
+use warnings;
 
 # have :alpha: match only ASCII
 use if $] >= 5.014, re => '/a';
@@ -58,6 +59,8 @@ use Texinfo::TreeElement;
 require Exporter;
 our @ISA = qw(Exporter);
 
+our $VERSION = '7.3dev';
+
 our @EXPORT_OK = qw(
 collect_commands_in_tree
 collect_commands_list_in_tree
@@ -71,11 +74,12 @@ our @EXPORT = qw(
 __ __p
 );
 
-our $VERSION = '7.3dev';
-
 # TODO document?
 use constant {
    MESSAGES_TEXTDOMAIN => 'texinfo',
+   # In general, it is better to leave the language unspecified, but when
+   # it is not possible, this constant can be used to use the same as the
+   # default language for translations in texi2any.
    DEFAULT_STRINGS_LANG => 'en',
 };
 
@@ -114,13 +118,6 @@ sub pgdt_context($$) {
 }
 
 
-# determine the null device
-my $default_null_device = File::Spec->devnull();
-# Used in many converters and init files
-our %null_device_file = (
-  $default_null_device => 1
-);
-
 # equivalence between a @set flag and an @@-command
 our %set_flag_command_equivalent = (
   'txicodequoteundirected' => 'codequoteundirected',
@@ -142,25 +139,6 @@ foreach my $variable_name ('MACRO_EXPAND', 'INTERNAL_LINKS') {
   $non_decoded_customization_variables{$variable_name} = 1;
 }
 
-# can be modified through command-line, but not customization options
-my %parser_document_state_configuration = (
-  # parsed document parsing information still relevant after parsing
-  'values' => {'txicommandconditionals' => 1},
-                              # the key is the name, the value the @set name
-                              # argument.
-                              # The txicommandconditionals is a special value
-                              # that is set to mark that @ifcommandnotdefined
-                              # is implemented
-);
-
-# parser keys related to customization
-# Set when initializing a parser, but never from command-line/init files
-my %parser_inner_options = (
-  'accept_internalvalue' => 0, # whether @txiinternalvalue should be added
-                               # to the tree or considered invalid.
-                               # currently set if called by gdt.
-);
-
 # this serves both to set defaults and list customization variable
 # valid for the parser.
 my $common_parser_regular_options_defaults
@@ -169,12 +147,6 @@ my $common_parser_regular_options_defaults
 our %default_parser_customization_values = (
                   %Texinfo::Options::parser_options,
                   %$common_parser_regular_options_defaults);
-
-# used in Parser, not documented
-our %parser_document_parsing_options = (
-                  %default_parser_customization_values,
-                  %parser_document_state_configuration,
-                  %parser_inner_options);
 
 # check that settable commands are contained in global commands
 # from command_data.txt
@@ -235,6 +207,29 @@ sub valid_customization_option($) {
 }
 
 
+# determine the null device
+my $default_null_device = File::Spec->devnull();
+# used in main program
+our %null_device_file = (
+  $default_null_device => 1,
+);
+
+# Used in many converters and init files
+sub is_null_device_name($) {
+  my $file_name = shift;
+
+  if ($default_null_device eq $file_name) {
+    return 1;
+  # nul is the null device name on platforms where it is not
+  # case sensitive
+  } elsif (lc($default_null_device) eq 'nul'
+           and lc($file_name) eq 'nul') {
+    return 1;
+  }
+  return 0;
+}
+
+
 # Output formats
 
 # used in main program
@@ -274,6 +269,7 @@ foreach my $valid_transformation (
     'complete_tree_nodes_menus',
     'complete_tree_nodes_missing_menu',
     'fill_gaps_in_sectioning',
+    # TODO remove in future release
     'insert_nodes_for_sectioning_commands',
     'move_index_entries_after_items',
     'regenerate_master_menu',
@@ -310,8 +306,8 @@ sub valid_tree_transformation($) {
 # the encoding corresponds to any 8bit encoding compatible with ISO-8859-1,
 # we convert US-ASCII as ISO-8859-1 to avoid errors for characters in
 # ISO-8859-1 but not in US-ASCII.
-# Used in Parser, not documented in Pod nor in the manual on purpose, to
-# be considered as not guaranteed backward compatibility.
+# Used in Parser, not documented anywhere on purpose, to be considered as
+# not guaranteed backward compatibility.
 our %encoding_name_conversion_map;
 %encoding_name_conversion_map = (
   'us-ascii' => 'iso-8859-1',
@@ -381,9 +377,9 @@ our %def_map = (
                                          'Method')},
 );
 
+our %def_aliases;
 # Argument not metasyntactic variables only.
 our %def_no_var_arg_commands;
-our %def_aliases;
 foreach my $def_command(keys %def_map) {
   if (ref($def_map{$def_command}) eq 'HASH') {
     my ($real_command) = keys(%{$def_map{$def_command}});
@@ -459,7 +455,7 @@ foreach my $internal_command (keys(%Texinfo::Commands::internal_commands)) {
 
 
 # functions used in main program, Parser and/or Texinfo::Structuring.
-# Not supposed to be called in user-defined code.
+# Not used in converters, in general not documented.
 
 # ALTIMP C/main/utils.c analyze_documentlanguage_argument
 sub analyze_documentlanguage_argument($) {
@@ -481,6 +477,7 @@ sub analyze_documentlanguage_argument($) {
 }
 
 
+# No equivalent C function, code is inlined in C/parsetexi/end_line.c
 # for Parser and main program
 sub warn_unknown_language($) {
   my $lang = shift;
@@ -507,6 +504,7 @@ sub warn_unknown_language($) {
   return $messages, $lang_code, $region_code;
 }
 
+# ALTIMP C/main/utils.c
 sub analyze_documentscript_argument($) {
   my $text = shift;
 
@@ -536,6 +534,7 @@ sub analyze_documentscript_argument($) {
   return 0, undef;
 }
 
+# ALTIMP C/main/utils.c
 # return (valid, surplus, variant)
 #  surplus: 1 if there was an unexpected trailing @-command, or 0
 #  variant: if undef, means that the argument was not empty and
@@ -561,6 +560,7 @@ sub _analyze_documentlanguagevariant_argument_e($) {
   return 1, $surplus, '';
 }
 
+# No equivalent C function, code is inlined in C/parsetexi/end_line.c
 sub warn_documentlanguagevariant_arguments($) {
   my $element = shift;
 
@@ -598,6 +598,7 @@ sub warn_documentlanguagevariant_arguments($) {
   return $messages, \@variants;
 }
 
+# ALTIMP C/main/utils.c
 sub documentlanguagevariant_variants($) {
   my $element = shift;
 
@@ -617,6 +618,7 @@ sub documentlanguagevariant_variants($) {
 
 # next functions are for code used in Structuring or Indices in addition
 # to Parser.  Also possibly used in Texinfo::Transformations.
+# Not used in converters, in general not documented.
 
 # ALTIMP C/main/utils.c
 sub ultimate_index($$) {
@@ -731,6 +733,7 @@ sub _count_opened_tree_braces($$) {
   return $braces_count;
 }
 
+# ALTIMP C/main/utils.c
 sub non_leading_trailing_indices($) {
   my $tree = shift;
 
@@ -788,9 +791,6 @@ sub non_leading_trailing_indices($) {
 # $LABEL_CONTENTS_CONTAINER contents such that the parentheses, the manual
 # part and the node part are not in the same elements in the contents,
 # and use the corresponding elements in the returned object.
-#
-# Could be documented, but only if there is evidence that this function
-# is useful in user-defined code.
 sub parse_node_manual($;$) {
   my ($label_contents_container, $modify_node) = @_;
 
@@ -959,8 +959,9 @@ sub parse_node_manual($;$) {
 
 # misc functions used in diverse contexts and useful in converters
 
+# ALTIMP C/main/utils.c
 # Wrapper around File::Spec->canonpath that replace backslashes by
-# forward slashes.
+# forward slashes.  Not documented.
 sub file_separator_canonpath($) {
   my $dir = shift;
 
@@ -976,7 +977,8 @@ sub file_separator_canonpath($) {
   }
 }
 
-# TODO document
+# ALTIMP C/main/utils.c
+# TODO document? (documented in texi2any_api, not in POD)
 sub empty_spaces_argument($) {
   my $element = shift;
 
@@ -1004,7 +1006,8 @@ sub empty_spaces_argument($) {
   return 1;
 }
 
-# TODO document
+# ALTIMP C/main/utils.c
+# TODO document? (documented in texi2any_api, not in POD)
 # Return argument of a brace command with simple text as argument, for
 # example @U
 sub simple_arg_text($) {
@@ -1038,6 +1041,8 @@ sub simple_arg_text($) {
   return ('', 0);
 }
 
+# Equivalent code in C is inlined
+# TODO document in POD?
 sub non_leading_trailing_tree($) {
   my $tree = shift;
 
@@ -1047,11 +1052,13 @@ sub non_leading_trailing_tree($) {
   }
 
   my $result = Texinfo::TreeElement::new({});
+
   $result->{'contents'} = [@{$tree->{'contents'}}[$start_idx .. $end_idx]];
 
   return $result;
 }
 
+# TODO document in POD?
 sub non_trailing_tree($) {
   my $tree = shift;
 
@@ -1066,7 +1073,7 @@ sub non_trailing_tree($) {
   return $result;
 }
 
-# ALTIMP C/convert/converter.c
+# ALTIMP C/main/utils.c
 # Used in converters
 # find the accent commands stack and the innermost text contents
 sub find_innermost_accent_contents($) {
@@ -1079,7 +1086,8 @@ sub find_innermost_accent_contents($) {
     my $current_cmdname = $current->{'cmdname'};
     # the following can happen if called with a bad tree
     if (!defined($current_cmdname)
-        or !exists($Texinfo::Commands::accent_commands{$current_cmdname})) {
+        or !(exists($Texinfo::Commands::brace_commands{$current_cmdname})
+      and $Texinfo::Commands::brace_commands{$current_cmdname} eq 'accent')) {
       #print STDERR "BUG: Not an accent command in accent\n";
       cluck "BUG: Not an accent command in accent\n";
       #print STDERR Texinfo::Convert::Texinfo::convert_to_texinfo($current)."\n";
@@ -1100,7 +1108,8 @@ sub find_innermost_accent_contents($) {
     foreach my $content (@{$arg->{'contents'}}) {
       if (exists($content->{'cmdname'})) {
         my $cmdname = $content->{'cmdname'};
-        if (exists($Texinfo::Commands::accent_commands{$cmdname})) {
+        if (exists($Texinfo::Commands::brace_commands{$cmdname})
+            and $Texinfo::Commands::brace_commands{$cmdname} eq 'accent') {
         # if outer accent is tieaccent, keep accent inside and do not try to
         # nest more
           if ($current_cmdname ne 'tieaccent') {
@@ -1121,7 +1130,7 @@ sub find_innermost_accent_contents($) {
 }
 
 # ALTIMP C/main/utils.c
-# TODO document
+# TODO document in POD? (already in texi2any_api)
 # Used in converters and parser
 sub multitable_columnfractions($) {
   my $multitable = shift;
@@ -1146,6 +1155,7 @@ sub multitable_columnfractions($) {
 # there is a command as argument for a block command (@itemize or
 # @table, @vtable...) if there is only one argument on the line,
 # it is a brace command but not an accent command and it is empty.
+# TODO document?
 sub block_line_argument_command($) {
   my $block_line_arg = shift;
 
@@ -1159,7 +1169,7 @@ sub block_line_argument_command($) {
                  and !exists($arg->{'contents'}->[0]->{'contents'})))) {
       my $cmdname = $arg->{'cmdname'};
       if ((exists($Texinfo::Commands::brace_commands{$cmdname})
-           and !exists($Texinfo::Commands::accent_commands{$cmdname}))
+           and $Texinfo::Commands::brace_commands{$cmdname} ne 'accent')
           or (exists($arg->{'type'})
               and $arg->{'type'} eq 'definfoenclose_command')) {
         return $arg;
@@ -1172,6 +1182,7 @@ sub block_line_argument_command($) {
 my $default_bullet_command = Texinfo::TreeElement::new({'cmdname' => 'bullet'});
 
 # ALTIMP C/main/convert_utils.c
+# TODO document in POD? (already in texi2any_api)
 sub itemize_line_prepended_element($) {
   my $block_line_arg = shift;
 
@@ -1197,6 +1208,7 @@ sub item_itemize_prepended($) {
 }
 
 # ALTIMP C/main/convert_utils.c
+# Only used in deprecated converter, not documented
 sub item_line_block_line_argument_command($) {
   my $block_line_arg = shift;
 
@@ -1217,6 +1229,7 @@ my $default_asis_command = Texinfo::TreeElement::new({'cmdname' => 'asis'});
 
 # ALTIMP C/main/convert_utils.c
 # always return something
+# Only used in deprecated converter, not documented
 sub block_item_line_command($) {
   my $block_line_arg = shift;
 
@@ -1229,6 +1242,7 @@ sub block_item_line_command($) {
 }
 
 # ALTIMP C/main/utils.c
+# TODO document in POD? (already in texi2any_api)
 sub find_float_caption_shortcaption($) {
   my $float = shift;
 
@@ -1250,7 +1264,7 @@ sub find_float_caption_shortcaption($) {
 }
 
 # ALTIMP C/main/utils.c
-# TODO document
+# TODO document in POD (already in texi2any_api)
 # used in Texinfo::Indices and converters
 sub collect_subentries($$);
 sub collect_subentries($$) {
@@ -1269,9 +1283,9 @@ sub collect_subentries($$) {
 sub index_entry_referred_entry($$);
 
 # ALTIMP C/main/utils.c
-# TODO document
+# TODO document in POD (already in texi2any_api)
 # Gather REFERRED_CMDNAME, either seeenentry or seealso, in
-# index command tree element $ELEMENT, recusring into subebtry.
+# index command tree element $ELEMENT, recursing into subentry.
 # Used in converters
 sub index_entry_referred_entry($$) {
   my ($element, $referred_cmdname) = @_;
@@ -1349,14 +1363,39 @@ sub locate_file_in_dirs($$$;$) {
   return undef, undef;
 }
 
+# apply %encoding_name_conversion_map for consistency with input encoding
+# handling in Parser and then return the canonical Perl encoding.
+# This Perl specific name is to be used for decoding/encoding only.
+# Also return the encoding name, possibly different from the argument
+# if a compatible encoding extending the original encoding is used.
 sub processing_output_encoding($) {
-  my $encoding = shift;
+  my $orig_encoding = shift;
 
+  my $encoding_name = $orig_encoding;
   my $perl_encoding;
 
-  if (defined($encoding) and $encoding ne '') {
-    $encoding = $encoding_name_conversion_map{$encoding}
-      if (defined($encoding_name_conversion_map{$encoding}));
+  if (defined($orig_encoding) and $orig_encoding ne '') {
+    my $encoding;
+    if (exists($encoding_name_conversion_map{lc($orig_encoding)})) {
+      $encoding = $encoding_name_conversion_map{lc($orig_encoding)};
+      $encoding_name = $encoding;
+    } else {
+      # try again to use the encoding_name_conversion_map using Perl
+      # map to encoding preferred names
+      my $Encode_orig_encoding_object = Encode::find_encoding($orig_encoding);
+      if (defined($Encode_orig_encoding_object)) {
+        my $preferred_encoding_name
+          = lc($Encode_orig_encoding_object->mime_name());
+        if (exists($encoding_name_conversion_map{$preferred_encoding_name})) {
+          $encoding = $encoding_name_conversion_map{$preferred_encoding_name};
+          $encoding_name = $encoding;
+        } else {
+          $encoding = $preferred_encoding_name;
+        }
+      } else {# no mapping nor Perl encoding found
+        return (undef, undef);
+      }
+    }
     my $Encode_encoding_object = Encode::find_encoding($encoding);
     if (defined($Encode_encoding_object)) {
       $perl_encoding = $Encode_encoding_object->name();
@@ -1365,9 +1404,12 @@ sub processing_output_encoding($) {
     }
   }
 
-  return $perl_encoding;
+  return ($perl_encoding, $encoding_name);
 }
 
+# ALTIMP tta/C/main/convert_utils.c
+# returns the encoding that can be used in Perl for encoding/decoding
+# associated to the input encoding that was in use when this element was parsed.
 sub associated_processing_encoding($) {
   my $element = shift;
 
@@ -1405,12 +1447,12 @@ sub encode_file_name($$) {
 sub locate_include_file($;$) {
   my ($input_file_path, $include_directories) = @_;
 
-  my $ignore_include_directories = 0;
+  my $use_include_directories = 1;
 
   # If the path is absolute or begins with . or .., do not search in
   # include directories.  This is consistent with Kpathsea for Texinfo TeX.
   if (File::Spec->file_name_is_absolute($input_file_path)) {
-    $ignore_include_directories = 1;
+    $use_include_directories = 0;
   } else {
     my ($volume, $directories, $filename)
       = File::Spec->splitpath($input_file_path);
@@ -1418,7 +1460,7 @@ sub locate_include_file($;$) {
 
     foreach my $dir (@directories) {
       if ($dir eq File::Spec->updir() or $dir eq File::Spec->curdir()) {
-        $ignore_include_directories = 1;
+        $use_include_directories = 0;
         last;
       } elsif ($dir ne '') {
         last;
@@ -1426,23 +1468,23 @@ sub locate_include_file($;$) {
     }
   }
 
-  if ($ignore_include_directories) {
+  if (not $use_include_directories) {
     if (-e $input_file_path and -r $input_file_path) {
-      return $input_file_path;
+      return ($input_file_path, $use_include_directories);
     }
   } else {
     if (!$include_directories) {
       # no directory list and not an absolute path, never succeed
-      return undef;
+      return (undef, 0);
     }
     foreach my $include_dir (@$include_directories) {
       my $possible_file = "$include_dir/$input_file_path";
       if (-e $possible_file and -r $possible_file) {
-        return $possible_file;
+        return ($possible_file, $use_include_directories);
       }
     }
   }
-  return undef;
+  return (undef, 0);
 }
 
 # ALTIMP C/main/utils.c
@@ -1475,13 +1517,19 @@ sub informative_command_value($) {
   } elsif (exists($element->{'extra'})
            and exists($element->{'extra'}->{'misc_args'})
            and exists($element->{'extra'}->{'misc_args'}->[0])) {
-    return $cmdname, $element->{'extra'}->{'misc_args'}->[0];
-  } elsif ($Texinfo::Commands::line_commands{$cmdname} eq 'line') {
-   my ($arg, $surplus)
-    = Texinfo::Common::simple_arg_text($element->{'contents'}->[0]);
+    my $arg = $element->{'extra'}->{'misc_args'}->[0];
     if (defined($arg)) {
-      return $cmdname, $arg;
+      if ($cmdname eq 'paragraphindent') {
+        $arg =   ($arg eq 'asis') ? -2
+               : ($arg eq 'none') ? 0
+               : $arg;
+      }
     }
+    return $cmdname, $arg;
+  } elsif ($Texinfo::Commands::line_commands{$cmdname} eq 'line') {
+    my ($arg, $surplus)
+     = Texinfo::Common::simple_arg_text($element->{'contents'}->[0]);
+    return $cmdname, $arg;
   }
   return undef, undef;
 }
@@ -1538,6 +1586,7 @@ sub set_informative_command_value($$) {
   return 0;
 }
 
+# ALTIMP C/main/utils.c
 sub in_preamble($) {
   my $element = shift;
 
@@ -1762,7 +1811,7 @@ sub enumerate_number_representation($$) {
     my $base_letter = ord('a');
     $base_letter = ord('A') if (ucfirst($specification) eq $specification);
     my @letter_ords
-        = _decompose_integer(ord($specification) - $base_letter + $number - 1, 26);
+     = _decompose_integer(ord($specification) - $base_letter + $number - 1, 26);
     foreach my $ord (@letter_ords) {
       $result = chr($base_letter + $ord) . $result;
     }
@@ -1932,9 +1981,10 @@ my $last_encoding;
 sub count_bytes($;$) {
   my ($string, $encoding) = @_;
 
-  # TODO encoding is unlikely to be ascii, as documentencoding ascii
-  # is mapped to output encoding name us-ascii, also it may have been
-  # better to call Texinfo::Common::processing_output_encoding, in
+  # TODO if/when code is used again.  Encoding is unlikely to be ascii, as
+  # documentencoding ascii is mapped to output encoding name us-ascii.
+  # Also it may have been better to call
+  # Texinfo::Common::processing_output_encoding, in
   # which case us-ascii would be mapped to iso-8859-1.
   if (defined($encoding) and $encoding ne 'ascii') {
     if (!defined($last_encoding) or $last_encoding ne $encoding) {
@@ -1949,25 +1999,6 @@ sub count_bytes($;$) {
     return length($Encode_encoding_object->encode($string));
   } else {
     return length($string);
-  }
-}
-
-# ALTIMP C/main/manipulate_indices.c
-# if $PREFER_REFERENCE_ELEMENT is set, prefer an untranslated element.
-# Seems to be used in converter only
-sub index_content_element($;$) {
-  my ($element, $prefer_reference_element) = @_;
-
-  if (exists($element->{'extra'})
-      and exists($element->{'extra'}->{'def_command'})) {
-    if ($prefer_reference_element
-        and exists($element->{'extra'}->{'def_index_ref_element'})) {
-      return $element->{'extra'}->{'def_index_ref_element'};
-    } else {
-      return $element->{'extra'}->{'def_index_element'};
-    }
-  } else {
-    return $element->{'contents'}->[0];
   }
 }
 
@@ -2076,6 +2107,7 @@ sub _collect_commands_in_tree($$) {
   }
 }
 
+# ALTIMP C/main/utils.c
 sub collect_commands_list_in_tree($$) {
   my ($root, $commands_list) = @_;
 
@@ -2114,7 +2146,7 @@ sub get_label_element($) {
 
   return undef if (!exists($current->{'cmdname'}));
 
-  if ($current->{'cmdname'} eq 'node') {
+  if (exists($Texinfo::Commands::root_commands{$current->{'cmdname'}})) {
     # first content of arguments_line type element
     return $current->{'contents'}->[0]->{'contents'}->[0];
   } elsif (($current->{'cmdname'} eq 'anchor'
@@ -2132,8 +2164,7 @@ sub get_label_element($) {
 # For code that can be called both from the main
 # context and from a converter.  With either a converter, and, if
 # not given, a document.
-# NOTE it is considered internal and should not be called in user-defined
-# code.  If this changes, should be documented.
+# NOTE should be avoided when possible, not documented.
 sub converter_or_document_line_warn($$$$;$) {
   my ($document, $converter, $text, $error_location_info, $continuation) = @_;
 
@@ -2149,21 +2180,6 @@ sub converter_or_document_line_warn($$$$;$) {
 # functions used for debugging.  May be used in other modules.
 # Not documented.
 
-sub _parent_string($) {
-  my $current = shift;
-
-  my $parent_string;
-  if (exists($current->{'parent'})) {
-    my $parent = $current->{'parent'};
-    my $parent_cmd = '';
-    my $parent_type = '';
-    $parent_cmd = "\@$parent->{'cmdname'}" if (exists($parent->{'cmdname'}));
-    $parent_type = "($parent->{'type'})" if (exists($parent->{'type'}));
-    $parent_string = " <- $parent_cmd$parent_type";
-  }
-  return $parent_string
-}
-
 sub debug_command_name($) {
   my $cmdname = shift;
 
@@ -2176,52 +2192,59 @@ sub debug_command_name($) {
   }
 }
 
+my %spaces_protection = (
+                  "\n" => '\\n',
+                  "\t" => '\\t',
+                  "\f" => '\\f',
+);
+
 # informations on a tree element, short version
+# Texinfo::ManipulateTree::element_print_details can be used for details.
 sub debug_print_element($;$) {
   my ($current, $print_parent) = @_;
 
   if (!defined($current)) {
     return "debug_print_element: UNDEF";
   }
-  my $warning = '';
+  my $result = '';
   if (ref($current) ne 'Texinfo::TreeElement') {
     if (ref($current) eq 'HASH') {
-      $warning = '[ERROR:HASH]';
+      $result = '[ERROR:HASH]';
     } else {
       return "debug_print_element: $current not a tree element";
     }
   }
-  my $type = '';
-  my $cmd = '';
-  my $text = '';
-  my $args = '';
-  my $contents = '';
-  $type = "($current->{'type'})" if (exists($current->{'type'}));
+  $result .= "($current->{'type'})" if (exists($current->{'type'}));
   if (exists($current->{'text'})) {
     if ($current->{'text'} eq '') {
-      $text = "[T]";
+      $result .= "[T]";
     } else {
       my $text_str = $current->{'text'};
-      $text_str =~ s/\n/\\n/g;
-      $text = "[T: $text_str]";
+      $text_str =~ s/([\n\t\f])/$spaces_protection{$1}/ge;
+      $result .= "[T: $text_str]";
     }
   } else {
     if (exists($current->{'cmdname'})) {
-      $cmd = '@' . debug_command_name($current->{'cmdname'});
+      $result .= '@' . debug_command_name($current->{'cmdname'});
     }
-    $contents = "[C".scalar(@{$current->{'contents'}}).']'
-       if $current->{'contents'};
+    $result .= "[C".scalar(@{$current->{'contents'}}).']'
+       if (exists($current->{'contents'}));
   }
-  my $parent_string = '';
-  if ($print_parent) {
-    $parent_string = _parent_string($current);
-    $parent_string = '' if (!defined($parent_string));
+  if ($print_parent and exists($current->{'parent'})) {
+    my $parent = $current->{'parent'};
+    $result .= ' <- ';
+    $result .= "($parent->{'type'})" if (exists($parent->{'type'}));
+    $result .= "\@$parent->{'cmdname'}" if (exists($parent->{'cmdname'}));
   }
-  return "$warning$cmd$type$text$args$contents$parent_string";
+  return $result;
 }
 
 # for debugging
-sub debug_print_element_details($;$) {
+# Shows Perl reference keys and values; values are not always in a
+# readable format.
+# Texinfo::ManipulateTree::element_print_details does not show the
+# references, but shows all the information in a readable format.
+sub debug_print_reference_key_val_info($;$) {
   my ($current, $print_parent) = @_;
 
   my $string = debug_print_element($current, $print_parent);
@@ -2241,54 +2264,6 @@ sub debug_print_element_details($;$) {
     }
   }
   return $string;
-}
-
-sub debug_print_output_unit($) {
-  my $current = shift;
-
-  if (!defined($current)) {
-    return "debug_print_output_unit: UNDEF\n";
-  }
-  if (ref($current) ne 'HASH') {
-    return "debug_print_output_unit: $current not a hash\n";
-  }
-  my $type = $current->{'unit_type'};
-  # Should never happen
-  $type = 'UNDEF' if (!defined($type));
-  my $node_unit_cmd = '';
-  if (exists($current->{'unit_node'})) {
-    my $node_element = $current->{'unit_node'}->{'element'};
-    $node_unit_cmd = '{N';
-    if ($node_element eq $current->{'unit_command'}) {
-      $node_unit_cmd .= '*';
-    }
-    $node_unit_cmd .= ':' . debug_print_element($node_element, 0)
-    .Texinfo::Convert::Texinfo::root_heading_command_to_texinfo(
-                                                $node_element).'}';
-  }
-  my $section_unit_cmd = '';
-  if (exists($current->{'unit_section'})) {
-    my $section_element = $current->{'unit_section'}->{'element'};
-    $section_unit_cmd = '{S';
-    if ($section_element eq $current->{'unit_command'}) {
-      $section_unit_cmd .= '*';
-    }
-    $section_unit_cmd .= ':'.debug_print_element($section_element, 0)
-      .Texinfo::Convert::Texinfo::root_heading_command_to_texinfo(
-                                               $section_element).'}';
-  }
-  my $fname = '';
-  if (exists($current->{'unit_filename'})) {
-    $fname = "{F:$current->{'unit_filename'}}";
-  }
-  my $variety = '';
-  if (exists($current->{'special_unit_variety'})) {
-    $variety = "{V:$current->{'special_unit_variety'}}";
-  }
-  my $contents = '';
-  $contents = "{C".scalar(@{$current->{'unit_contents'}}).'}'
-    if (exists($current->{'unit_contents'}));
-  return "{$type}$fname$variety$contents$node_unit_cmd$section_unit_cmd";
 }
 
 # format list for debugging messages
@@ -2459,16 +2434,12 @@ outside of the module.
 Keys are customization options corresponding to @-commands.  For example
 C<frenchspacing> or C<footnotestyle>.
 
-=item %null_device_file
-
-Keys are null devices names, such as C</dev/null> or C<NUL>.
-
 =item %texinfo_output_formats
 X<C<%texinfo_output_formats>>
 
 Cannonical output formats that have associated conditionals.  In
-practice corresponds to C<format_raw> C<%block_commands> plus C<info>
-and C<plaintext>.
+practice corresponds to C<format_raw> C<%block_commands> plus C<info>,
+C<plaintext> and C<epub>.
 
 =back
 
@@ -2612,15 +2583,6 @@ Find the parent root command (sectioning command or node) of a tree element.
 The I<$object> argument is optional, its C<global_commands> field is used
 to continue through C<@insertcopying> if in a C<@copying>.
 
-=item $entry_content_element = index_content_element($element, $prefer_reference_element)
-
-Return a Texinfo tree element corresponding to the content of the index
-entry associated to I<$element>.  If I<$prefer_reference_element> is set,
-prefer an untranslated element.  If the element is an index command like
-C<@cindex> or an C<@ftable> C<@item>, the content element is the argument
-of the command.  If the element is a definition line, the index entry
-element is based on the name and class.
-
 =item $encoding = input_file_name_encoding($name_encoding, $doc_encoding_for_input_file_name, $locale_encoding, $document, $input_file_encoding)
 X<C<input_file_encoding>>
 
@@ -2641,15 +2603,23 @@ Return true if the I<$tree> has content that could be formatted.
 I<$do_not_ignore_index_entries> is optional.  If set, index entries
 are considered to be formatted.
 
-=item $file = locate_include_file($customization_information, $file_path)
+=item $result = is_null_device_file($file_name)
+
+Return 1 if I<$file_name> is the platform null device name, such as
+C</dev/null> or C<NUL>.
+
+=item ($file, $use_inc_dir) = locate_include_file($file_path, \@include_directories)
 X<C<locate_include_file>>
 
-Locate I<$file_path>.  If I<$file_path> is an absolute path or has C<.>
-or C<..> in the path directories it is checked that the path exists and is a
-file.  Otherwise, the file name in I<$file_path> is located in include
-directories also used to find texinfo files included in Texinfo documents.
-I<$file_path> should be a binary string.  C<undef> is returned if the file was
-not found, otherwise the file found is returned as a binary string.
+Locate I<$file_path>.  Returns the file path found in I<$file> and set
+I<$use_inc_dir> to indicate if the include directories were used.  If
+I<$file_path> is an absolute path or has C<.> or C<..> in the path directories
+it is checked that the path exists and is a file.  In that case I<$use_inc_dir>
+is set to 0.  Otherwise, the file name in I<$file_path> is located in the
+include directories passed in I<\@include_directories>.  In that case
+I<$use_inc_dir> is set to 1.  I<$file_path> should be a binary string.
+C<undef> is returned if the file was not found, otherwise the file found is
+returned as a binary string.
 
 =item ($index_entry, $index_info) = lookup_index_entry($index_entry_info, $indices_information)
 

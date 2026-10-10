@@ -19,12 +19,15 @@
 
 #include "command_ids.h"
 #include "tree_types.h"
-/* ELEMENT_STACK */
-#include "document_types.h"
-/* HTML_FORMATTING_CONTEXT HTML_DOCUMENT_CONTEXT */
+/* COMMAND_OR_TYPE_STACK */
 #include "converter_types.h"
+/* HTML_FORMATTING_CONTEXT HTML_DOCUMENT_CONTEXT */
+#include "html_converter_state.h"
+#include "list_macros.h"
 /* fatal */
 #include "base_utils.h"
+/* for strings lists definitions */
+#include "utils.h"
 #include "command_stack.h"
 
 /* Generic stack functions */
@@ -32,51 +35,14 @@
 void
 reset_command_stack (COMMAND_STACK *stack)
 {
-  stack->top = 0;
+  stack->number = 0;
   stack->space = 0;
-  free (stack->stack);
-  stack->stack = 0;
+  free (stack->list);
+  stack->list = 0;
 }
 
-void
-push_command (COMMAND_STACK *stack, enum command_id cmd)
-{
-  if (stack->top >= stack->space)
-    {
-      stack->stack
-        = realloc (stack->stack,
-                   (stack->space += 5) * sizeof (enum command_id));
-    }
-
-  /*
-  fprintf (stderr, "---STPUSH %p (%ld) %d %s\n", stack, stack->top,
-                                            cmd, command_name(cmd));
-   */
-  stack->stack[stack->top] = cmd;
-  stack->top++;
-}
-
-enum command_id
-pop_command (COMMAND_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("command stack empty");
-
-  /*
-  fprintf (stderr, "---STPOP %p (%ld) %d %s\n", stack, stack->top,
-   stack->stack[stack->top-1], command_name(stack->stack[stack->top-1]));
-   */
-  return stack->stack[--stack->top];
-}
-
-enum command_id
-top_command (const COMMAND_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("command stack empty for top");
-
-  return stack->stack[stack->top - 1];
-}
+def_list_fns(COMMAND_STACK, command, enum command_id, 5);
+def_stack_fns(COMMAND_STACK, command, enum command_id);
 
 
 /* stack of command or type ids */
@@ -84,187 +50,97 @@ void
 push_command_or_type (COMMAND_OR_TYPE_STACK *stack, enum command_id cmd,
                       enum element_type type)
 {
-  if (stack->top >= stack->space)
+  if (stack->number >= stack->space)
     {
-      stack->stack
-        = realloc (stack->stack,
+      stack->list
+        = realloc (stack->list,
                    (stack->space += 5) * sizeof (COMMAND_OR_TYPE));
     }
 
   if (type)
     {
-      stack->stack[stack->top].ct.type = type;
-      stack->stack[stack->top].variety = CTV_type_type;
+      stack->list[stack->number].ct.type = type;
+      stack->list[stack->number].variety = CTV_type_type;
     }
   else if (cmd)
     {
-      stack->stack[stack->top].ct.cmd = cmd;
-      stack->stack[stack->top].variety = CTV_type_command;
+      stack->list[stack->number].ct.cmd = cmd;
+      stack->list[stack->number].variety = CTV_type_command;
     }
   else
     {
-      stack->stack[stack->top].ct.cmd = 0;
-      stack->stack[stack->top].variety = CTV_type_none;
+      stack->list[stack->number].ct.cmd = 0;
+      stack->list[stack->number].variety = CTV_type_none;
     }
 
-  stack->top++;
+  stack->number++;
 }
 
 void
 pop_command_or_type (COMMAND_OR_TYPE_STACK *stack)
 {
-  if (stack->top == 0)
+  if (stack->number == 0)
     fatal ("command or type stack empty");
 
-  stack->top--;
+  stack->number--;
 }
 
 COMMAND_OR_TYPE *
 top_command_or_type (const COMMAND_OR_TYPE_STACK *stack)
 {
-  if (stack->top == 0)
+  if (stack->number == 0)
     fatal ("command or type stack empty for top");
 
-  return &stack->stack[stack->top - 1];
+  return &stack->list[stack->number - 1];
 }
 
 
 /* stack of strings */
-void
-push_string_stack_string (STRING_STACK *stack, const char *string)
-{
-  if (stack->top >= stack->space)
-    {
-      stack->stack
-        = realloc (stack->stack,
-                   (stack->space += 5) * sizeof (char *));
-    }
 
+def_stack_fns(STRING_LIST, string, char *);
+
+/* very similar to add_string, but allow a NULL string argument */
+void
+push_string_stack_string (STRING_LIST *stack, const char *string)
+{
+  char *new_string = 0;
   if (string)
-    stack->stack[stack->top] = strdup (string);
-  else
-    stack->stack[stack->top] = 0;
-
-  stack->top++;
+    new_string = strdup (string);
+  add_(string) (stack, new_string);
 }
 
 void
-pop_string_stack (STRING_STACK *stack)
+pop_string_stack (STRING_LIST *stack)
 {
-  if (stack->top == 0)
-    fatal ("string stack empty");
-
-  free (stack->stack[stack->top - 1]);
-  stack->top--;
-}
-
-const char *
-top_string_stack (const STRING_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("string stack empty for top");
-
-  return stack->stack[stack->top - 1];
-}
-
-void
-clear_string_stack (STRING_STACK *stack)
-{
-  while (stack->top > 0)
-    pop_string_stack (stack);
+  char **string = top_(string) (stack);
+  free (*string);
+  pop_(string) (stack);
 }
 
 
 /* stack of integers */
-void
-push_integer_stack_integer (INTEGER_STACK *stack, int value)
-{
-  if (stack->top >= stack->space)
-    {
-      stack->stack
-        = realloc (stack->stack,
-                   (stack->space += 5) * sizeof (int));
-    }
 
-  stack->stack[stack->top] = value;
-  stack->top++;
-}
-
-int
-pop_integer_stack (INTEGER_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("integer stack empty for top");
-
-  return stack->stack[--stack->top];
-}
-
-int
-top_integer_stack (const INTEGER_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("integer stack empty for top");
-
-  return stack->stack[stack->top - 1];
-}
+def_list_fns(INTEGER_STACK, integer, int, 5);
+def_stack_fns(INTEGER_STACK, integer, int);
 
 
 /* accents/elements stacks */
-void
-push_stack_element (ELEMENT_STACK *stack, const ELEMENT *e)
-{
-  if (stack->top >= stack->space)
-    {
-      stack->stack
-        = realloc (stack->stack,
-                   (stack->space += 5) * sizeof (ELEMENT *));
-    }
 
-  stack->stack[stack->top] = e;
-  stack->top++;
-}
-
-const ELEMENT *
-pop_stack_element (ELEMENT_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("element stack empty");
-
-  stack->top--;
-  return stack->stack[stack->top +1];
-}
+def_stack_fns(CONST_ELEMENT_LIST, const_element, const ELEMENT *);
 
 
 /* elements stack that can also be called from an external language (Perl)
    where there is no reference to C elements */
+
+def_list_fns(ELEMENT_REFERENCE_STACK, element_reference, ELEMENT_REFERENCE, 5);
+def_stack_fns(ELEMENT_REFERENCE_STACK, element_reference, ELEMENT_REFERENCE);
+
 void
 push_element_reference_stack_element (ELEMENT_REFERENCE_STACK *stack,
                                       const ELEMENT *e, const void *hv)
 {
-  if (stack->top >= stack->space)
-  {
-    stack->stack
-      = realloc (stack->stack,
-                 (stack->space += 5) * sizeof (ELEMENT_STACK));
-  }
-
-  memset (&stack->stack[stack->top], 0, sizeof (ELEMENT_STACK));
-
-  if (e)
-    stack->stack[stack->top].element = e;
-  if (hv)
-    stack->stack[stack->top].hv = hv;
-
-  stack->top++;
-}
-
-void
-pop_element_reference_stack (ELEMENT_REFERENCE_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("element reference stack empty for top");
-
-  stack->top--;
+  ELEMENT_REFERENCE new_element_reference = { e, hv };
+  add_(element_reference) (stack, new_element_reference);
 }
 
 int
@@ -272,9 +148,9 @@ command_is_in_referred_command_stack (const ELEMENT_REFERENCE_STACK *stack,
                                       const ELEMENT *e, const void *hv)
 {
   size_t i;
-  for (i = 0; i < stack->top; i++)
+  for (i = 0; i < stack->number; i++)
     {
-      ELEMENT_REFERENCE *element_reference = &stack->stack[i];
+      ELEMENT_REFERENCE *element_reference = &stack->list[i];
       if ((e && element_reference->element == e)
           || (hv && element_reference->hv == hv))
         {
@@ -296,7 +172,7 @@ new_element_reference_stack (void)
 void
 destroy_element_reference_stack (ELEMENT_REFERENCE_STACK *stack)
 {
-  free (stack->stack);
+  free (stack->list);
   free (stack);
 }
 
@@ -305,20 +181,21 @@ destroy_element_reference_stack (ELEMENT_REFERENCE_STACK *stack)
 HTML_DOCUMENT_CONTEXT *
 html_top_document_context (const CONVERTER *self)
 {
-  const HTML_DOCUMENT_CONTEXT_STACK *stack = &self->html_document_context;
+  const HTML_DOCUMENT_CONTEXT_STACK *stack;
+  stack = &self->html_converter->html_document_context;
 
-  if (stack->top == 0)
+  if (stack->number == 0)
     fatal ("HTML document context stack empty for top");
 
-  return &stack->stack[stack->top - 1];
+  return &stack->list[stack->number - 1];
 }
 
 HTML_FORMATTING_CONTEXT *
 html_top_formatting_context (const HTML_FORMATTING_CONTEXT_STACK *stack)
 {
-  if (stack->top == 0)
+  if (stack->number == 0)
     fatal ("HTML formatting context stack empty for top");
 
-  return &stack->stack[stack->top - 1];
+  return &stack->list[stack->number - 1];
 }
 

@@ -23,6 +23,9 @@
 
 #undef context
 
+#include <stddef.h>
+#include <string.h>
+
 /* for BYTES_STRING */
 #include "document_types.h"
 /*
@@ -61,74 +64,39 @@ newSVpv_byte (const char *str, STRLEN len)
   return sv;
 }
 
-char *
-call_nodenamenormalization_unicode_to_transliterate (const char *text,
-                                        int in_test, int no_unidecode)
+/* load a module */
+void
+call_eval_use_module (const char *module_name)
 {
-  int count;
-  char *result;
-  char *result_ret;
-  STRLEN len;
-  SV *result_sv;
+  SV *sv_str;
+  char *str;
 
   dTHX;
 
-  /* this happens if the customization variable TEST is set while there
-     is no embedded Perl */
-  if (!has_perl_interpreter ())
-    return 0;
+  sv_str = newSVpvf("use %s;", module_name);
+  str = SvPV_nolen(sv_str);
 
-  dSP;
-
-  ENTER;
-  SAVETMPS;
-
-  PUSHMARK(SP);
-  EXTEND(SP, 3);
-
-  PUSHs(sv_2mortal (newSVpv_utf8 (text, 0)));
-  PUSHs(sv_2mortal (newSViv (in_test)));
-  PUSHs(sv_2mortal (newSViv (no_unidecode)));
-  PUTBACK;
-
-  count = call_pv (
-    "Texinfo::Convert::NodeNameNormalization::_unicode_to_transliterate",
-    G_SCALAR);
-
-  SPAGAIN;
-
-  if (count != 1)
-    croak ("_unicode_to_transliterate should return 1 item\n");
-
-  result_sv = POPs;
-  result_ret = SvPVutf8 (result_sv, len);
-  result = non_perl_strndup (result_ret, len);
-
-  PUTBACK;
-
-  FREETMPS;
-  LEAVE;
-
-  return result;
+  eval_pv (str, TRUE);
 }
 
-char *
+TEXT
 call_translations_translate_string (const char *string,
                                     const char *language_env,
                                     const char *translation_context)
 {
   int count;
-  char *result;
+  TEXT result;
   const char *result_ret;
   STRLEN len;
   SV *result_sv;
 
   dTHX;
 
+  text_init (&result);
   /* this happens if USE_LIBINTL_PERL_IN_XS is set while there is no
-     embedded Perl */
+     Perl interpreter */
   if (!has_perl_interpreter ())
-    return 0;
+    return result;
 
   dSP;
 
@@ -154,7 +122,7 @@ call_translations_translate_string (const char *string,
 
   result_sv = POPs;
   result_ret = SvPVutf8 (result_sv, len);
-  result = non_perl_strndup (result_ret, len);
+  text_append_n (&result, result_ret, len);
 
   PUTBACK;
 
@@ -164,108 +132,12 @@ call_translations_translate_string (const char *string,
   return result;
 }
 
-void *
-call_setup_collator (int use_unicode_collation, const char *locale_lang)
-{
-  int count;
-  void *result = 0;
-  SV *collator_sv = 0;
-
-  dTHX;
-
-  /* this happens if XS_STRXFRM_COLLATION_LOCALE=undef while there is
-     no embedded Perl */
-  if (!has_perl_interpreter ())
-    return 0;
-
-  dSP;
-
-  ENTER;
-  SAVETMPS;
-
-  PUSHMARK(SP);
-  EXTEND(SP, 2);
-
-  PUSHs(sv_2mortal (newSViv (use_unicode_collation)));
-  PUSHs(sv_2mortal (newSVpv (locale_lang, 0)));
-
-  PUTBACK;
-
-  count = call_pv ("Texinfo::Indices::_setup_collator",
-                   G_SCALAR);
-
-  SPAGAIN;
-
-  if (count != 1)
-    croak ("_setup_collator should return 1 item\n");
-
-  collator_sv = POPs;
-  if (SvOK (collator_sv))
-    {
-      SvREFCNT_inc (collator_sv);
-      result = (void *) collator_sv;
-    }
-
-  PUTBACK;
-
-  FREETMPS;
-  LEAVE;
-
-  return result;
-}
-
-BYTES_STRING *
-call_collator_getSortKey (const void *collator_sv, const char *string)
-{
-  BYTES_STRING *result;
-  unsigned char *result_ret;
-  STRLEN len;
-  SV *result_sv;
-  int count;
-
-  dTHX;
-
-  result = (BYTES_STRING *) non_perl_malloc (sizeof (BYTES_STRING));
-  dSP;
-
-  ENTER;
-  SAVETMPS;
-
-  PUSHMARK(SP);
-  EXTEND(SP, 2);
-
-  PUSHs((SV *) collator_sv);
-  PUSHs(sv_2mortal (newSVpv_utf8 (string, 0)));
-
-  PUTBACK;
-
-  count = call_method ("getSortKey",
-                       G_SCALAR);
-
-  SPAGAIN;
-
-  if (count != 1)
-    croak ("getSortKey should return 1 item\n");
-
-  result_sv = POPs;
-  result_ret = (unsigned char *)SvPVbyte (result_sv, len);
-  result->len = (size_t) len;
-  result->bytes = (unsigned char *)
-    non_perl_malloc (sizeof (unsigned char) * len);
-  memcpy (result->bytes, result_ret, result->len);
-
-  PUTBACK;
-
-  FREETMPS;
-  LEAVE;
-
-  return result;
-}
+
 
 /* Used to load the Texinfo modules similar to texi2any.pl or
-   load_txi_modules.pl, but trimmed down and from C.  This is used
-   from the SWIG Perl interface to allow calls to Perl functions from C */
-
+   load_txi_modules.pl, but trimmed down and from C.
+ */
+/* Currently unused */
 static void
 call_modulepath_init (int updirs, const char *perl_modules_dir,
                       const char *converter_libdir,
@@ -324,6 +196,7 @@ call_modulepath_init (int updirs, const char *perl_modules_dir,
    return 0 in case of regular errors.
    return 1 for success.
  */
+/* Currently unused */
 int
 call_eval_load_texinfo_modules (int texinfo_uninstalled,
           const char *t2a_builddir, int updirs, const char *modules_dir,
@@ -372,12 +245,46 @@ call_eval_load_texinfo_modules (int texinfo_uninstalled,
         "use Texinfo::Indices;\n";
   eval_pv (str, TRUE);
 
-  /* TODO add more from load_txi_modules.pl when there is code to test?
+  /* Could add more from load_txi_modules.pl when some Perl code becomes
+     needed.
      For example loading messages for error messages translation and
-     loading translated strings from LocaleData?
+     loading translated strings from LocaleData.
    */
 
   return 1;
 }
 
+
+/* assume that there is already a Perl interpreter loaded, but the
+   texi2any Perl modules are not loaded and load some modules.
+   Currently unused */
+int
+txi_use_interpreter_load_modules (int texinfo_uninstalled, const char *datadir,
+                              const char *converter_datadir,
+                              const char *converter_libdir,
+                              const char *t2a_builddir,
+                              const char *t2a_srcdir, int updirs)
+{
+  int loaded
+     = call_eval_load_texinfo_modules (texinfo_uninstalled, t2a_builddir,
+                                      updirs, converter_datadir,
+                                      converter_libdir, datadir);
+
+  /* In general, loaded <= 0 cannot happen, because failure to call Perl
+     if embedded or to load modules should lead to dying/croaking
+     earlier, notably in XSLoader */
+
+  if (loaded < 0)
+    {
+    /* Unexpected failure loading Perl modules, consider that there is no
+       Perl interpreter
+     */
+      return 1;
+    }
+  else
+    {
+      set_use_perl_interpreter (1);
+      return 0;
+    }
+}
 

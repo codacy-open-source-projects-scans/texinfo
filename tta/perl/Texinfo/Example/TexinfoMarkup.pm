@@ -43,6 +43,7 @@ use Texinfo::Commands;
 use Texinfo::TreeElement;
 
 use Texinfo::Common;
+use Texinfo::Indices;
 
 # for section_level_adjusted_command_name
 use Texinfo::Structuring;
@@ -290,9 +291,7 @@ sub converter_initialize($) {
 sub conversion_initialization($;$) {
   my ($self, $document) = @_;
 
-  if ($document) {
-    $self->set_document($document);
-  }
+  $self->set_document($document);
 
   $self->{'document_context'} = [{'monospace' => [0]}];
 }
@@ -375,7 +374,7 @@ sub _index_entry($$) {
     $self->{'document_context'}->[-1]->{'monospace'}->[-1] = 1
       if ($in_code);
     my $index_element = Texinfo::Common::non_leading_trailing_tree(
-                         Texinfo::Common::index_content_element($element));
+                $self->converter_index_content_element($element));
     $result .= $self->_convert($index_element);
     pop @{$self->{'document_context'}};
     $result .= $self->txi_markup_close_element('indexterm');

@@ -15,11 +15,9 @@ Texinfo to other formats.  There is no promise of API stability.
 @node Texinfo@asis{::}Transformations DESCRIPTION
 @section Texinfo::Transformations DESCRIPTION
 
-Includes miscellaneous methods such as as
-@code{insert_nodes_for_sectioning_commands} that adds nodes for sectioning commands
-without nodes and @code{complete_tree_nodes_menus_in_document} and
-@code{complete_tree_nodes_missing_menu} that completes the node menus based on the
-sectioning tree.
+Includes miscellaneous methods such as @code{complete_tree_nodes_menus_in_document}
+and @code{complete_tree_nodes_missing_menu} that completes the node menus based on
+the sectioning tree.
 
 Methods for copying and modifying the Texinfo tree used for default
 conversion to output formats are in @ref{Texinfo@asis{::}ManipulateTree NAME,, Texinfo::ManipulateTree}.
@@ -50,8 +48,8 @@ If the optional @emph{$add_section_names_in_entries} argument is set, a menu ent
 name is added using the section name.  This function should be
 called after @ref{Texinfo@asis{::}Structuring sectioning_structure($document),, sectioning_structure}.
 
-@item fill_gaps_in_sectioning_in_document($document, $commands_heading_tree)
-@anchor{Texinfo@asis{::}Transformations fill_gaps_in_sectioning_in_document($document@comma{} $commands_heading_tree)}
+@item fill_gaps_in_sectioning_in_document($document, $commands_heading_texi)
+@anchor{Texinfo@asis{::}Transformations fill_gaps_in_sectioning_in_document($document@comma{} $commands_heading_texi)}
 @cindex @code{fill_gaps_in_sectioning_in_document}
 
 This function adds empty @code{@@unnumbered} and similar commands in a
@@ -59,18 +57,12 @@ This function adds empty @code{@@unnumbered} and similar commands in a
 when converting from a format that can handle gaps in sectioning.
 
 In the default case, the added sectioning commands headings are empty.  It is
-possible to use instead the @emph{$commands_heading_tree} Texinfo tree element.
+possible to use instead the @emph{$commands_heading_texi} Texinfo code, whose
+parsed tree is copied into the added sectioning commands.
 
 If the sectioning commands are lowered or raised (with @code{@@raisesections},
 @code{@@lowersection}) the tree may be modified with @code{@@raisesections} or
 @code{@@lowersection} added to some tree elements.
-
-@item insert_nodes_for_sectioning_commands($document)
-@anchor{Texinfo@asis{::}Transformations insert_nodes_for_sectioning_commands($document)}
-@cindex @code{insert_nodes_for_sectioning_commands}
-
-Insert nodes for sectioning commands without node in @code{$document}
-tree.
 
 @item menu_to_simple_menu($menu)
 @anchor{Texinfo@asis{::}Transformations menu_to_simple_menu($menu)}
@@ -94,21 +86,6 @@ considered as lines to be processed by the CPP processor.  The @emph{$document}
 argument is optional.  If defined, the @emph{$document} is used for error reporting
 in case an hash character could not be protected because it appeared in a raw
 formatted environment (@code{@@tex}, @code{@@html}...).
-
-@item $modified_tree = reference_to_arg_in_tree($tree, $document)
-@anchor{Texinfo@asis{::}Transformations $modified_tree = reference_to_arg_in_tree($tree@comma{} $document)}
-@cindex @code{reference_to_arg_in_tree}
-
-Modify @emph{$tree} by converting reference @@-commands to simple text using one of
-the arguments.  This transformation can be used, for example, to remove
-reference @@-command from constructed node names trees, as node names cannot
-contain reference @@-command while there could be some in the tree used in input
-for the node name tree.  The @emph{$document} argument is optional.  If given,
-the converted reference @@-command is removed from the @emph{$document} internal
-references list.
-
-A @emph{$modified_tree} is not systematically returned, if the @emph{$tree} in argument
-is not replaced, undef may also be returned.
 
 @item regenerate_master_menu($document, $use_sections)
 @anchor{Texinfo@asis{::}Transformations regenerate_master_menu($document@comma{} $use_sections)}

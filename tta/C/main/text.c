@@ -97,3 +97,22 @@ text_init (TEXT *t)
   t->end = t->space = 0;
   t->text = 0;
 }
+
+void
+text_destroy (TEXT *t)
+{
+  free (t->text);
+  t->text = 0;
+  t->end = t->space = 0;
+}
+
+/* Remove reference to allocating storage, without freeing it.
+   This allows other objects to take ownership of the storage. */
+char *
+text_yield (TEXT *t)
+{
+  char *text = t->text;
+  t->text = 0;
+  t->end = t->space = 0;
+  return text;
+}

@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'simple'} = '*document_root C1
- *before_node_section C6
-  {empty_line:\\n}
+ *before_node_section C7
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
   *paragraph C1
    {Before menu.\\n}
   {empty_line:\\n}
@@ -119,8 +124,7 @@ After menu.
 ';
 
 
-$result_texts{'simple'} = '
-Before menu.
+$result_texts{'simple'} = 'Before menu.
 
 comment
 * menu entry name : node.    description
@@ -190,7 +194,6 @@ th.menu-comment {text-align:left}
 </head>
 
 <body>
-
 <p>Before menu.
 </p>
 <table class="menu">
@@ -226,8 +229,8 @@ $result_converted_errors{'html'}->{'simple'} = '* W |must specify a title with a
 ';
 
 
-$result_converted{'xml'}->{'simple'} = '
-<para>Before menu.
+$result_converted{'xml'}->{'simple'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><para>Before menu.
 </para>
 <menu endspaces=" ">
 <menucomment><pre xml:space="preserve">comment

@@ -27,6 +27,7 @@
 
 #include "document_types.h"
 #include "structure_list.h"
+#include "xs_utils.h"
 #include "structuring.h"
 /* print_document_listoffloats */
 #include "document.h"
@@ -62,6 +63,18 @@ sectioning_structure (SV *document_in)
         if (document)
           {
             sectioning_structure (document);
+          }
+
+void
+sectioning_targets (SV *document_in)
+    PREINIT:
+        DOCUMENT *document = 0;
+     CODE:
+        document = get_sv_document_document (document_in,
+                                             "sectioning_targets");
+        if (document)
+          {
+            sectioning_targets (document);
           }
 
 void
@@ -136,7 +149,7 @@ print_sections_list (SV *document_in)
           {
             char *result = print_sections_list (document);
             result_sv = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
         if (result_sv)
           RETVAL = result_sv;
@@ -157,7 +170,7 @@ print_nodes_list (SV *document_in)
           {
             char *result = print_nodes_list (document);
             result_sv = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
         if (result_sv)
           RETVAL = result_sv;
@@ -178,7 +191,7 @@ print_headings_list (SV *document_in)
           {
             char *result = print_headings_list (document);
             result_sv = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
         if (result_sv)
           RETVAL = result_sv;
@@ -199,7 +212,7 @@ print_sectioning_root (SV *document_in)
           {
             char *result = print_sectioning_root (document);
             result_sv = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
         if (result_sv)
           RETVAL = result_sv;
@@ -221,7 +234,7 @@ print_document_listoffloats (SV *document_in)
             if (listoffloats_str)
               {
                 RETVAL = newSVpv_utf8 (listoffloats_str, 0);
-                free (listoffloats_str);
+                non_perl_free (listoffloats_str);
               }
             else
               RETVAL = newSV (0);

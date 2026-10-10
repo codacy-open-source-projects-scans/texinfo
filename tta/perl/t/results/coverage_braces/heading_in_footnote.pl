@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'heading_in_footnote'} = '*document_root C1
- *before_node_section C1
+ *before_node_section C2
+  *preamble_before_content
   *paragraph C3
    {T}
    *@footnote C1 l1
@@ -81,6 +85,10 @@ BBB
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'heading_in_footnote'} = 'cp:
+ ind e
+';
+
 
 $result_converted{'html_text'}->{'heading_in_footnote'} = '<p>T<a class="footnote" id="DOCF1" href="#FOOT1"><sup>1</sup></a>
 </p><div class="footnotes-segment">
@@ -97,7 +105,8 @@ $result_converted{'html_text'}->{'heading_in_footnote'} = '<p>T<a class="footnot
 ';
 
 
-$result_converted{'latex_text'}->{'heading_in_footnote'} = 'T\\footnote{AAA
+$result_converted{'latex_text'}->{'heading_in_footnote'} = '\\begin{document}
+T\\footnote{AAA
 \\section*{{H1}}
 \\index[cp]{ind e@ind e}%
 BBB

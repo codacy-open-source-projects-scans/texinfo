@@ -1,20 +1,26 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'sectioning_part_appendix'} = 'U0 unit{S:top}
+use Encode;
+
+$result_tree_text{'sectioning_part_appendix'} = 'U0 unit{C2}{S:@top top}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
 Forward: [U1]
 FastForward: [U1]
 Next: [U5]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@top C2 l1 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -23,7 +29,7 @@ Next: [U5]
     {top}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U1 unit{S:1 chapter}
+U1 unit{C1}{S:@chapter 1 chapter}
 unit_directions:D[next->[U2]|prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -34,6 +40,8 @@ FastBack: [U0]
 Up: [U0]
  *@chapter C2 l3 {chapter}
  |EXTRA
+ |identifier:{chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -43,7 +51,7 @@ Up: [U0]
     {chapter}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U2 unit{S:1.1 section}
+U2 unit{C1}{S:@section 1.1 section}
 unit_directions:D[next->[U3]|prev->[U1]]
 UNIT_DIRECTIONS
 This: [U2]
@@ -54,6 +62,8 @@ FastBack: [U1]
 Up: [U1]
  *@section C2 l5 {section}
  |EXTRA
+ |identifier:{section}
+ |is_target:{1}
  |section_heading_number:{1.1}
  |section_level:{2}
  |section_number:{3}
@@ -63,7 +73,7 @@ Up: [U1]
     {section}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U3 unit{S:1.1.1 subsection}
+U3 unit{C1}{S:@subsection 1.1.1 subsection}
 unit_directions:D[next->[U4]|prev->[U2]]
 UNIT_DIRECTIONS
 This: [U3]
@@ -74,6 +84,8 @@ FastBack: [U1]
 Up: [U2]
  *@subsection C2 l7 {subsection}
  |EXTRA
+ |identifier:{subsection}
+ |is_target:{1}
  |section_heading_number:{1.1.1}
  |section_level:{3}
  |section_number:{4}
@@ -83,7 +95,7 @@ Up: [U2]
     {subsection}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U4 unit{S:1.1.1.1 subsubsection}
+U4 unit{C1}{S:@subsubsection 1.1.1.1 subsubsection}
 unit_directions:D[next->[U5]|prev->[U3]]
 UNIT_DIRECTIONS
 This: [U4]
@@ -94,6 +106,8 @@ FastBack: [U1]
 Up: [U3]
  *@subsubsection C2 l9 {subsubsection}
  |EXTRA
+ |identifier:{subsubsection}
+ |is_target:{1}
  |section_heading_number:{1.1.1.1}
  |section_level:{4}
  |section_number:{5}
@@ -103,7 +117,7 @@ Up: [U3]
     {subsubsection}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U5 unit{S:2 chapter in part}
+U5 unit{C2}{S:@chapter 2 chapter in part}
 unit_directions:D[next->[U6]|prev->[U4]]
 UNIT_DIRECTIONS
 This: [U5]
@@ -125,6 +139,8 @@ Next: [U6]
   {empty_line:\\n}
  *@chapter C2 l13 {chapter in part}
  |EXTRA
+ |identifier:{chapter-in-part}
+ |is_target:{1}
  |section_heading_number:{2}
  |section_level:{1}
  |section_number:{7}
@@ -134,7 +150,7 @@ Next: [U6]
     {chapter in part}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U6 unit{S:3 second chapter in part}
+U6 unit{C1}{S:@chapter 3 second chapter in part}
 unit_directions:D[next->[U7]|prev->[U5]]
 UNIT_DIRECTIONS
 This: [U6]
@@ -147,6 +163,8 @@ Prev: [U5]
 Up: [U5]
  *@chapter C2 l15 {second chapter in part}
  |EXTRA
+ |identifier:{second-chapter-in-part}
+ |is_target:{1}
  |section_heading_number:{3}
  |section_level:{1}
  |section_number:{8}
@@ -156,7 +174,7 @@ Up: [U5]
     {second chapter in part}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U7 unit{S:unnumbered}
+U7 unit{C1}{S:@unnumbered unnumbered}
 unit_directions:D[next->[U8]|prev->[U6]]
 UNIT_DIRECTIONS
 This: [U7]
@@ -168,6 +186,8 @@ Prev: [U6]
 Up: [U5]
  *@unnumbered C2 l17 {unnumbered}
  |EXTRA
+ |identifier:{unnumbered}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{9}
   *arguments_line C1
@@ -176,7 +196,7 @@ Up: [U5]
     {unnumbered}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U8 unit{S:A appendix}
+U8 unit{C1}{S:@appendix A appendix}
 unit_directions:D[next->[U9]|prev->[U7]]
 UNIT_DIRECTIONS
 This: [U8]
@@ -186,6 +206,8 @@ FastBack: [U7]
 Prev: [U5]
  *@appendix C2 l19 {appendix}
  |EXTRA
+ |identifier:{appendix}
+ |is_target:{1}
  |section_heading_number:{A}
  |section_level:{1}
  |section_number:{10}
@@ -195,7 +217,7 @@ Prev: [U5]
     {appendix}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U9 unit{S:A.1 appendixsec}
+U9 unit{C1}{S:@appendixsec A.1 appendixsec}
 unit_directions:D[prev->[U8]]
 UNIT_DIRECTIONS
 This: [U9]
@@ -204,6 +226,8 @@ FastBack: [U8]
 Up: [U8]
  *@appendixsec C1 l21 {appendixsec}
  |EXTRA
+ |identifier:{appendixsec}
+ |is_target:{1}
  |section_heading_number:{A.1}
  |section_level:{2}
  |section_number:{11}

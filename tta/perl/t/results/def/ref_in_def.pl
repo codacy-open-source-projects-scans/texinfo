@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'ref_in_def'} = '*document_root C2
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C6 l2 {first}
  |EXTRA
  |identifier:{first}
@@ -23,14 +28,6 @@ $result_tree_text{'ref_in_def'} = '*document_root C2
    *def_line C1 l4
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@ref C1
-       |*brace_arg C1
-       ||EXTRA
-       ||node_content:{myanchor}
-        |{myanchor}
    |element_node:{first}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
@@ -84,14 +81,6 @@ $result_tree_text{'ref_in_def'} = '*document_root C2
    *@deffnx C1 l5
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@ref C1
-       |*brace_arg C1
-       ||EXTRA
-       ||node_content:{myanchor}
-        |{myanchor}
    |element_node:{first}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffnx}
@@ -176,7 +165,6 @@ T
 
 
 $result_texts{'ref_in_def'} = '
-
 myanchor: myanchor myanchor myanchor myanchor
 myanchor: myanchor myanchor myanchor myanchor
 T
@@ -204,6 +192,11 @@ $result_converted{'plaintext'}->{'ref_in_def'} = ' -- myanchor: myanchor see mya
  -- myanchor: myanchor see myanchor see myanchor see myanchor
      T
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'ref_in_def'} = 'fn:
+ myanchor
+ myanchor
 ';
 
 1;

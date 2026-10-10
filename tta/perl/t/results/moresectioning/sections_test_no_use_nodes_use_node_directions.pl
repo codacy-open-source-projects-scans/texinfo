@@ -1,15 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document_root C12
  *before_node_section C1
   *preamble_before_content
  *@top C2 l1 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -20,6 +25,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@chapter C2 l3 {chapter}
  |EXTRA
+ |identifier:{chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -31,6 +38,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@section C2 l5 {section}
  |EXTRA
+ |identifier:{section}
+ |is_target:{1}
  |section_heading_number:{1.1}
  |section_level:{2}
  |section_number:{3}
@@ -42,6 +51,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@subsection C2 l7 {subsection}
  |EXTRA
+ |identifier:{subsection}
+ |is_target:{1}
  |section_heading_number:{1.1.1}
  |section_level:{3}
  |section_number:{4}
@@ -53,6 +64,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@subsubsection C2 l9 {subsubsection}
  |EXTRA
+ |identifier:{subsubsection}
+ |is_target:{1}
  |section_heading_number:{1.1.1.1}
  |section_level:{4}
  |section_number:{5}
@@ -75,6 +88,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@chapter C2 l13 {chapter in part}
  |EXTRA
+ |identifier:{chapter-in-part}
+ |is_target:{1}
  |section_heading_number:{2}
  |section_level:{1}
  |section_number:{7}
@@ -86,6 +101,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@chapter C2 l15 {second chapter in part}
  |EXTRA
+ |identifier:{second-chapter-in-part}
+ |is_target:{1}
  |section_heading_number:{3}
  |section_level:{1}
  |section_number:{8}
@@ -97,6 +114,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@unnumbered C2 l17 {unnumbered}
  |EXTRA
+ |identifier:{unnumbered}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{9}
   *arguments_line C1
@@ -107,6 +126,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@appendix C2 l19 {appendix}
  |EXTRA
+ |identifier:{appendix}
+ |is_target:{1}
  |section_heading_number:{A}
  |section_level:{1}
  |section_number:{10}
@@ -118,6 +139,8 @@ $result_tree_text{'sections_test_no_use_nodes_use_node_directions'} = '*document
   {empty_line:\\n}
  *@appendixsec C1 l21 {appendixsec}
  |EXTRA
+ |identifier:{appendixsec}
+ |is_target:{1}
  |section_heading_number:{A.1}
  |section_level:{2}
  |section_number:{11}
@@ -324,7 +347,7 @@ $result_converted{'html'}->{'sections_test_no_use_nodes_use_node_directions'} = 
 <meta name="distribution" content="global">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<link href="#top" rel="start" title="top">
+<link href="#Top" rel="start" title="top">
 <style type="text/css">
 a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
 span:hover a.copiable-link {visibility: visible}
@@ -334,8 +357,8 @@ span:hover a.copiable-link {visibility: visible}
 </head>
 
 <body>
-<div class="top-level-extent" id="top">
-<h1 class="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
+<div class="top-level-extent" id="Top">
+<h1 class="top"><span>top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <ul class="mini-toc">
 <li><a href="#chapter" accesskey="1">chapter</a></li>

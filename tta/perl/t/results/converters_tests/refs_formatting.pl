@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'refs_formatting'} = '*document_root C3
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {chapter}
  |EXTRA
  |identifier:{chapter}
@@ -991,7 +995,8 @@ $result_converted{'docbook'}->{'refs_formatting'} = '<chapter label="1" id="chap
 ';
 
 
-$result_converted{'latex_text'}->{'refs_formatting'} = '\\Texinfochapter{{chapter}}
+$result_converted{'latex_text'}->{'refs_formatting'} = '\\begin{document}
+\\Texinfochapter{{chapter}}
 \\label{anchor:chapter}%
 
 \\texttt{@ref\\{chapter,cross ref name\\}} \\hyperref[anchor:chapter]{\\chaptername~\\ref*{anchor:chapter} [chapter], page~\\pageref*{anchor:chapter}}
@@ -1031,7 +1036,7 @@ $result_converted{'latex_text'}->{'refs_formatting'} = '\\Texinfochapter{{chapte
 ';
 
 
-$result_converted{'info'}->{'refs_formatting'} = 'This is , produced from .
+$result_converted{'info'}->{'refs_formatting'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: chapter
@@ -1088,7 +1093,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'refs_formatting'} = '* W |document without Top node
  warning: document without Top node

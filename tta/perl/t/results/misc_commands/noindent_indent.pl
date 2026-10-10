@@ -1,15 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'noindent_indent'} = '*document_root C1
- *before_node_section C16
-  {empty_line:\\n}
-  *@indent l2
-  {ignorable_spaces_after_command:\\n}
+ *before_node_section C15
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C2
+   *@indent l2
+   {ignorable_spaces_after_command:\\n}
   *paragraph C1
   |EXTRA
   |indent:{1}
@@ -53,8 +58,7 @@ qsd dsq sdq dsq dssdq sdq sdq sdq dsq sdq dsq dsq sdq dsq sdqsd q
 ';
 
 
-$result_texts{'noindent_indent'} = '
-First para
+$result_texts{'noindent_indent'} = 'First para
 
 qsddsqkdsqkkmljsqjsqodmmdsqdsmqj dqs sdq sqd sdq dsq sdq sqd sqd sdq sdq 
 qsd dsq sdq dsq dssdq sdq sdq sdq dsq sdq dsq dsq sdq dsq sdqsd q
@@ -86,8 +90,7 @@ noindent in para.
 ';
 
 
-$result_converted{'html_text'}->{'noindent_indent'} = '
-<p>First para
+$result_converted{'html_text'}->{'noindent_indent'} = '<p>First para
 </p>
 <p>qsddsqkdsqkkmljsqjsqodmmdsqdsmqj dqs sdq sqd sdq dsq sdq sqd sqd sdq sdq 
 qsd dsq sdq dsq dssdq sdq sdq sdq dsq sdq dsq dsq sdq dsq sdqsd q
@@ -103,6 +106,13 @@ $result_converted{'latex'}->{'noindent_indent'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -172,7 +182,7 @@ $result_converted{'latex'}->{'noindent_indent'} = '\\documentclass{book}
 \\makeatother
 \\pagestyle{single}%
 
-
+\\begin{document}
 First para
 
 \\noindent{}qsddsqkdsqkkmljsqjsqodmmdsqdsmqj dqs sdq sqd sdq dsq sdq sqd sqd sdq sdq 
@@ -185,8 +195,7 @@ unneeded indent
 ';
 
 
-$result_converted{'docbook'}->{'noindent_indent'} = '
-<para>First para
+$result_converted{'docbook'}->{'noindent_indent'} = '<para>First para
 </para>
 <para>qsddsqkdsqkkmljsqjsqodmmdsqdsmqj dqs sdq sqd sdq dsq sdq sqd sqd sdq sdq 
 qsd dsq sdq dsq dssdq sdq sdq sdq dsq sdq dsq dsq sdq dsq sdqsd q

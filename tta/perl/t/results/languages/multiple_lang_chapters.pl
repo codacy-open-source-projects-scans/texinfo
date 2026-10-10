@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'multiple_lang_chapters'} = '*document_root C13
  *before_node_section C2
@@ -191,24 +194,6 @@ $result_tree_text{'multiple_lang_chapters'} = '*document_root C13
    *def_line C1 l28
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{AAA}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{AAA}
    |documentlanguage:{ja}
    |element_node:{chapter-ja}
    |index_entry:I{vr,1}
@@ -286,24 +271,6 @@ $result_tree_text{'multiple_lang_chapters'} = '*document_root C13
    *def_line C1 l36
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{AAA}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{AAA}
    |documentlanguage:{en}
    |element_node:{chapter-en}
    |index_entry:I{vr,2}
@@ -372,24 +339,6 @@ $result_tree_text{'multiple_lang_chapters'} = '*document_root C13
    *def_line C1 l43
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ de }
-     |* C1
-      |*def_line_arg C1
-       |{AAA}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{AAA}
    |documentlanguage:{fr_FR}
    |element_node:{chapter-fr_005fFR}
    |index_entry:I{vr,3}
@@ -706,6 +655,18 @@ list:
 $result_headings_list{'multiple_lang_chapters'} = '';
 
 $result_indices_sort_strings{'multiple_lang_chapters'} = 'vr:
+ BBB de AAA
+ BBB of AAA
+ BBB of AAA
+';
+
+$result_converted_sort_strings{'file_html'}->{'multiple_lang_chapters'} = 'vr:
+ BBB de AAA
+ BBB of AAA
+ BBB of AAA
+';
+
+$result_converted_sort_strings{'file_info'}->{'multiple_lang_chapters'} = 'vr:
  BBB de AAA
  BBB of AAA
  BBB of AAA

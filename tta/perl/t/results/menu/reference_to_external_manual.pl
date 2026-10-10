@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'reference_to_external_manual'} = '*document_root C2
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C3 l2 {first}
  |EXTRA
  |identifier:{first}
@@ -55,7 +60,6 @@ $result_texis{'reference_to_external_manual'} = '
 
 
 $result_texts{'reference_to_external_manual'} = '
-
 * (info)::
 ';
 
@@ -104,7 +108,6 @@ td.menu-entry-destination {vertical-align: top}
 </head>
 
 <body>
-
 <h4 class="node" id="first"><span>first<a class="copiable-link" href="#first"> &para;</a></span></h4>
 
 <table class="menu">
@@ -124,8 +127,8 @@ $result_converted_errors{'html'}->{'reference_to_external_manual'} = '* W |must 
 ';
 
 
-$result_converted{'xml'}->{'reference_to_external_manual'} = '
-<node identifier="first"><nodename> first</nodename></node>
+$result_converted{'xml'}->{'reference_to_external_manual'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><node identifier="first"><nodename> first</nodename></node>
 
 <menu endspaces=" ">
 <menuentry><menuleadingtext>* </menuleadingtext><menunode>(info)</menunode><menuseparator>::</menuseparator><menudescription><pre xml:space="preserve">

@@ -24,6 +24,7 @@
 #include "tree_types.h"
 #include "text.h"
 #include "types_data.h"
+#include "list_macros.h"
 /* for bug */
 #include "base_utils.h"
 #include "tree.h"
@@ -60,11 +61,11 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
       enum command_id cmd = current->e.c->cmd;
       ELEMENT *arg;
 
-      if (command_data(cmd).flags & CF_contain_basic_inline)
-        push_command (&nesting_context.basic_inline_stack, cmd);
+      if (parsed_command_data(cmd).flags & CF_contain_basic_inline)
+        add_(command) (&nesting_context.basic_inline_stack, cmd);
 
       counter_push (&count_remaining_args, current,
-                    command_data(cmd).args_number);
+                    parsed_command_data(cmd).args_number);
       counter_dec (&count_remaining_args);
 
       if (cmd == CM_verb)
@@ -101,7 +102,7 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
               line += char_len;
             }
         }
-      else if (command_data(cmd).data == BRACE_context)
+      else if (parsed_command_data(cmd).data == BRACE_context)
         {
           ELEMENT *space_e;
           int n;
@@ -141,7 +142,6 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
             = new_text_element (ET_spaces_before_argument);
 
           add_to_contents_as_array (current, space_e);
-          internal_space_holder = current->e.c->parent;
 
           n = strspn (line, whitespace_chars_except_newline);
           if (n > 0)
@@ -153,14 +153,14 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
       else /* not context brace */
         {
           /* Commands that disregard leading whitespace. */
-          if (command_data(cmd).data == BRACE_arguments
-              || command_data(cmd).data == BRACE_inline)
+          if (parsed_command_data(cmd).data == BRACE_arguments
+              || parsed_command_data(cmd).data == BRACE_inline)
             {
               arg = new_element (ET_brace_arg);
 
               if (cmd == CM_inlineraw)
                 push_context (ct_inlineraw, cmd);
-              else if (command_data(cmd).flags & CF_math)
+              else if (parsed_command_data(cmd).flags & CF_math)
                 push_context (ct_math, cmd);
             }
           else
@@ -170,7 +170,7 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
           add_to_element_contents (current, arg);
           current = arg;
         }
-      debug_nonl ("OPENED @%s, remaining: %d ",
+      debug_nonl ("C|OPENED @%s, remaining: %d ",
                   command_name (current->e.c->parent->e.c->cmd),
                   counter_value (&count_remaining_args,
                                  current->e.c->parent) > 0 ?
@@ -193,11 +193,11 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
          end of the line and also for misplaced { errors.  */
       current->e.c->source_info = current_source_info;
 
-      debug ("BRACKETED in def/multitable");
+      debug ("C|BRACKETED in def/multitable");
     }
   else if (current->type == ET_rawpreformatted)
     {
-      debug ("LONE OPEN BRACE in rawpreformatted");
+      debug ("C|LONE OPEN BRACE in rawpreformatted");
       current = merge_text (current, "{", 1, 0);
     }
   /* matching braces accepted in a rawpreformatted, inline raw or
@@ -216,7 +216,7 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
       current = b;
       text_append (open_brace->e.text, "{");
       add_to_contents_as_array (current, open_brace);
-      debug ("BALANCED BRACES in math/rawpreformatted/inlineraw");
+      debug ("C|BALANCED BRACES in math/rawpreformatted/inlineraw");
     }
   else
     {
@@ -251,7 +251,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
 {
   const char *line = *line_inout;
 
-  debug ("CLOSE BRACE");
+  debug ("C|CLOSE BRACE");
 
   /* For footnote and caption closing, when there is a paragraph inside.
      This makes the brace command the parent element. */
@@ -260,7 +260,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
       && current->type == ET_paragraph)
     {
       abort_empty_line (current);
-      debug ("IN BRACE_COMMAND_CONTEXT end paragraph");
+      debug ("C|IN BRACE_COMMAND_CONTEXT end paragraph");
       current = close_container (current);
     }
 
@@ -282,13 +282,13 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
 
       abort_empty_line (current);
 
-      if (command_data(closed_cmd).data == BRACE_arguments)
+      if (parsed_command_data(closed_cmd).data == BRACE_arguments)
         isolate_leading_trailing (current, 0);
-      else if (command_data(closed_cmd).data == BRACE_inline
+      else if (parsed_command_data(closed_cmd).data == BRACE_inline
                && current->type != ET_elided_brace_command_arg)
         isolate_leading_trailing (current, 1);
 
-      debug ("CLOSING(brace) @%s", command_data(closed_cmd).cmdname);
+      debug ("C|CLOSING(brace) @%s", parsed_command_data(closed_cmd).cmdname);
 
 
       if (closed_cmd == CM_anchor || closed_cmd == CM_namedanchor)
@@ -301,15 +301,15 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
             {
               check_register_target_element_label (
                                         anchor_id_element, brace_command);
-              if (nesting_context.regions_stack.top > 0)
+              if (nesting_context.regions_stack.number > 0)
                 {
                   add_extra_string_dup (anchor_id_element,
                                         AI_key_element_region,
-                   command_name(top_command (&nesting_context.regions_stack)));
+                   command_name(*top_(command) (&nesting_context.regions_stack)));
                 }
             }
         }
-      else if (command_data(closed_cmd).flags & CF_ref)
+      else if (parsed_command_data(closed_cmd).flags & CF_ref)
         {
           ELEMENT *ref = brace_command;
           int link_or_inforef = (closed_cmd == CM_link
@@ -330,7 +330,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
             }
           else
             {
-              ELEMENT *arg_label = contents_child_by_index (ref, 0);
+              ELEMENT *arg_label = ref->e.c->contents.list[0];
               NODE_SPEC_EXTRA *ref_label_info = parse_node_manual (arg_label, 1);
 
               if (ref_label_info && (ref_label_info->manual_content
@@ -424,7 +424,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
             {
               const char *text = 0;
               if (type_data[current->e.c->contents.list[0]->type].flags
-                   == TF_text)
+                   & TF_text)
                 text = current->e.c->contents.list[0]->e.text->text;
               if (!text || (strcmp (text, "i") && strcmp (text, "j")))
                 {
@@ -435,7 +435,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
                 }
             }
         }
-      else if ((command_data(closed_cmd).data == BRACE_inline)
+      else if ((parsed_command_data(closed_cmd).data == BRACE_inline)
                || closed_cmd == CM_abbr
                || closed_cmd == CM_acronym)
         {
@@ -489,7 +489,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
                   ret = sscanf (arg_text, "%lx", &val);
                   if (ret != 1)
                     {
-                      debug ("hex sscanf failed %s", arg_text);
+                      debug ("C|hex sscanf failed %s", arg_text);
                       /* unknown error.  possibly argument is too large
                          for an int. */
                     }
@@ -507,10 +507,10 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
         {
           register_command_as_argument (brace_command);
         }
-      else if (command_data(closed_cmd).data == BRACE_noarg)
+      else if (parsed_command_data(closed_cmd).data == BRACE_noarg)
         {
           if (current->e.c->contents.number > 0
-              && command_data(closed_cmd).data == BRACE_noarg)
+              && parsed_command_data(closed_cmd).data == BRACE_noarg)
             line_warn ("command @%s does not accept arguments",
                        command_name(closed_cmd));
         }
@@ -594,7 +594,7 @@ handle_comma (ELEMENT *current, const char **line_inout)
   if (counter_value (&count_remaining_args, command_element) != COUNTER_VARIADIC)
     counter_dec (&count_remaining_args);
 
-  if (command_data(command_element->e.c->cmd).data == BRACE_inline)
+  if (parsed_command_data(command_element->e.c->cmd).data == BRACE_inline)
     {
       int expandp = 0;
       const char *format = lookup_extra_string (command_element, AI_key_format);
@@ -620,12 +620,12 @@ handle_comma (ELEMENT *current, const char **line_inout)
           if (!inline_type)
             {
               /* Condition is missing */
-              debug ("INLINE COND MISSING");
+              debug ("C|INLINE COND MISSING");
               /* add_extra_string (command_element, AI_key_format, 0); */
             }
           else
             {
-              debug ("INLINE: %s", inline_type);
+              debug ("C|INLINE: %s", inline_type);
               if (command_element->e.c->cmd == CM_inlineraw
                   || command_element->e.c->cmd == CM_inlinefmt
                   || command_element->e.c->cmd == CM_inlinefmtifelse)

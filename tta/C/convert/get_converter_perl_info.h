@@ -19,9 +19,12 @@ CONVERTER *get_or_create_sv_converter (SV *converter_in,
                                        const char *input_class);
 void set_non_customization_sv (HV *converter_hv, SV *init_info_sv,
                                STRING_LIST *non_valid_customization);
-CONVERTER *converter_set_document_from_sv (SV *converter_in, SV *document_in);
+DOCUMENT *get_converter_and_document_from_sv (SV *converter_in,
+                                 SV *document_in, CONVERTER **converter);
 
 DOCUMENT *get_converter_sv_document (SV *converter_sv, const char *warn_string);
+
+const LANG_TRANSLATION *get_hv_lang_translation (HV *hv_in);
 
 TEXT_OPTIONS *copy_sv_options_for_convert_text (SV *sv_in);
 

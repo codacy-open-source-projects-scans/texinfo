@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'top_file_name_and_node_name_collision'} = '*document_root C6
  *before_node_section C1
@@ -52,6 +55,8 @@ $result_tree_text{'top_file_name_and_node_name_collision'} = '*document_root C6
   {empty_line:\\n}
  *@top C2 l7 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{3}
   *arguments_line C1

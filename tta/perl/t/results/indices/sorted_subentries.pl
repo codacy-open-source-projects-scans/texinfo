@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'sorted_subentries'} = '*document_root C7
  *before_node_section C1
@@ -504,7 +507,7 @@ $result_indices_sort_strings{'sorted_subentries'} = 'cp:
 ';
 
 
-$result_converted{'info'}->{'sorted_subentries'} = 'This is , produced from .
+$result_converted{'info'}->{'sorted_subentries'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chapter one,  Up: (dir)
@@ -561,6 +564,36 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'sorted_subentries'} = 'cp:
+ , aa
+ aa, bb
+ aa, dd
+ ab, cc
+ bb, cc
+ hhh
+ hhh
+ hhh, 
+ hhh, jjj
+ hhh, jjj
+ hhh, jjj, A
+ hhh, jjj, lll
+ hhh, jjj, lll
+ hhh, jjj, lll, ppp
+ hhh, JJJ, mymail
+ hhh, k
+ hhh, k, nnn
+ hhh, l, third
+ hhh jjj
+';
+
+$result_converted_errors{'info'}->{'sorted_subentries'} = '* W l16|empty index sub entry 1 key in @cindex
+ warning: empty index sub entry 1 key in @cindex
+
+* W l26|empty index key in @cindex
+ warning: empty index key in @cindex
+
 ';
 
 
@@ -591,6 +624,36 @@ $result_converted{'plaintext'}->{'sorted_subentries'} = '1 one
 * hhh, k, nnn:                           chapter second.        (line 6)
 * hhh, l, third:                         chapter second.        (line 6)
 * hhh jjj:                               chapter one.           (line 2)
+
+';
+
+$result_converted_sort_strings{'plaintext'}->{'sorted_subentries'} = 'cp:
+ , aa
+ aa, bb
+ aa, dd
+ ab, cc
+ bb, cc
+ hhh
+ hhh
+ hhh, 
+ hhh, jjj
+ hhh, jjj
+ hhh, jjj, A
+ hhh, jjj, lll
+ hhh, jjj, lll
+ hhh, jjj, lll, ppp
+ hhh, JJJ, mymail
+ hhh, k
+ hhh, k, nnn
+ hhh, l, third
+ hhh jjj
+';
+
+$result_converted_errors{'plaintext'}->{'sorted_subentries'} = '* W l16|empty index sub entry 1 key in @cindex
+ warning: empty index sub entry 1 key in @cindex
+
+* W l26|empty index key in @cindex
+ warning: empty index key in @cindex
 
 ';
 
@@ -696,6 +759,14 @@ $result_converted{'html_text'}->{'sorted_subentries'} = '<div class="top-level-e
 </div>
 </div>
 </div>
+';
+
+$result_converted_errors{'html_text'}->{'sorted_subentries'} = '* W l16|empty index sub entry 1 key in @cindex
+ warning: empty index sub entry 1 key in @cindex
+
+* W l26|empty index key in @cindex
+ warning: empty index key in @cindex
+
 ';
 
 

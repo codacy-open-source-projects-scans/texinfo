@@ -28,8 +28,25 @@ converterdatadir = $(datadir)/$(CONVERTER)
 include $(srcdir)/Makefile.tres
 
 # should be kept in sync with autogen.sh call
-$(srcdir)/Makefile.tres: ../maintain/regenerate_file_lists.pl
+$(srcdir)/Makefile.tres: ../maintain/regenerate_tap_tests_lists.pl
+	cd $(srcdir)/ && $(PERL) ../maintain/regenerate_tap_tests_lists.pl
+
+MAINTAINERCLEANFILES =
+
+products_regenerate_file_lists = $(srcdir)/t/test_dirs_generated_list.txt \
+                                 $(srcdir)/t/test_files_generated_list.txt
+
+$(srcdir)/stamp.regenerate_file_lists: ../maintain/regenerate_file_lists.pl
+	@rm -f tmp.regenerate_file_lists
+	@touch -f tmp.regenerate_file_lists
 	cd $(srcdir)/ && $(PERL) ../maintain/regenerate_file_lists.pl
+	@mv -f tmp.regenerate_file_lists $@
+
+$(products_regenerate_file_lists): $(srcdir)/stamp.regenerate_file_lists
+	@test -f $@ || rm -f stamp.regenerate_file_lists
+	@test -f $@ || $(MAKE) $(AM_MAKEFLAGS) stamp.regenerate_file_lists
+EXTRA_DIST += stamp.regenerate_file_lists
+MAINTAINERCLEANFILES += $(products_regenerate_file_lists) stamp.regenerate_file_lists
 
 if !PREFER_C_TEXI2ANY
 bin_SCRIPTS = texi2any
@@ -107,10 +124,17 @@ dist_modules_DATA = \
  Texinfo/XSLoader.pm
 
 dist_noinst_DATA = \
- Texinfo/ModulePath.pm.in
+ Texinfo/ModulePath.pm.in \
+ Texinfo/Configure.pm.in
 
 modules_DATA = \
- Texinfo/ModulePath.pm
+ Texinfo/ModulePath.pm \
+ Texinfo/Configure.pm
+
+documentmodulesdir = $(converterdatadir)/Texinfo/Document
+dist_documentmodules_DATA = \
+ Texinfo/Document/Indices.pm \
+ Texinfo/Document/IndicesNonXS.pm
 
 convertmodulesdir = $(converterdatadir)/Texinfo/Convert
 dist_convertmodules_DATA = \
@@ -120,12 +144,14 @@ dist_convertmodules_DATA = \
  Texinfo/Convert/HTML.pm \
  Texinfo/Convert/HTMLNonXS.pm \
  Texinfo/Convert/Info.pm \
+ Texinfo/Convert/InfoNonXS.pm \
  Texinfo/Convert/LaTeX.pm \
  Texinfo/Convert/NodeNameNormalization.pm \
  Texinfo/Convert/Paragraph.pm \
  Texinfo/Convert/ParagraphNonXS.pm \
  Texinfo/Convert/PlainTexinfo.pm \
  Texinfo/Convert/Plaintext.pm \
+ Texinfo/Convert/PlaintextNonXS.pm \
  Texinfo/Convert/Texinfo.pm \
  Texinfo/Convert/TexinfoNonXS.pm \
  Texinfo/Convert/Text.pm \
@@ -153,10 +179,8 @@ dist_extensions_DATA = \
 initdir = $(converterdatadir)/init
 dist_init_DATA = \
  init/book.pm \
- init/chm.pm \
- init/documentation_examples.pm \
- init/html32.pm \
- init/sc_formatting_with_css.pm
+ init/breadcrumb_navigation.pm \
+ init/chm.pm
 
 test_files = \
  t/README \
@@ -213,7 +237,9 @@ test_files = \
  t/init/cvs.init \
  t/init/directions_string_undef.pm \
  t/init/directions_buttons.pm \
+ t/init/documentation_examples.pm \
  t/init/footnote_mark_in_inline_content.pm \
+ t/init/html32.pm \
  t/init/icons.init \
  t/init/ignore_and_comments_output.init \
  t/init/index_direction_from_index_name.pm \
@@ -227,6 +253,7 @@ test_files = \
  t/init/redefined_buttons.pm \
  t/init/redirection_file_collision_with_special.init \
  t/init/redirection_file_collision_with_user_def.init \
+ t/init/sc_formatting_with_css.pm \
  t/init/set_global_direction_for_relative.pm \
  t/init/set_unit_file_name_filepath.pm \
  t/init/special_element_customization.pm \
@@ -269,6 +296,7 @@ test_files = \
  t/input_files/cpp_line_before_first_node.texi \
  t/input_files/cpp_lines.texi \
  t/input_files/cpp_line_latin1.texi \
+ t/input_files/customize_definition_index_translations.texi \
  t/input_files/delcomment.texi \
  t/input_files/delcomment_followed_by_cpp_line.texi \
  t/input_files/delcomment_on_comment.texi \
@@ -338,18 +366,20 @@ test_files = \
  t/input_files/htmlxref-split.cnf \
  #
 
-# test_files_generated_list comes from the generated Makefile.tres
+# test_tap_files_generated_list comes from the generated Makefile.tres
 EXTRA_DIST += \
   Convert_format_template.pod \
   load_txi_modules.pl \
   prove.sh \
   texi2any.pl \
   $(test_files) \
-  $(test_files_generated_list)
+  $(test_tap_files_generated_list) \
+  t/test_dirs_generated_list.txt \
+  t/test_files_generated_list.txt
 
 # template.pod is the basis for the .pm documentation, and the script
 # invoked here updates them; to be run when template.pod changes.
-# 
+#
 # If we ever make that documentation more extensive, the .pm doc could
 # (and probably should) just be maintained separately, by hand.
 do-pm-doc:
@@ -360,13 +390,17 @@ Texinfo/ModulePath.pm: Texinfo/ModulePath.pm.in Makefile
 	sed -e 's|[@]USE_EXTERNAL_LIBINTL[@]|$(USE_EXTERNAL_LIBINTL)|' \
 	    -e 's|[@]USE_EXTERNAL_EASTASIANWIDTH[@]|$(USE_EXTERNAL_EASTASIANWIDTH)|' \
 	    -e 's|[@]USE_EXTERNAL_UNIDECODE[@]|$(USE_EXTERNAL_UNIDECODE)|' \
-	    -e 's|[@]ICONV_CONVERTS_EUC_CN[@]|$(ICONV_CONVERTS_EUC_CN)|' \
-	    -e 's|[@]DEFAULT_TEST_LEVEL[@]|$(DEFAULT_TEST_LEVEL)|' \
 	    -e 's|[@]CONVERTER[@]|$(CONVERTER)|' \
+	  $(srcdir)/Texinfo/ModulePath.pm.in >$@
+
+Texinfo/Configure.pm: Texinfo/Configure.pm.in Makefile
+	$(MKDIR_P) Texinfo
+	sed -e 's|[@]ICONV_CONVERTS_EUC_CN[@]|$(ICONV_CONVERTS_EUC_CN)|' \
+	    -e 's|[@]DEFAULT_TEST_LEVEL[@]|$(DEFAULT_TEST_LEVEL)|' \
 	    -e 's|[@]enable_xs[@]|$(enable_xs)|' \
 	    -e 's|[@]use_shared_txi_libraries[@]|$(use_shared_txi_libraries)|' \
 	    -e 's|[@]use_libintl_perl_in_xs[@]|$(use_libintl_perl_in_xs)|' \
-	  $(srcdir)/Texinfo/ModulePath.pm.in >$@
+	  $(srcdir)/Texinfo/Configure.pm.in >$@
 
 # target that can be built upon cd'ing to the build directory, as needed
 # for the documentation
@@ -380,6 +414,8 @@ $(srcdir)/Texinfo/Options.pm: ../data/converters_defaults.txt ../data/options_da
 	    $(srcdir)/../data/converters_defaults.txt \
 	    $(srcdir)/Texinfo/Options.pm \
 	       < $(srcdir)/../data/options_data.txt
+# Note: keep Texinfo/Options.pm filename in sync with comment at
+# top of ../data/converters_defaults.txt.
 
 $(srcdir)/Texinfo/CommandsValues.pm: ../data/commands_values.txt $(srcdir)/../maintain/generate_code_commands_values.pl
 	$(PERL) $(srcdir)/../maintain/generate_code_commands_values.pl \
@@ -419,11 +455,22 @@ AM_T_LOG_FLAGS = -w
 
 AM_TESTS_ENVIRONMENT = srcdir="$(srcdir)"; export srcdir; t2a_srcdir="$(top_srcdir)"; export t2a_srcdir; t2a_builddir="$(top_builddir)"; export t2a_builddir;
 
+# use read and not for `cat ...` because of spaces in files names
+dist-hook: $(srcdir)/t/test_files_generated_list.txt \
+                     $(srcdir)/t/test_dirs_generated_list.txt
+	while read dir ; do \
+	  $(MKDIR_P) "$(distdir)/$$dir" || exit 1; \
+	done < $(srcdir)/t/test_dirs_generated_list.txt
+	while read file ; do \
+	  cp -p "$(srcdir)/$$file" "$(distdir)/$$file" || exit 1; \
+	done < $(srcdir)/t/test_files_generated_list.txt
+
 distclean-local:
 	rm -f t/results/*/*.pl.new
 	rm -rf t/results/*/*/out_*/
 
-CLEANFILES = texi2any makeinfo load_txi_modules Texinfo/ModulePath.pm
-MAINTAINERCLEANFILES = Texinfo/Commands.pm Texinfo/CommandsValues.pm \
+CLEANFILES = texi2any makeinfo load_txi_modules Texinfo/ModulePath.pm \
+             Texinfo/Configure.pm
+MAINTAINERCLEANFILES += Texinfo/Commands.pm Texinfo/CommandsValues.pm \
                        Texinfo/HTMLData.pm Texinfo/HTMLDataCSS.pm \
                        Texinfo/Options.pm

@@ -1,14 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'footnote_no_node'} = '*document_root C2
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@top C3 l1 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -68,8 +74,8 @@ F(1).
 ';
 
 
-$result_converted{'html_text'}->{'footnote_no_node'} = '<div class="top-level-extent" id="top">
-<h1 class="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
+$result_converted{'html_text'}->{'footnote_no_node'} = '<div class="top-level-extent" id="Top">
+<h1 class="top"><span>top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <p>F<a class="footnote" id="DOCF1" href="#FOOT1"><sup>1</sup></a>.
 </p><div class="footnotes-segment">
@@ -83,13 +89,15 @@ $result_converted{'html_text'}->{'footnote_no_node'} = '<div class="top-level-ex
 ';
 
 
-$result_converted{'latex_text'}->{'footnote_no_node'} = '\\part*{{top}}
+$result_converted{'latex_text'}->{'footnote_no_node'} = '\\begin{document}
+\\part*{{top}}
+\\label{anchor:Top}%
 
 F\\footnote{In footnote}.
 ';
 
 
-$result_converted{'docbook'}->{'footnote_no_node'} = '<chapter label="">
+$result_converted{'docbook'}->{'footnote_no_node'} = '<chapter label="" id="Top">
 <title>top</title>
 
 <para>F<footnote><para>In footnote</para></footnote>.

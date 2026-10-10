@@ -17,6 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include <stddef.h>
+
+/* In general, it is better to leave the language unspecified, but when
+   it is not possible, this constant can be used to use the same as the
+   default language for translations in texi2any. */
 #define TXI_DEFAULT_STRINGS_LANG "en"
 
 void fatal (char *);

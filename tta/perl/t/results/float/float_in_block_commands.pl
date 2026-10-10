@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'float_in_block_commands'} = '*document_root C1
  *before_node_section C7
@@ -265,12 +268,19 @@ $result_converted{'latex'}->{'float_in_block_commands'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
 \\usepackage[utf8]{inputenc}
 \\usepackage[T1]{fontenc}
-\\usepackage[framemethod=tikz]{mdframed}
+\\usepackage{tcolorbox}
 \\usepackage{caption}
 \\usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
@@ -333,10 +343,8 @@ $result_converted{'latex'}->{'float_in_block_commands'} = '\\documentclass{book}
 \\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
                               {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
-% the mdframed style for @cartouche
-\\mdfdefinestyle{Texinfocartouche}{
-innertopmargin=10pt, innerbottommargin=10pt,%
-roundcorner=10pt}
+% the tcolorbox environment for @cartouche
+\\newtcolorbox{Texinfocartouche}[1][]{#1}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_
@@ -368,12 +376,12 @@ roundcorner=10pt}
 \\end{TexinfoFloatText}
 \\end{quote}
 
-\\begin{mdframed}[style=Texinfocartouche]
+\\begin{Texinfocartouche}
 \\begin{Texinfononfloatingfloat}
 \\captionof{TexinfoFloatText}{float in cartouche}
 \\label{anchor:in-cartouche}%
 \\end{Texinfononfloatingfloat}
-\\end{mdframed}
+\\end{Texinfocartouche}
 
 \\end{document}
 ';

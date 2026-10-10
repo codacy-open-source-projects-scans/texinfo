@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'cartouche_title_and_content'} = '*document_root C1
- *before_node_section C1
+ *before_node_section C2
+  *preamble_before_content
   *@cartouche C3 l1
    *arguments_line C1
     *block_line_arg C4
@@ -73,10 +77,11 @@ flow of the text.
 ';
 
 
-$result_converted{'latex_text'}->{'cartouche_title_and_content'} = '\\begin{mdframed}[style=Texinfocartouche, frametitle={Box title on \\emph{documentation}}]
+$result_converted{'latex_text'}->{'cartouche_title_and_content'} = '\\begin{document}
+\\begin{Texinfocartouche}[title={Box title on \\emph{documentation}}]
 Text on documentation explaining something important out of the main
 flow of the text.
-\\end{mdframed}
+\\end{Texinfocartouche}
 ';
 
 

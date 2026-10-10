@@ -18,12 +18,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <iconv.h>
+/* for ssize_t */
+#include <sys/types.h>
 #include <errno.h>
 
-#include "text.h"
 #include "source_mark_types.h"
 #include "tree_types.h"
+#include "document_types.h"
 /* for fatal */
 #include "base_utils.h"
 /* for xasprintf and other */
@@ -32,7 +33,6 @@
 #include "parser_conf.h"
 #include "errors_parser.h"
 #include "debug_parser.h"
-#include "commands.h"
 #include "source_marks.h"
 /* for parsed_document */
 #include "parser.h"
@@ -106,7 +106,7 @@ int after_end_fetch_nr = -1;
 char *
 convert_to_utf8 (char *s)
 {
-  char *ret;
+  TEXT ret;
 
   /* Convert from @documentencoding to UTF-8.
      It could have been possible to use an 8-bit encoding throughout,
@@ -132,9 +132,10 @@ convert_to_utf8 (char *s)
     }
 
   ret = encode_with_iconv (current_encoding_conversion->iconv, s,
+                           strlen (s),
                            &current_source_info, ieh_error, 0);
   free (s);
-  return ret;
+  return ret.text;
 }
 
 /* In Perl Parser _encode_file_name */
@@ -168,10 +169,11 @@ parser_encode_file_name (char *filename)
 
   if (filename_encoding_conversion)
     {
-      char *result
+      TEXT result
         = encode_with_iconv (filename_encoding_conversion->iconv,
-                             filename, &current_source_info, ieh_error, 0);
-      return result;
+                             filename, strlen (filename),
+                             &current_source_info, ieh_error, 0);
+      return result.text;
     }
   else
     {
@@ -260,8 +262,8 @@ next_text (ELEMENT *current)
           char *new;
         case IN_text:
           /*
-          debug_nonl ("IN_TEXT '"); debug_print_protected_string (input->ptext);
-          debug ("'");
+          debug_nonl ("C|IN_TEXT '");
+          debug_print_protected_string (input->ptext); debug ("'");
           */
           if (!*input->ptext)
             break;
@@ -273,7 +275,7 @@ next_text (ELEMENT *current)
           else
             input->ptext = p; /* The next time, we will pop the input source. */
           /*
-          debug_nonl ("NEW IN_TEXT '"); debug_print_protected_string (new);
+          debug_nonl ("C|NEW IN_TEXT '"); debug_print_protected_string (new);
           debug_nonl ("' next: '");
           debug_print_protected_string (input->ptext); debug ("'");
           */
@@ -390,7 +392,7 @@ next_text (ELEMENT *current)
               register_source_mark (current, end_include_source_mark);
             }
           else
-            debug ("INPUT MARK MISSED");
+            debug ("C|INPUT MARK MISSED");
 
           input->input_source_mark = 0;
         }
@@ -411,9 +413,9 @@ next_text (ELEMENT *current)
       */
       after_end_fetch_nr++;
       if (after_end_fetch_nr > 1)
-        debug ("AFTER END FETCHED INPUT NR: %d", after_end_fetch_nr);
+        debug ("C|AFTER END FETCHED INPUT NR: %d", after_end_fetch_nr);
     }
-  debug ("INPUT FINISHED");
+  debug ("C|INPUT FINISHED");
   return 0;
 }
 
@@ -486,7 +488,7 @@ save_string (const char *string)
   if (!string)
     return 0;
 
-  return add_string (string, parsed_document->small_strings);
+  return add_string (parsed_document->small_strings, string);
 }
 
 void
@@ -510,8 +512,9 @@ top_file_index (void)
 char *
 parser_locate_include_file (const char *filename)
 {
+  int use_inc_dir;
   return locate_include_file (filename,
-                              &parser_include_directories);
+                              &parser_include_directories, &use_inc_dir);
 }
 
 /* Try to open a file path INPUT_FILE_PATH */

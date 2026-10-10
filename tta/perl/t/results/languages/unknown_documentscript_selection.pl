@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'unknown_documentscript_selection'} = '*document_root C5
  *before_node_section C2
@@ -18,24 +21,6 @@ $result_tree_text{'unknown_documentscript_selection'} = '*document_root C5
      *def_line C1 l3
      |EXTRA
      |def_command:{defivar}
-     |def_index_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{BBB}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{SSS}
-     |def_index_ref_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{BBB}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{SSS}
      |element_region:{copying}
      |index_entry:I{vr,1}
      |original_def_cmdname:{defivar}
@@ -136,24 +121,6 @@ $result_tree_text{'unknown_documentscript_selection'} = '*document_root C5
    *def_line C1 l16
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{other}
-     |{ од }
-     |* C1
-      |*def_line_arg C1
-       |{some}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{other}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{some}
    |documentlanguage:{sr}
    |documentscript:{UkNo}
    |element_node:{chap}
@@ -202,24 +169,6 @@ $result_tree_text{'unknown_documentscript_selection'} = '*document_root C5
    *def_line C1 l21
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{reset}
-     |{ од }
-     |* C1
-      |*def_line_arg C1
-       |{after}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{reset}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{after}
    |documentlanguage:{sr}
    |element_node:{chap}
    |index_entry:I{vr,3}
@@ -276,24 +225,6 @@ $result_tree_text{'unknown_documentscript_selection'} = '*document_root C5
    *def_line C1 l27
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{before}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{script}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{before}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{script}
    |documentlanguage:{az}
    |element_node:{chap}
    |index_entry:I{vr,4}
@@ -342,24 +273,6 @@ $result_tree_text{'unknown_documentscript_selection'} = '*document_root C5
    *def_line C1 l32
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{script}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{after}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{script}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{after}
    |documentlanguage:{az}
    |documentscript:{wwrong}
    |element_node:{chap}
@@ -529,6 +442,14 @@ $result_converted{'plaintext'}->{'unknown_documentscript_selection'} = 'top
 
  -- Instance Variable of after: script change
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'unknown_documentscript_selection'} = 'vr:
+ BBB of SSS
+ before of script
+ other од some
+ reset од after
+ script of after
 ';
 
 1;

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'test_accents_sc_enable_encoding_latin1'} = '*document_root C5
  *before_node_section C2
@@ -345,8 +348,8 @@ $result_converted{'html_text'}->{'test_accents_sc_enable_encoding_latin1'} = '
 </p>
 <p>é, &mdash; <em class="dfn">def</em> &ndash; <code class="code">in code</code>. &lsquo;<samp class="samp">in samp</samp>&rsquo; aé. , ¡. &hellip;
 </p>
-<p>&ge; <small class="enddots">...</small> Å é &#550; &#322;. ©. error&rarr;.
-&ldquo; in quotes &rdquo;. &rarr;
+<p>&ge; <small class="enddots">...</small> Å é &#550; &#322;. ©. error<span class="arrow">&rarr;</span>.
+&ldquo; in quotes &rdquo;. <span class="expansion">&rarr;</span>
 &minus; ®
 </p>
 

@@ -111,13 +111,13 @@ AC_DEFUN([gl_EARLY],
   # Code from module libunistring:
   # Code from module limits-h:
   # Code from module localcharset:
-  # Code from module locale:
   # Code from module locale-h:
   # Code from module localeconv:
   # Code from module malloc-gnu:
   # Code from module malloc-posix:
   # Code from module malloca:
   # Code from module mbchar:
+  # Code from module mbiter-aux:
   # Code from module mbiterf:
   # Code from module mbrtoc32:
   # Code from module mbrtowc:
@@ -126,13 +126,19 @@ AC_DEFUN([gl_EARLY],
   # Code from module mbszero:
   # Code from module memchr:
   # Code from module memeq:
+  # Code from module minmax:
   # Code from module msvc-inval:
   # Code from module msvc-nothrow:
   # Code from module multiarch:
   # Code from module nocrash:
+  # Code from module once:
   # Code from module pathmax:
+  # Code from module pthread-h:
+  gl_ANYTHREADLIB_EARLY
+  # Code from module pthread-once:
   # Code from module rawmemchr:
   # Code from module root-uid:
+  # Code from module sched-h:
   # Code from module setenv:
   # Code from module setlocale-null:
   # Code from module setlocale-null-unlocked:
@@ -162,8 +168,12 @@ AC_DEFUN([gl_EARLY],
   # Code from module sys_stat-h:
   # Code from module sys_types-h:
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
+  # Code from module threadlib:
+  gl_THREADLIB_EARLY
   # Code from module time-h:
+  # Code from module tls:
   # Code from module uchar-h:
+  # Code from module uchar-h-c23:
   # Code from module unicase/base:
   # Code from module unicase/cased:
   # Code from module unicase/empty-prefix-context:
@@ -206,6 +216,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module uninorm/decompose-internal:
   # Code from module uninorm/decomposition:
   # Code from module uninorm/decomposition-table:
+  # Code from module uninorm/filter:
   # Code from module uninorm/nfc:
   # Code from module uninorm/nfd:
   # Code from module uninorm/nfkd:
@@ -214,6 +225,8 @@ AC_DEFUN([gl_EARLY],
   # Code from module unistd-h:
   # Code from module unistr/base:
   # Code from module unistr/u32-cpy:
+  # Code from module unistr/u32-mbsnlen:
+  # Code from module unistr/u32-mbtouc:
   # Code from module unistr/u32-mbtouc-unsafe:
   # Code from module unistr/u32-next:
   # Code from module unistr/u32-strmbtouc:
@@ -230,7 +243,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module unistr/u8-uctomb:
   # Code from module unitypes-h:
   # Code from module uniwidth/base:
-  # Code from module uniwidth/u8-strwidth:
   # Code from module uniwidth/u8-width:
   # Code from module uniwidth/width:
   # Code from module unsetenv:
@@ -238,8 +250,11 @@ AC_DEFUN([gl_EARLY],
   # Code from module vasnprintf:
   # Code from module vasprintf:
   # Code from module wchar-h:
+  # Code from module wcrtomb:
   # Code from module wctype-h:
   # Code from module wcwidth:
+  # Code from module windows-once:
+  # Code from module windows-tls:
   # Code from module xalloc-oversized:
   # Code from module xsize:
 ])
@@ -568,6 +583,7 @@ AC_DEFUN([gl_INIT],
   gl_STRING_MODULE_INDICATOR([memchr])
   gl_FUNC_MEMEQ
   gl_STRING_MODULE_INDICATOR([memeq])
+  gl_MINMAX
   AC_REQUIRE([gl_MSVC_INVAL])
   gl_CONDITIONAL([GL_COND_OBJ_MSVC_INVAL],
                  [test $HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1])
@@ -576,13 +592,24 @@ AC_DEFUN([gl_INIT],
                  [test $HAVE_MSVC_INVALID_PARAMETER_HANDLER = 1])
   gl_MODULE_INDICATOR([msvc-nothrow])
   gl_MULTIARCH
+  gl_ONCE
   gl_PATHMAX
+  gl_PTHREAD_H
+  gl_PTHREAD_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_PTHREAD_ONCE
+  gl_CONDITIONAL([GL_COND_OBJ_PTHREAD_ONCE],
+                 [test $HAVE_PTHREAD_ONCE = 0 || test $REPLACE_PTHREAD_ONCE = 1])
+  gl_PTHREAD_MODULE_INDICATOR([pthread-once])
   gl_FUNC_RAWMEMCHR
   gl_CONDITIONAL([GL_COND_OBJ_RAWMEMCHR], [test $HAVE_RAWMEMCHR = 0])
   AM_COND_IF([GL_COND_OBJ_RAWMEMCHR], [
     gl_PREREQ_RAWMEMCHR
   ])
   gl_STRING_MODULE_INDICATOR([rawmemchr])
+  gl_SCHED_H
+  gl_SCHED_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
   gl_FUNC_SETENV
   gl_CONDITIONAL([GL_COND_OBJ_SETENV],
                  [test $HAVE_SETENV = 0 || test $REPLACE_SETENV = 1])
@@ -699,12 +726,15 @@ AC_DEFUN([gl_INIT],
   gl_SYS_TYPES_H
   gl_SYS_TYPES_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
+  AC_REQUIRE([gl_THREADLIB])
   gl_TIME_H
   gl_TIME_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
+  gl_TLS
   gl_UCHAR_H
   gl_UCHAR_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
+  gl_UCHAR_H_C23
   gl_LIBUNISTRING_LIBHEADER([1.2], [unicase.h])
   gl_UNICASE_H
   gl_UNICASE_H_REQUIRE_DEFAULTS
@@ -720,7 +750,7 @@ AC_DEFUN([gl_INIT],
   gl_LIBUNISTRING_MODULE([1.4], [unicase/toupper])
   gl_LIBUNISTRING_MODULE([1.4], [unicase/u8-tolower])
   gl_LIBUNISTRING_MODULE([1.4], [unicase/u8-toupper])
-  gl_LIBUNISTRING_LIBHEADER([1.3], [unictype.h])
+  gl_LIBUNISTRING_LIBHEADER([1.4], [unictype.h])
   gl_UNICTYPE_H
   gl_UNICTYPE_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
@@ -780,6 +810,7 @@ AC_DEFUN([gl_INIT],
   gl_LIBUNISTRING_MODULE([1.3], [uninorm/composition])
   gl_LIBUNISTRING_MODULE([1.4], [uninorm/decomposition])
   AC_REQUIRE([AC_C_INLINE])
+  gl_LIBUNISTRING_MODULE([1.4], [uninorm/filter])
   gl_UNINORM_H_REQUIRE_DEFAULTS
   gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.4], [uninorm/nfc])
   gl_UNINORM_H_REQUIRE_DEFAULTS
@@ -796,6 +827,9 @@ AC_DEFUN([gl_INIT],
   gl_LIBUNISTRING_LIBHEADER([1.2], [unistr.h])
   AC_PROG_MKDIR_P
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-cpy])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-mbsnlen])
+  gl_MODULE_INDICATOR([unistr/u32-mbtouc])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-mbtouc])
   gl_MODULE_INDICATOR([unistr/u32-mbtouc-unsafe])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-mbtouc-unsafe])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-next])
@@ -821,7 +855,6 @@ AC_DEFUN([gl_INIT],
   gl_UNITYPES_H
   gl_LIBUNISTRING_LIBHEADER([0.9.11], [uniwidth.h])
   AC_PROG_MKDIR_P
-  gl_LIBUNISTRING_MODULE([1.4], [uniwidth/u8-strwidth])
   gl_LIBUNISTRING_MODULE([1.4], [uniwidth/u8-width])
   gl_LIBUNISTRING_MODULE([1.4], [uniwidth/width])
   gl_FUNC_UNSETENV
@@ -842,6 +875,13 @@ AC_DEFUN([gl_INIT],
   gl_WCHAR_H
   gl_WCHAR_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
+  gl_FUNC_WCRTOMB
+  gl_CONDITIONAL([GL_COND_OBJ_WCRTOMB],
+                 [test $HAVE_WCRTOMB = 0 || test $REPLACE_WCRTOMB = 1])
+  AM_COND_IF([GL_COND_OBJ_WCRTOMB], [
+    gl_PREREQ_WCRTOMB
+  ])
+  gl_WCHAR_MODULE_INDICATOR([wcrtomb])
   gl_WCTYPE_H
   gl_WCTYPE_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
@@ -852,6 +892,12 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_WCWIDTH
   ])
   gl_WCHAR_MODULE_INDICATOR([wcwidth])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  gl_CONDITIONAL([GL_COND_OBJ_WINDOWS_ONCE],
+                 [case "$host_os" in mingw* | windows*) true;; *) false;; esac])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  gl_CONDITIONAL([GL_COND_OBJ_WINDOWS_TLS],
+                 [case "$host_os" in mingw* | windows*) true;; *) false;; esac])
   gl_XSIZE
   # End of code from modules
   m4_ifval(gl_LIBSOURCES_LIST, [
@@ -1097,6 +1143,11 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/getopt1.c
   lib/getopt_int.h
   lib/gettext.h
+  lib/glthread/once.c
+  lib/glthread/once.h
+  lib/glthread/threadlib.c
+  lib/glthread/tls.c
+  lib/glthread/tls.h
   lib/group-member.c
   lib/hard-locale.c
   lib/hard-locale.h
@@ -1110,6 +1161,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/itold.c
   lib/lc-charset-dispatch.c
   lib/lc-charset-dispatch.h
+  lib/lc-charset-unicode.c
+  lib/lc-charset-unicode.h
   lib/libunistring.valgrind
   lib/limits.in.h
   lib/localcharset.c
@@ -1121,6 +1174,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/malloca.h
   lib/mbchar.c
   lib/mbchar.h
+  lib/mbiter-aux.c
+  lib/mbiter-aux.h
   lib/mbiterf.c
   lib/mbiterf.h
   lib/mbrtoc32.c
@@ -1135,6 +1190,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/memchr.c
   lib/memchr.valgrind
   lib/memeq.c
+  lib/minmax.h
   lib/msvc-inval.c
   lib/msvc-inval.h
   lib/msvc-nothrow.c
@@ -1144,9 +1200,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/printf-args.h
   lib/printf-parse.c
   lib/printf-parse.h
+  lib/pthread-once.c
+  lib/pthread.in.h
   lib/rawmemchr.c
   lib/rawmemchr.valgrind
   lib/root-uid.h
+  lib/sched.in.h
   lib/setenv.c
   lib/setlocale-lock.c
   lib/setlocale_null-unlocked.c
@@ -1268,12 +1327,15 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/uninorm/u-normalize-internal.h
   lib/uninorm/u32-normalize.c
   lib/uninorm/u8-normalize.c
+  lib/uninorm/uninorm-filter.c
   lib/unistd.c
   lib/unistd.in.h
   lib/unistr.in.h
   lib/unistr/u-cpy.h
   lib/unistr/u32-cpy.c
+  lib/unistr/u32-mbsnlen.c
   lib/unistr/u32-mbtouc-unsafe.c
+  lib/unistr/u32-mbtouc.c
   lib/unistr/u32-next.c
   lib/unistr/u32-strmbtouc.c
   lib/unistr/u32-uctomb.c
@@ -1293,7 +1355,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/unitypes.in.h
   lib/uniwidth.in.h
   lib/uniwidth/cjk.h
-  lib/uniwidth/u8-strwidth.c
   lib/uniwidth/u8-width.c
   lib/uniwidth/width.c
   lib/uniwidth/width0.h
@@ -1305,10 +1366,15 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/verify.h
   lib/warn-on-use.h
   lib/wchar.in.h
+  lib/wcrtomb.c
   lib/wctype-h.c
   lib/wctype.in.h
   lib/wcwidth.c
   lib/windows-initguard.h
+  lib/windows-once.c
+  lib/windows-once.h
+  lib/windows-tls.c
+  lib/windows-tls.h
   lib/xalloc-oversized.h
   lib/xsize.c
   lib/xsize.h
@@ -1381,6 +1447,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/mbstate_t.m4
   m4/memchr.m4
   m4/memeq.m4
+  m4/minmax.m4
   m4/mmap-anon.m4
   m4/msvc-inval.m4
   m4/msvc-nothrow.m4
@@ -1389,10 +1456,15 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/nocrash.m4
   m4/off64_t.m4
   m4/off_t.m4
+  m4/once.m4
   m4/pathmax.m4
   m4/pid_t.m4
   m4/printf.m4
+  m4/pthread-once.m4
+  m4/pthread-spin.m4
+  m4/pthread_h.m4
   m4/rawmemchr.m4
+  m4/sched_h.m4
   m4/setenv.m4
   m4/setlocale_null.m4
   m4/size_max.m4
@@ -1417,6 +1489,8 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/sys_types_h.m4
   m4/threadlib.m4
   m4/time_h.m4
+  m4/tls.m4
+  m4/uchar_h-c23.m4
   m4/uchar_h.m4
   m4/unicase_h.m4
   m4/unictype_h.m4
@@ -1429,6 +1503,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/visibility.m4
   m4/warn-on-use.m4
   m4/wchar_h.m4
+  m4/wcrtomb.m4
   m4/wctype_h.m4
   m4/wcwidth.m4
   m4/wint_t.m4

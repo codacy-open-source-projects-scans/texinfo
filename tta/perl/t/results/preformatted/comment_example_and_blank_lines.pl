@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'comment_example_and_blank_lines'} = '*document_root C1
- *before_node_section C15
+ *before_node_section C16
+  *preamble_before_content
   *paragraph C1
    {Para.\\n}
   {empty_line:\\n}
@@ -257,7 +261,8 @@ $result_converted{'xml'}->{'comment_example_and_blank_lines'} = '<para>Para.
 </para>';
 
 
-$result_converted{'latex_text'}->{'comment_example_and_blank_lines'} = 'Para.
+$result_converted{'latex_text'}->{'comment_example_and_blank_lines'} = '\\begin{document}
+Para.
 
 \\begin{Texinfoindented}
 \\begin{Texinfopreformatted}%

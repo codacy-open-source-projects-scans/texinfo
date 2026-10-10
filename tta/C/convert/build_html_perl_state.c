@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -26,10 +27,10 @@
 
 #undef context
 
-#include "html_conversion_data.h"
 #include "tree_types.h"
 #include "converter_types.h"
-/* for builtin_command_data */
+#include "html_converter_state.h"
+/* for command_data */
 #include "builtin_commands.h"
 /* for HMSF_* */
 #include "utils.h"
@@ -38,14 +39,11 @@
 #include "debug.h"
 #include "convert_to_texinfo.h"
  */
-/* new_documentlanguage_translation */
-#include "translations.h"
 /* newSVpv_utf8 element_to_perl_hash */
 #include "build_perl_info.h"
 /* for html_conversion_context_type_names */
-#include "html_converter_types.h"
+#include "convert_html.h"
 #include "build_html_perl_state.h"
-#include "xs_utils.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
@@ -53,102 +51,84 @@
 static const char *lang_trans_key = "current_lang_translations";
 
 #define FETCH(key) key##_sv = hv_fetch (converter_hv, #key, strlen (#key), 0);
-/* initialize 'translations' and pass current_lang_translations */
-static void
-set_perl_lang_translations (HV *converter_hv, CONVERTER *converter)
-{
-  SV *translations;
-  SV *bcp47_locale_sv;
-  SV **translations_sv;
-  HV *translations_hv;
-  HE *translations_lang_he;
-  HV *translations_lang_hv;
-  AV *current_lang_translations_av;
-  LANG_TRANSLATION *lang_translation;
-  DOCUMENT_LANG_INFO *lang_info;
-  HV *lang_info_hv;
+/* Set the information set/modified by *_translate_names and pass
+   current_lang_translations.
 
-  dTHX;
-
-  lang_translation = converter->current_lang_translations;
-
-  if (!lang_translation)
-    return;
-
-  lang_info = lang_translation->info;
-
-  lang_info_hv = build_lang_info (lang_info);
-
-  FETCH(translations);
-
-  if (!translations_sv || !SvOK (*translations_sv))
-    {
-      translations = get_sv ("Texinfo::Translations::translation_cache",
-                             0);
-      hv_store (converter_hv, "translations", strlen ("translations"),
-                newSVsv (translations), 0);
-    }
-  else
-    {
-      translations = *translations_sv;
-    }
-
-  bcp47_locale_sv = newSVpv_byte (lang_info->bcp47_locale, 0);
-
-  translations_hv = (HV *)SvRV (translations);
-  translations_lang_he = hv_fetch_ent (translations_hv, bcp47_locale_sv,
-                                       0, 0);
-  if (!translations_lang_he)
-    {
-      translations_lang_hv = newHV ();
-      hv_store_ent (translations_hv, bcp47_locale_sv,
-                    newRV_noinc ((SV *)translations_lang_hv), 0);
-    }
-  else
-    translations_lang_hv = (HV *)SvRV (HeVAL (translations_lang_he));
-
-  current_lang_translations_av = newAV ();
-
-  av_push (current_lang_translations_av,
-           newRV_noinc ((SV *) lang_info_hv));
-
-  av_push (current_lang_translations_av,
-           newSVpv_byte (lang_translation->language_env, 0));
-
-  av_push (current_lang_translations_av,
-           newRV_inc ((SV *) translations_lang_hv));
-
-  hv_store (converter_hv, lang_trans_key, strlen (lang_trans_key),
-            newRV_noinc ((SV *) current_lang_translations_av), 0);
-}
-
-/* TODO should set the same as
-   Texinfo::Convert::HTMLNonXS::_translate_names */
+   current_lang_translations is not set in translate_names.  However
+   translate_names is called after the current_lang_translations
+   initialization, and is also called each time current_lang_translations
+   changes.  Therefore needing to pass current_lang_translations and
+   translated names happens at the same time and can be driven by the
+   same indicators (in practice set by translate_names).
+ */
 static void
 build_html_translated_names (HV *converter_hv, CONVERTER *converter)
 {
+  HTML_CONVERTER_STATE *self_html = converter->html_converter;
   SV **no_arg_commands_formatting_sv;
 
   dTHX;
 
-  set_perl_lang_translations (converter_hv, converter);
+  /* setup current_lang_translations, passing lang info */
+  if (converter->current_lang_translations)
+    {
+      SV *translations_cache_sv
+        = get_sv ("Texinfo::Translations::converters_translation_cache", 0);
+      HV *translations_cache_hv = (HV *)SvRV (translations_cache_sv);
+      SV **translations_lang_sv;
+      const char *bcp47_locale
+        = converter->current_lang_translations->info->bcp47_locale;
+      size_t bcp47_locale_len = strlen (bcp47_locale);
+
+      translations_lang_sv = hv_fetch (translations_cache_hv,
+                                 bcp47_locale, bcp47_locale_len, 0);
+
+      if (translations_lang_sv)
+        {
+           hv_store (converter_hv, lang_trans_key, strlen (lang_trans_key),
+                     newSVsv (*translations_lang_sv), 0);
+        }
+      else
+        {
+          AV *current_lang_translations_av = newAV ();
+          HV *lang_info_hv
+            = build_lang_info (converter->current_lang_translations->info);
+          HV *translations_lang_hv = newHV ();
+
+          av_push (current_lang_translations_av,
+                   newRV_noinc ((SV *) lang_info_hv));
+
+          av_push (current_lang_translations_av,
+                   newSVpv_byte (
+                converter->current_lang_translations->language_env, 0));
+
+          av_push (current_lang_translations_av, 
+                   newRV_noinc ((SV *)translations_lang_hv));
+
+          hv_store (translations_cache_hv, bcp47_locale, bcp47_locale_len,
+                    newRV_noinc ((SV *) current_lang_translations_av), 0);
+
+          hv_store (converter_hv, lang_trans_key, strlen (lang_trans_key),
+                    newRV_inc ((SV *) current_lang_translations_av), 0);
+        }
+    }
 
   /* pass all the information for each context for translated commands */
-  if (converter->no_arg_formatted_cmd_translated.number)
+  if (self_html->no_arg_formatted_cmd_translated.number)
     {
       size_t j;
       HV *no_arg_commands_formatting_hv;
       FETCH(no_arg_commands_formatting);
       no_arg_commands_formatting_hv
         = (HV *) SvRV (*no_arg_commands_formatting_sv);
-      for (j = 0; j < converter->no_arg_formatted_cmd_translated.number; j++)
+      for (j = 0; j < self_html->no_arg_formatted_cmd_translated.number; j++)
         {
           int k;
           enum command_id cmd
-            = converter->no_arg_formatted_cmd_translated.list[j];
-          const char *cmdname = builtin_command_data[cmd].cmdname;
+            = self_html->no_arg_formatted_cmd_translated.list[j];
+          const char *cmdname = command_data[cmd].cmdname;
           HTML_NO_ARG_COMMAND_FORMATTING *no_arg_cmd_formatting
-            = &converter->html_no_arg_command_conversion[cmd];
+            = &self_html->html_no_arg_command_conversion[cmd];
           SV **no_arg_command_sv
              = hv_fetch (no_arg_commands_formatting_hv,
                          cmdname, strlen (cmdname), 0);
@@ -197,10 +177,10 @@ build_html_translated_names (HV *converter_hv, CONVERTER *converter)
                        strlen ("translated_tree"), G_DISCARD);
         }
 
-      memset (converter->no_arg_formatted_cmd_translated.list, 0,
-              converter->no_arg_formatted_cmd_translated.number
+      memset (self_html->no_arg_formatted_cmd_translated.list, 0,
+              self_html->no_arg_formatted_cmd_translated.number
                    * sizeof (enum command_id));
-      converter->no_arg_formatted_cmd_translated.number = 0;
+      self_html->no_arg_formatted_cmd_translated.number = 0;
     }
 
 #undef FETCH
@@ -210,19 +190,20 @@ build_html_translated_names (HV *converter_hv, CONVERTER *converter)
 void
 build_html_formatting_state (CONVERTER *converter)
 {
+  HTML_CONVERTER_STATE *self_html = converter->html_converter;
   HV *converter_hv;
   unsigned long flags;
 
   dTHX;
 
-  flags = converter->modified_state;
+  flags = self_html->modified_state;
 
   if (!flags)
     return;
 
-  if (converter->external_references_number <= 0)
+  if (self_html->external_references_number <= 0)
     {
-      converter->modified_state = 0;
+      self_html->modified_state = 0;
       return;
     }
 
@@ -232,20 +213,20 @@ build_html_formatting_state (CONVERTER *converter)
 
   if (flags & HMSF_current_root)
     {
-      if (!converter->current_root_command)
+      if (!self_html->current_root_command)
         STORE("current_root_command", newSV (0));
       else
         STORE("current_root_command",
-          newSVsv ((SV *) converter->current_root_command->sv));
+          newSVsv ((SV *) self_html->current_root_command->sv));
     }
 
   if (flags & HMSF_current_node)
     {
-      if (!converter->current_node)
+      if (!self_html->current_node)
         STORE("current_node", newSV (0));
       else
         STORE("current_node",
-           newSVsv ((SV *) converter->current_node->sv));
+           newSVsv ((SV *) self_html->current_node->sv));
     }
 
 #undef STORE
@@ -253,6 +234,6 @@ build_html_formatting_state (CONVERTER *converter)
   if (flags & HMSF_translations)
     build_html_translated_names (converter_hv, converter);
 
-  converter->modified_state = 0;
+  self_html->modified_state = 0;
 }
 

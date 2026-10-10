@@ -5,6 +5,11 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 require 't/test_utils.pl';
 
+use Texinfo::XSLoader;
+
+my $use_XS = (Texinfo::XSLoader::XS_modules_enabled()
+              and $Texinfo::XSLoader::core_modules_built);
+
 my @test_cases = (
 ['wrong_synindex',
 '@defindex aaa
@@ -594,7 +599,7 @@ fn
 '],
 ['def_existing_index',
 '@defcodeindex cp
-', {'full_document' => 0}],
+',],
 ['default_cp_index_and_one_letter_syncodeindex',
 '@node Top
 @node chap
@@ -627,6 +632,26 @@ This variable represents MMM Mode.
 
 @printindex fn
 '],
+# next test also a reference for the SWIG interface sorting test
+['sorting_of_symbols',
+'@node Top
+@top sort with symbols
+
+@node chap
+@chapter Chap
+
+@cindex a-b
+@cindex a b
+@cindex a,b
+@cindex a^b
+@cindex ab
+
+@printindex cp
+
+',
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,}
+],
 ['explicit_sort_key',
 '@node Top
 @top
@@ -871,6 +896,18 @@ c
 
 @printindex cp
 ', {'test_formats' => ['docbook']}],
+['test_sorting_symbols',
+'@node top
+@top top
+
+@node chapter index
+@chapter Index
+
+@findex \'\'
+@findex @quotesinglbase{} (single low-9 quotation mark)
+
+@printindex fn
+', {'skip' => $use_XS ? 'Different collation in C' : undef,} ],
 # test with only sectioning commands, no node command
 ['index_no_node_no_top',
 undef, {'test_file' => 'index_no_node_no_top.texi'},
@@ -1051,19 +1088,21 @@ my @file_encodings_tests = (
 @setfilename encoding_index_ascii.info
 @documentencoding us-ascii
 '.$encoding_index_text,
-{'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
-'full_document' => 1},
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,},
 {'ENABLE_ENCODING' => 0}
 ],
 ['encoding_index_latin1',
 undef,
-{'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,
 'test_file' => 'encoding_index_latin1.texi'},
 {'ENABLE_ENCODING' => 0}
 ],
 ['encoding_index_utf8',
 undef,
-{'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,
 'test_file' => 'encoding_index_utf8.texi',},
 {'ENABLE_ENCODING' => 0},
 ],
@@ -1077,19 +1116,21 @@ undef,
 @setfilename encoding_index_ascii_enable_encoding.info
 @documentencoding us-ascii
 '.$encoding_index_text,
-{'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
-'full_document' => 1},
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,},
 {'ENABLE_ENCODING' => 1,}
 ],
 ['encoding_index_latin1_enable_encoding',
 undef,
-{'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,
 'test_file' => 'encoding_index_latin1.texi',},
 {'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}
 ],
 ['encoding_index_utf8_enable_encoding',
 undef,
-{'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
+{'skip' => ($] < 5.018 and not $use_XS)
+            ? 'Perl too old incompatible Unicode collation' : undef,
 'test_file' => 'encoding_index_utf8.texi',},
 {'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}
 ],
@@ -1168,7 +1209,6 @@ my @latex_tests_cases_tests = ('syncode_index_print_both',
   'same_only_seealso_seeentry');
 
 foreach my $test (@test_formatted) {
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
   push @{$test->[2]->{'test_formats'}}, 'info';
   push @{$test->[2]->{'test_formats'}}, 'plaintext';
   push @{$test->[2]->{'test_formats'}}, 'html_text';

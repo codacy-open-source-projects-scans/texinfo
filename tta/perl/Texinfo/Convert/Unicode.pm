@@ -23,6 +23,7 @@ package Texinfo::Convert::Unicode;
 # charnames::vianame is not documented in 5.6.0.
 use 5.008;
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -44,6 +45,8 @@ use Texinfo::UnicodeData;
 
 require Exporter;
 
+our $VERSION = '7.3dev';
+
 # Some extra initialization for the first time this module is loaded.
 my $module_loaded = 0;
 sub import {
@@ -63,8 +66,6 @@ our @EXPORT_OK = qw(
   unicode_text
   string_width
 );
-
-our $VERSION = '7.3dev';
 
 my %unicode_accented_letters = %Texinfo::UnicodeData::unicode_accented_letters;
 my %unicode_to_eight_bit = %Texinfo::UnicodeData::unicode_to_eight_bit;
@@ -109,7 +110,7 @@ foreach my $command (keys(%unicode_map)) {
 }
 
 
-our %transliterate_map = (
+my %transliterate_map = (
   # Text::Unicode starting from version 1.25_01 maps C1 controls in the
   # 0080 to 009F range to Windows-1252 characters.  We still consider
   # the Unicode standard to rule and keep on transliterating to empty
@@ -231,17 +232,20 @@ my %tests_specific_transliterate_map = (
                '30EB' => 'ru',
           );
 
-our %tests_transliterate_map = (%transliterate_map,
+# Unused
+my %tests_transliterate_map = (%transliterate_map,
                                 %tests_specific_transliterate_map);
 
-our %no_transliterate_map;
+# Unused
+my %no_transliterate_map;
 foreach my $symbol(keys(%unicode_map)) {
   if (!exists($transliterate_map{$symbol})) {
     $no_transliterate_map{$unicode_map{$symbol}} = 1;
   }
 }
 
-our %transliterate_accent_map;
+# Unused
+my %transliterate_accent_map;
 foreach my $command (keys(%unicode_accented_letters)) {
   foreach my $letter(keys (%{$unicode_accented_letters{$command}})) {
     $transliterate_accent_map{$unicode_accented_letters{$command}->{$letter}} = $letter
@@ -618,6 +622,8 @@ sub check_unicode_point_conversion($;$) {
 
 # string length size taking into account that east asian characters
 # may take 2 spaces.
+# NOTE beware of a difference with the C function string_width_multibyte,
+# newline is one character here, not zero.
 sub string_width($) {
   my $string = shift;
 
@@ -674,7 +680,7 @@ Texinfo::Convert::Unicode - Representation as Unicode characters
 
   my $formatted_accents = encoded_accents($converter,
                  convert_to_text($contents_element), $stack, $encoding,
-                        \&Texinfo::Text::ascii_accent_fallback);
+                   \&Texinfo::Convert::Text::ascii_accent_fallback);
 
 =head1 NOTES
 

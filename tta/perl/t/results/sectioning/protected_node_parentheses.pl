@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'protected_node_parentheses'} = '*document_root C4
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C1 l2 {first}
  |EXTRA
  |identifier:{first}
@@ -54,7 +59,7 @@ $result_tree_text{'protected_node_parentheses'} = '*document_root C4
      {menu}
      {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C6 l9 {@asis{(}manual) name}
+ *@node C8 l9 {@asis{(}manual) name}
  |EXTRA
  |identifier:{_0028manual_0029-name}
  |is_target:{1}
@@ -90,6 +95,18 @@ $result_tree_text{'protected_node_parentheses'} = '*document_root C4
        {(}
      {manual2) name2}
    {.\\n}
+  {empty_line:\\n}
+  *paragraph C2
+   *@ref C1 l15
+    *brace_arg C2
+    |EXTRA
+    |node_content:{@asis{(}manual) name}
+    |normalized:{_0028manual_0029-name}
+     *@asis C1 l15
+      *brace_container C1
+       {(}
+     {manual) name}
+   {.\\n}
 ';
 
 
@@ -106,11 +123,12 @@ $result_texis{'protected_node_parentheses'} = '
 @anchor{@asis{(}manual2) name2}
 
 @ref{@asis{(}manual2) name2}.
+
+@ref{@asis{(}manual) name}.
 ';
 
 
-$result_texts{'protected_node_parentheses'} = '
-top
+$result_texts{'protected_node_parentheses'} = 'top
 ***
 
 * (manual) name::
@@ -118,6 +136,8 @@ top
 
 
 (manual2) name2.
+
+(manual) name.
 ';
 
 $result_errors{'protected_node_parentheses'} = '';
@@ -145,7 +165,7 @@ list:
 $result_headings_list{'protected_node_parentheses'} = '';
 
 
-$result_converted{'info'}->{'protected_node_parentheses'} = 'This is , produced from .
+$result_converted{'info'}->{'protected_node_parentheses'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: first
@@ -155,18 +175,20 @@ top
 
 * Menu:
 
-* (manual) name::
+* (manual) name::
 
 
 File: ,  Node: (manual) name,  Up: first
 
-*note (manual2) name2::.
+*note (manual2) name2::.
+
+   *note (manual) name::.
 
 
 Tag Table:
 Node: first27
-Node: (manual) name88
-Ref: (manual2) name2132
+Node: (manual) name90
+Ref: (manual2) name2134
 
 End Tag Table
 
@@ -174,7 +196,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'protected_node_parentheses'} = '* W |document without Top node
  warning: document without Top node
@@ -205,7 +227,6 @@ span:hover a.copiable-link {visibility: visible}
 </head>
 
 <body>
-
 <div class="top-level-extent" id="first">
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
@@ -217,6 +238,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <a class="anchor" id="g_t_0028manual2_0029-name2"></a>
 <p><a class="ref" href="#g_t_0028manual2_0029-name2">(manual2) name2</a>.
+</p>
+<p><a class="ref" href="#g_t_0028manual_0029-name">(manual) name</a>.
 </p></div>
 
 

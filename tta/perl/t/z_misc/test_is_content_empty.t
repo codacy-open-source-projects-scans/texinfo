@@ -7,26 +7,27 @@ use Test::More;
 
 BEGIN { plan tests => 23; }
 
-use Texinfo::Parser;
-#use Texinfo::Convert::Texinfo;
 use Texinfo::Common;
+
+use Texinfo::Parser;
+# not used directly, but useful to find functions used through the
+# Texinfo::Document returned by the Parser.
+use Texinfo::Document;
+
+#use Texinfo::Convert::Texinfo;
 #use Data::Dumper;
 
 ok(1, 'modules loading');
 
-sub test_is_empty($$$;$)
-{
-  my $name = shift;
-  my $is_empty = shift;
-  my $in = shift;
-  my $do_not_ignore_index_entries = shift;
+sub test_is_empty($$$;$) {
+  my ($name, $is_empty, $in, $do_not_ignore_index_entries) = @_;
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_piece($in);
+  my $document = $parser->parse_text($in);
   my $tree_as_text = $document->tree();
 
   my $line_parser = Texinfo::Parser::parser();
-  my $tree_as_line = $line_parser->parse_texi_line($in);
+  my $tree_as_line = $line_parser->parse_string($in);
   my $result_as_text = Texinfo::Common::is_content_empty($tree_as_text,
                                                $do_not_ignore_index_entries);
   my $result_as_line = Texinfo::Common::is_content_empty($tree_as_line,

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'float_copying'} = '*document_root C5
  *before_node_section C1
@@ -416,8 +419,16 @@ Copyright notice 1: The Public Domain notice(2)
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'float_copying'} = 'cp:
+ indexed caption
+ indexed caption copying footnote
+fn:
+ indexed caption function
+ public domain function
+';
 
-$result_converted{'info'}->{'float_copying'} = 'This is , produced from .
+
+$result_converted{'info'}->{'float_copying'} = Encode::encode('utf-8', 'This is , produced from .
 
 Public domain is not really a licence, as it means than the author
 abandon his copyright.
@@ -510,6 +521,14 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'float_copying'} = 'cp:
+ indexed caption
+ indexed caption copying footnote
+fn:
+ indexed caption function
+ public domain function
 ';
 
 $result_converted_errors{'info'}->{'float_copying'} = '* E l3|@float output more than once: public domain
@@ -697,6 +716,14 @@ the author abandon his copyright.
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'float_copying'} = 'cp:
+ indexed caption
+ indexed caption copying footnote
+fn:
+ indexed caption function
+ public domain function
+';
+
 
 $result_converted{'xml'}->{'float_copying'} = '<copying endspaces=" ">
 
@@ -752,6 +779,13 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -761,6 +795,8 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 \\usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
 \\usepackage[hidelinks]{hyperref}
+
+\\hypersetup{pdftitle={Top}}
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}

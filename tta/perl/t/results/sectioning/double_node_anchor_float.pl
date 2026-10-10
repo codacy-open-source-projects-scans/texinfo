@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'double_node_anchor_float'} = '*document_root C5
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C2 l1 {node1}
  |EXTRA
  |identifier:{node1}
@@ -228,11 +232,10 @@ $result_sectioning_root{'double_node_anchor_float'} = '';
 $result_headings_list{'double_node_anchor_float'} = '';
 
 
-$result_converted{'info'}->{'double_node_anchor_float'} = 'This is , produced from .
+$result_converted{'info'}->{'double_node_anchor_float'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: node1
-
 
 Text 1
 
@@ -240,12 +243,11 @@ Text 2
 
 Text 3
 
-
 
 Tag Table:
 Node: node127
 Ref: anchor151
-Ref: float168
+Ref: float167
 
 End Tag Table
 
@@ -253,7 +255,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'double_node_anchor_float'} = '* W |document without Top node
  warning: document without Top node

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'multiple_documentlanguage'} = '*document_root C5
  *before_node_section C1
@@ -25,24 +28,6 @@ $result_tree_text{'multiple_documentlanguage'} = '*document_root C5
      *def_line C1 l4
      |EXTRA
      |def_command:{defivar}
-     |def_index_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{a}
-       |{ de }
-       |* C1
-        |*def_line_arg C1
-         |{copying}
-     |def_index_ref_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{a}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{copying}
      |documentlanguage:{fr}
      |element_region:{copying}
      |index_entry:I{vr,1}
@@ -136,24 +121,6 @@ $result_tree_text{'multiple_documentlanguage'} = '*document_root C5
    *def_line C1 l15
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ de }
-     |* C1
-      |*def_line_arg C1
-       |{fr}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{fr}
    |documentlanguage:{fr}
    |element_node:{chap}
    |index_entry:I{vr,2}
@@ -222,24 +189,6 @@ $result_tree_text{'multiple_documentlanguage'} = '*document_root C5
    *def_line C1 l25
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ od }
-     |* C1
-      |*def_line_arg C1
-       |{hr}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{hr}
    |documentlanguage:{hr}
    |element_node:{chap}
    |index_entry:I{vr,3}
@@ -423,8 +372,14 @@ $result_converted{'plaintext'}->{'multiple_documentlanguage'} = 'top
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'multiple_documentlanguage'} = 'vr:
+ a de copying
+ BBB de fr
+ BBB od hr
+';
 
-$result_converted{'info'}->{'multiple_documentlanguage'} = 'This is , produced from .
+
+$result_converted{'info'}->{'multiple_documentlanguage'} = Encode::encode('utf-8', 'This is , produced from .
 
  -- Variable d\'instance de copying : a b
      erreur→
@@ -466,16 +421,22 @@ File: ,  Node: chap,  Prev: Top,  Up: Top
 
 
 Tag Table:
-Node: Top82
-Node: chap157
+Node: Top84
+Node: chap159
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
-Info-documentlanguage: hr
+Info-documentlanguage: fr
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'multiple_documentlanguage'} = 'vr:
+ a de copying
+ BBB de fr
+ BBB od hr
 ';
 
 
@@ -529,24 +490,24 @@ th.index-letter-header-printindex {text-align: left}
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">
 <dt class="defcv defivar-alias-defcv def-line" id="index-BBB-of-fr"><span class="category-def">Variable d&rsquo;instance de <code class="code">fr</code>&nbsp;: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-fr"> &para;</a></span></dt>
-<dd><p>erreur&rarr;
+<dd><p>erreur<span class="arrow">&rarr;</span>
 </p></dd></dl>
 
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">
 <dt class="defcv defivar-alias-defcv def-line" id="index-copying-a-of-copying"><span class="category-def">Instanzvariable of <code class="code">copying</code>: </span><span><strong class="def-name">a</strong> <var class="def-var-arguments">b</var><a class="copiable-link" href="#index-copying-a-of-copying"> &para;</a></span></dt>
-<dd><p>error&rarr;
+<dd><p>error<span class="arrow">&rarr;</span>
 </p></dd></dl>
 
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">
 <dt class="defcv defivar-alias-defcv def-line" id="index-BBB-of-hr"><span class="category-def">Primjerak varijable od <code class="code">hr</code>: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-hr"> &para;</a></span></dt>
-<dd><p>greška&rarr;
+<dd><p>greška<span class="arrow">&rarr;</span>
 </p></dd></dl>
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">
 <dt class="defcv defivar-alias-defcv def-line" id="index-copying-a-of-copying"><span class="category-def">Primjerak varijable od <code class="code">copying</code>: </span><span><strong class="def-name">a</strong> <var class="def-var-arguments">b</var><a class="copiable-link" href="#index-copying-a-of-copying"> &para;</a></span></dt>
-<dd><p>greška&rarr;
+<dd><p>greška<span class="arrow">&rarr;</span>
 </p></dd></dl>
 
 <div class="printindex vr-printindex">
@@ -578,6 +539,12 @@ th.index-letter-header-printindex {text-align: left}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'multiple_documentlanguage'} = 'vr:
+ a de copying
+ BBB de fr
+ BBB od hr
 ';
 
 

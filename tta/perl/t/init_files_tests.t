@@ -181,10 +181,21 @@ my @file_tests = (
 
 @error{}.
 
+@documentlanguage de_AT
+@node Chapter de_AT
+@chapter chap de_AT
+
+@error{}.
+
 @node Last chapter
 @chapter Last Chapter
 
 ', {'init_files' => ['translated_strings_customization.pm']},
+   {'SPLIT' => 'chapter'}],
+['customize_definition_index_translations',
+undef,
+ {'test_file' => 'customize_definition_index_translations.texi',
+  'init_files' => ['translated_strings_customization.pm']},
    {'SPLIT' => 'chapter'}],
 ['undefined_node_filename',
 '@node Top
@@ -440,7 +451,6 @@ foreach my $test (@test_cases) {
 foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_html';
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 run_all('init_files_tests', [@test_cases, @file_tests]);

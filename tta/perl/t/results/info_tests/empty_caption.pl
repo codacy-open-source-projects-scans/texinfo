@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'empty_caption'} = '*document_root C2
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C5 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -70,7 +75,6 @@ aa
 
 
 $result_texts{'empty_caption'} = '
-
 a, b
 aa
 
@@ -93,7 +97,7 @@ $result_sectioning_root{'empty_caption'} = '';
 $result_headings_list{'empty_caption'} = '';
 
 
-$result_converted{'info'}->{'empty_caption'} = 'This is , produced from .
+$result_converted{'info'}->{'empty_caption'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -117,6 +121,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

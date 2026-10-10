@@ -5,6 +5,8 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 require 't/test_utils.pl';
 
+my $XS_convert = Texinfo::XSLoader::XS_modules_enabled();
+
 my $unnumbered_top_without_node_text =
 '@node a node,,,(dir)
 @unnumbered unnumbered
@@ -395,23 +397,33 @@ my @tests_info = (
 '],
 # a subset of the next test, with ascii spaces only
 ['in_menu_only_special_ascii_spaces_node',
-undef, {'test_file' => 'in_menu_only_special_ascii_spaces_node.texi'}],
+undef, {'test_file' => 'in_menu_only_special_ascii_spaces_node.texi',
+        # NOTE relevant for all the tests with a CRLF in input file,
+        # we assume that the following condition also means that the
+        # XS code uses native text I/O on Windows, which is not
+        # true in some cases.
+        'skip' => ($^O eq 'MSWin32') ? 'difference on CRLF input' : undef}],
 ['in_menu_only_special_ascii_spaces_node_menu',
-undef, {'test_file' => 'in_menu_only_special_ascii_spaces_node.texi'},
+undef, {'test_file' => 'in_menu_only_special_ascii_spaces_node.texi',
+         'skip' => ($^O eq 'MSWin32') ? 'difference on CRLF input' : undef},
 {'FORMAT_MENU' => 'menu'}],
 # TODO for the LINE SEPARATOR and PARAGRAPH SEPARATOR Unicode characters
 # Perl and XS code give different width, therefore the corresponding
 # Texinfo code is commented out in the input file.
 ['in_menu_only_special_spaces_node',
 undef, {'test_file' => 'in_menu_only_special_spaces_node.texi',
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef, }],
+        # TODO if Windows condition kept, change the message
+        'skip' => ($] < 5.014 or $^O eq 'MSWin32') ? 'Perl too old: /a regex flag needed' : undef, }],
 ['in_menu_only_special_spaces_node_menu',
 undef, {'test_file' => 'in_menu_only_special_spaces_node.texi',
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef, },
+        # TODO if Windows condition kept, change the message
+        'skip' => ($] < 5.014 or $^O eq 'MSWin32') ? 'Perl too old: /a regex flag needed' : undef, },
        {'FORMAT_MENU' => 'menu', 'TRANSLITERATE_FILE_NAMES' => 0}],
 ['in_menu_only_special_spaces_node_menu_transliterate',
 undef, {'test_file' => 'in_menu_only_special_spaces_node.texi',
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef, },
+        # TODO if Windows condition kept, change the message
+        'skip' => ($] < 5.014 or $XS_convert or $^O eq 'MSWin32') ?
+           '/a flag needed or non reproducible transliteration' : undef, },
        {'FORMAT_MENU' => 'menu', 'TRANSLITERATE_FILE_NAMES' => 1}],
 ['reference_to_only_special_spaces_node',
 undef, {'test_file' => 'reference_to_only_special_spaces_node.texi',
@@ -420,7 +432,8 @@ undef, {'test_file' => 'reference_to_only_special_spaces_node.texi',
 ],
 ['reference_to_only_special_spaces_node_transliterate',
 undef, {'test_file' => 'reference_to_only_special_spaces_node.texi',
-        'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef, },
+        'skip' => ($] < 5.014 or $XS_convert) ?
+           '/a flag needed or non reproducible transliteration' : undef, },
 {'TRANSLITERATE_FILE_NAMES' => 1},
 ],
 ['double_node_anchor_float',
@@ -944,6 +957,8 @@ $unnumbered_top_without_node_text,
 @anchor{@asis{(}manual2) name2}
 
 @ref{@asis{(}manual2) name2}.
+
+@ref{@asis{(}manual) name}.
 '],
 ['automatic_menu_referencing_node',
 '@node Top
@@ -1410,7 +1425,8 @@ my @test_out_files = (
 @node n
 
 @node @^a
-', {'test_split' => 'node'},
+', {'test_split' => 'node',
+    'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
 {'TRANSLITERATE_FILE_NAMES' => 1}],
 # test the texi2html style to test the style for tests
 # interesting to test diverse tree splitting options, and already
@@ -1478,7 +1494,6 @@ $two_nodes_at_the_end_text,
 foreach my $test (@test_out_files) {
   if (!$test->[2]->{'test_formats'}) {
     push @{$test->[2]->{'test_formats'}}, 'file_html';
-    $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
   }
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
 }
@@ -1511,8 +1526,6 @@ foreach my $test (@tests_converted) {
     push @{$test->[2]->{'test_formats'}}, 'file_latex';
     $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
   }
-
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 my @xml_tests_info_tests = ('part_chapter_after_top',
@@ -1560,12 +1573,10 @@ foreach my $test (@tests_info) {
     if (grep {$_ eq $test->[0]} @docbook_tests_info_tests);
   if (grep {$_ eq $test->[0]} @latex_tests_info_tests) {
     push @{$test->[2]->{'test_formats'}}, 'latex_text';
-    $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
   }
   if (grep {$_ eq $test->[0]} @file_latex_tests_info_tests) {
     push @{$test->[2]->{'test_formats'}}, 'file_latex';
     $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-    $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
   }
 }
 
@@ -1597,7 +1608,6 @@ foreach my $test (@test_cases) {
   if (grep {$_ eq $test->[0]} @file_latex_tests_cases_tests) {
     push @{$test->[2]->{'test_formats'}}, 'file_latex';
     $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
-    $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
   }
 }
 

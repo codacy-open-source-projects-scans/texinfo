@@ -1,11 +1,14 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'node_part_chapter_after_chapter'} = 'U0 unit{S:top}{n:Top}
+use Encode;
+
+$result_tree_text{'node_part_chapter_after_chapter'} = 'U0 unit{C3}{S:@top top}{n:Top}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
@@ -14,7 +17,8 @@ FastForward: [U1]
 Next: [U2]
 NodeNext: [U1]
 NodeForward: [U1]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -69,7 +73,7 @@ NodeForward: [U1]
      {menu}
      {spaces_after_argument:\\n}
   {empty_line:\\n}
-U1 unit{S:1 chapter node}{n:chapter node}
+U1 unit{C2}{S:@chapter 1 chapter node}{n:chapter node}
 unit_directions:D[next->[U2]|prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -105,7 +109,7 @@ NodeBack: [U0]
     {chapter node}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U2 unit{S:2 chapter with part node}{n:part chapter node}
+U2 unit{C3}{S:@chapter 2 chapter with part node}{n:part chapter node}
 unit_directions:D[prev->[U1]]
 UNIT_DIRECTIONS
 This: [U2]
@@ -284,7 +288,7 @@ part
 ';
 
 
-$result_converted{'info'}->{'node_part_chapter_after_chapter'} = 'This is , produced from .
+$result_converted{'info'}->{'node_part_chapter_after_chapter'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chapter node,  Up: (dir)
@@ -321,7 +325,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'node_part_chapter_after_chapter'} = '<!DOCTYPE html>

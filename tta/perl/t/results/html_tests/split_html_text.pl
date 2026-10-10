@@ -1,11 +1,14 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'split_html_text'} = 'U0 unit{N:Top}{s:top}
+use Encode;
+
+$result_tree_text{'split_html_text'} = 'U0 unit{C3}{N:Top}{s:@top top}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
@@ -13,7 +16,8 @@ Forward: [U1]
 FastForward: [U1]
 NodeNext: [U1]
 NodeForward: [U1]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -36,7 +40,7 @@ NodeForward: [U1]
   *paragraph C1
    {In top\\n}
   {empty_line:\\n}
-U1 unit{N:chap}{s:1 Chap}
+U1 unit{C2}{N:chap}{s:@chapter 1 Chap}
 unit_directions:D[prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]

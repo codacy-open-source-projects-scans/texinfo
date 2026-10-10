@@ -44,11 +44,11 @@
 #  gettext-h \
 #  iconv \
 #  libunistring \
-#  locale \
+#  locale-h \
 #  setenv \
 #  strchrnul \
 #  strndup \
-#  uchar-h \
+#  uchar-h-c23 \
 #  unicase/u8-tolower \
 #  unicase/u8-toupper \
 #  unictype/category-L \
@@ -61,11 +61,14 @@
 #  unictype/property-join-control \
 #  unictype/property-test \
 #  unictype/property-unified-ideograph \
+#  uninorm/filter \
 #  uninorm/nfc \
 #  uninorm/nfd \
 #  uninorm/nfkd \
 #  uninorm/u32-normalize \
 #  uninorm/u8-normalize \
+#  unistr/u32-mbsnlen \
+#  unistr/u32-mbtouc \
 #  unistr/u32-next \
 #  unistr/u8-mbsnlen \
 #  unistr/u8-mbtouc \
@@ -74,7 +77,6 @@
 #  unistr/u8-strmbtouc \
 #  unistr/u8-to-u32 \
 #  unistr/u8-uctomb \
-#  uniwidth/u8-strwidth \
 #  uniwidth/u8-width \
 #  unsetenv \
 #  vasprintf
@@ -89,11 +91,11 @@ gl_MODULES([
   gettext-h
   iconv
   libunistring
-  locale
+  locale-h
   setenv
   strchrnul
   strndup
-  uchar-h
+  uchar-h-c23
   unicase/u8-tolower
   unicase/u8-toupper
   unictype/category-L
@@ -106,11 +108,14 @@ gl_MODULES([
   unictype/property-join-control
   unictype/property-test
   unictype/property-unified-ideograph
+  uninorm/filter
   uninorm/nfc
   uninorm/nfd
   uninorm/nfkd
   uninorm/u32-normalize
   uninorm/u8-normalize
+  unistr/u32-mbsnlen
+  unistr/u32-mbtouc
   unistr/u32-next
   unistr/u8-mbsnlen
   unistr/u8-mbtouc
@@ -119,7 +124,6 @@ gl_MODULES([
   unistr/u8-strmbtouc
   unistr/u8-to-u32
   unistr/u8-uctomb
-  uniwidth/u8-strwidth
   uniwidth/u8-width
   unsetenv
   vasprintf

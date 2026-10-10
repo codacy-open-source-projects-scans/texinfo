@@ -20,6 +20,7 @@
 
 package Texinfo::TreeElement;
 
+use 5.006;
 use strict;
 use warnings;
 
@@ -40,6 +41,7 @@ sub new($) {
 
 1;
 __END__
+
 =head1 NAME
 
 Texinfo::TreeElement - Texinfo tree element interface

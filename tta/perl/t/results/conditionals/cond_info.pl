@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'cond_info'} = '*document_root C5
  *before_node_section C4
@@ -263,7 +266,7 @@ list:
 $result_headings_list{'cond_info'} = '';
 
 
-$result_converted{'info'}->{'cond_info'} = 'This is , produced from cond.texi.
+$result_converted{'info'}->{'cond_info'} = Encode::encode('utf-8', 'This is , produced from cond.texi.
 
 This is ifnothtml text.
 
@@ -291,6 +294,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

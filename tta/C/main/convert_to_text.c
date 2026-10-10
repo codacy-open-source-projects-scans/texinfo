@@ -19,30 +19,29 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <time.h>
 #include <stdio.h>
+/* for strcasecmp */
+#include <strings.h>
 
 #include "text.h"
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
-#include "options_data.h"
 #include "converter_types.h"
+#include "options_data.h"
+#include "option_types.h"
 #include "types_data.h"
 #include "tree.h"
 #include "extra.h"
 #include "builtin_commands.h"
-#include "customization_options.h"
 /* for find_innermost_accent_contents ... */
 #include "utils.h"
 #include "unicode.h"
 /* wipe_error_message_list */
 #include "errors.h"
-/* for PARSED_DEF cdt_tree add_heading_number
+/* for PARSED_DEF add_heading_number
    translated_command_tree ... */
 #include "convert_utils.h"
-#include "document.h"
 /*
 #include "convert_to_texinfo.h"
 */
@@ -129,18 +128,18 @@ copy_options_for_convert_text (OPTIONS *options, DOCUMENT *document)
     text_options->COMMAND_LINE_ENCODING
       = strdup (options->COMMAND_LINE_ENCODING.o.string);
 
-  /* TODO? possibly current documentlanguage and documentscript
-     option value used with preamble preamble_lang_cmd commands
-     information.  For output prepared before starting the main
-     conversion, as is the case for the comment formatting,
-     the values should be ok.
+  /* The documentlanguage and documentscript options values
+     are not fit for the call below if this is not called at the very
+     beginning.  It is probably not a real issue, as the function are
+     called early in converters and it is also documented for the other caller,
+     setup_*index_entry_keys_formatting, that it should be called early.
    */
   if (document)
     {
       text_options->current_lang_translations
         = set_preamble_language_commands (
                 &document->global_info.preamble_lang_cmd,
-                &translation_cache,
+                &converters_translation_cache,
                 options->documentlanguage.o.string,
                 options->documentscript.o.string,
                 TXI_CONVERT_STRINGS_NR);
@@ -254,7 +253,7 @@ text_reset_options_encoding (TEXT_OPTIONS *text_options)
 static char *
 ascii_accent (CONVERTER *self, const char *text,
               const ELEMENT *command, int index_in_stack,
-              const ELEMENT_STACK *stack, int set_case)
+              const CONST_ELEMENT_LIST *stack, int set_case)
 {
   const enum command_id cmd = command->e.c->cmd;
   TEXT accent_text;
@@ -292,7 +291,7 @@ ascii_accent (CONVERTER *self, const char *text,
 }
 
 static char *
-ascii_accents_internal (const char *text, const ELEMENT_STACK *stack,
+ascii_accents_internal (const char *text, const CONST_ELEMENT_LIST *stack,
                         int set_case)
 {
   char *result;
@@ -303,9 +302,9 @@ ascii_accents_internal (const char *text, const ELEMENT_STACK *stack,
   else
     result = strdup (text);
 
-  for (i = stack->top - 1; i >= 0; i--)
+  for (i = stack->number - 1; i >= 0; i--)
     {
-      const ELEMENT *accent_command = stack->stack[i];
+      const ELEMENT *accent_command = stack->list[i];
       char *formatted_accent = ascii_accent (0, result, accent_command, 0, 0,
                                              set_case);
       free (result);
@@ -389,41 +388,36 @@ static const char *underline_symbol[5] = {"*", "*", "=", "-", "."};
 
 /* Return the text of an underlined heading. */
 /* return to be freed by caller */
-static char *
-text_heading (const ELEMENT *current, const char *text,
-              int numbered, LANG_TRANSLATION *lang_translation)
+static TEXT
+text_heading (const ELEMENT *current, TEXT text,
+              int numbered, const LANG_TRANSLATION *lang_translation,
+              int debug_level)
 {
   int i;
   TEXT result;
   int level;
   int status;
   int text_width;
-  char *heading = strdup (text);
-  char *heading_with_number;
 
   /* end of lines spaces are ignored in conversion.  However in
      rare cases, invalid nestings leave an end of line, so we chomp.
-  if (result.end > 0 && result.text[result.end - 1] == '\n')
-    result.text[--result.end] = '\0';
    */
-  if (strlen (heading))
-    if (heading[strlen (heading) - 1] == '\n')
-      heading[strlen (heading) - 1] = '\0';
+  if (text.end > 0 && text.text[text.end - 1] == '\n')
+    text.text[--text.end] = '\0';
 
-  heading_with_number = add_heading_number (current, heading,
-                                            numbered, lang_translation);
+  /* frees text if it does not reuse it */
+  result = add_heading_number (current, text, numbered, lang_translation,
+                               debug_level);
 
-  free (heading);
-
-  if (heading_with_number[
-           strspn (heading_with_number, whitespace_chars)] == '\0')
+  if (strspn (result.text, whitespace_chars) == result.end)
     {
-      free (heading_with_number);
-      return strdup ("");
+      text_reset (&result);
+      text_append (&result, "");
+      return result;
     }
 
-  text_init (&result);
-  text_append (&result, heading_with_number);
+  /* width of heading */
+  text_width = width_multibyte (result.text, result.end);
 
   text_append (&result, "\n");
 
@@ -432,16 +426,12 @@ text_heading (const ELEMENT *current, const char *text,
   if (status != 0)
     level = section_level (current);
 
-  text_width = width_multibyte (heading_with_number);
-
-  free (heading_with_number);
-
   for (i = 0; i < text_width; i++)
     text_append (&result, underline_symbol[level]);
 
   text_append (&result, "\n");
 
-  return result.text;
+  return result;
 }
 
 static void
@@ -456,8 +446,7 @@ convert_def_line (const ELEMENT *element, TEXT_OPTIONS *text_options,
   ELEMENT *parsed_definition_category
      = definition_category_tree (element,
                                  text_options->current_lang_translations,
-                                 text_options->COMMAND_LINE_ENCODING,
-                                 text_options->DEBUG, 0, 0);
+                                 text_options->DEBUG, 0);
   if (parsed_definition_category)
     {
       ELEMENT *converted_element = new_element (ET_NONE);
@@ -613,24 +602,24 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
       data_cmd = element_builtin_data_cmd (element);
 
      /* hyphenation anchor errormsg sortas caption shortcaption */
-  if (builtin_command_data[data_cmd].other_flags & CF_non_formatted_brace
-      || (builtin_command_data[data_cmd].flags & CF_block
+  if (command_data[data_cmd].other_flags & CF_non_formatted_brace
+      || (command_data[data_cmd].flags & CF_block
           && (/* ignored_block_commands */
               /* titlepage copying documentdescription */
-              builtin_command_data[data_cmd].data == BLOCK_region
+              command_data[data_cmd].data == BLOCK_region
               /* ignore nodedescriptionblock, @*macro */
-              || builtin_command_data[data_cmd].other_flags
+              || command_data[data_cmd].other_flags
                                             & CF_non_formatted_block
               || (/* html tex xml docbook latex */
-                  builtin_command_data[data_cmd].data == BLOCK_format_raw
+                  command_data[data_cmd].data == BLOCK_format_raw
                   && !format_expanded_p (text_options->expanded_formats,
                                     builtin_command_name (data_cmd)))))
        /* here ignore most of the line commands */
       || element->type == ET_index_entry_command
-      || (builtin_command_data[data_cmd].flags & CF_line
-          && !(builtin_command_data[data_cmd].other_flags
+      || (command_data[data_cmd].flags & CF_line
+          && !(command_data[data_cmd].other_flags
                                              & CF_formatted_line)
-          && !(builtin_command_data[data_cmd].flags & CF_def)
+          && !(command_data[data_cmd].flags & CF_def)
           && !(data_cmd == CM_sp
                || data_cmd == CM_verbatiminclude))
       || data_cmd == CM_footnote
@@ -643,11 +632,11 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
     return;
 
   if (data_cmd
-      && builtin_command_data[data_cmd].flags & CF_brace
-      && builtin_command_data[data_cmd].data == BRACE_inline
+      && command_data[data_cmd].flags & CF_brace
+      && command_data[data_cmd].data == BRACE_inline
       && data_cmd != CM_inlinefmtifelse)
     {
-      if (builtin_command_data[data_cmd].other_flags & CF_inline_format)
+      if (command_data[data_cmd].other_flags & CF_inline_format)
         {
           char *format = lookup_extra_string (element, AI_key_format);
           if (!format
@@ -683,7 +672,7 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
               ELEMENT *today_element
                 = expand_today (text_options->TEST,
                                 text_options->current_lang_translations,
-                                text_options->DEBUG, 0, 0);
+                                text_options->DEBUG, 0);
               convert_to_text_internal (today_element,
                                         text_options, result);
               destroy_element_and_children (today_element);
@@ -696,7 +685,7 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
           ELEMENT *tree
             = translated_command_tree (&text_options->translated_commands,
                data_cmd, text_options->current_lang_translations,
-               text_options->DEBUG, 0, 0);
+               text_options->DEBUG, 0);
 
           if (tree)
             {
@@ -713,7 +702,8 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
           free (brace_no_args_text);
           return;
         }
-      else if (builtin_command_data[data_cmd].flags & CF_accent)
+      if (command_data[data_cmd].flags & CF_brace
+          && command_data[data_cmd].data == BRACE_accent)
         {
           char *text = text_accents (element, text_options->encoding,
                                      text_options->set_case);
@@ -807,7 +797,7 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
             }
           return;
         }
-      else if ((builtin_command_data[data_cmd].other_flags & CF_explained)
+      else if ((command_data[data_cmd].other_flags & CF_explained)
                && element->e.c->contents.number >= 2)
         {
           TEXT explanation;
@@ -824,8 +814,8 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
             }
           return;
         }
-      else if ((builtin_command_data[data_cmd].flags & CF_brace)
-               && builtin_command_data[data_cmd].data == BRACE_inline)
+      else if ((command_data[data_cmd].flags & CF_brace)
+               && command_data[data_cmd].data == BRACE_inline)
         {
           size_t arg_index = 1;
           if (data_cmd == CM_inlineraw)
@@ -851,15 +841,15 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
       else if (element->e.c->contents.number > 0
                 && (element->e.c->contents.list[0]->type == ET_brace_container
                     || element->e.c->contents.list[0]->type == ET_brace_arg
-                    || (builtin_command_data[data_cmd].flags & CF_brace
-                        && builtin_command_data[data_cmd].flags & CF_math)))
+                    || (command_data[data_cmd].flags & CF_brace
+                        && command_data[data_cmd].flags & CF_math)))
         {
           int in_code = 0;
           if (data_cmd == CM_sc)
             text_options->set_case++;
 
-          if (builtin_command_data[data_cmd].other_flags & CF_brace_code
-              || builtin_command_data[data_cmd].flags & CF_math)
+          if (command_data[data_cmd].other_flags & CF_brace_code
+              || command_data[data_cmd].flags & CF_math)
             in_code = 1;
 
           if (in_code)
@@ -921,16 +911,16 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
               free (args_line.text);
             }
         }
-      else if (builtin_command_data[data_cmd].flags & CF_sectioning_heading)
+      else if (command_data[data_cmd].flags & CF_sectioning_heading)
         {
           const ELEMENT *line_arg;
           TEXT text;
-          char *heading;
+          TEXT heading;
 
           text_init (&text);
           text_append (&text, "");
 
-          if (builtin_command_data[data_cmd].flags & CF_root)
+          if (command_data[data_cmd].flags & CF_root)
             {
               /* arguments_line type element */
               const ELEMENT *arguments_line = element->e.c->contents.list[0];
@@ -942,16 +932,16 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
 
           convert_to_text_internal (line_arg, text_options, &text);
           heading
-             = text_heading (element, text.text,
+             = text_heading (element, text,
                              text_options->NUMBER_SECTIONS,
-                             text_options->current_lang_translations);
-          ADD(heading);
-          free (heading);
-          free (text.text);
-          if (!(builtin_command_data[data_cmd].flags & CF_root))
+                             text_options->current_lang_translations,
+                             text_options->DEBUG);
+          ADD(heading.text);
+          free (heading.text);
+          if (!(command_data[data_cmd].flags & CF_root))
             return;
         }
-      else if (builtin_command_data[data_cmd].other_flags & CF_formatted_line)
+      else if (command_data[data_cmd].other_flags & CF_formatted_line)
         {
           if (data_cmd != CM_node)
             {
@@ -968,9 +958,9 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
               return;
             }
         }
-      else if (builtin_command_data[data_cmd].flags & CF_line)
+      else if (command_data[data_cmd].flags & CF_line)
         {
-          if (builtin_command_data[data_cmd].flags & CF_def)
+          if (command_data[data_cmd].flags & CF_def)
             {
               convert_def_line (element, text_options, result);
             }
@@ -1054,15 +1044,16 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
         */
           tree = gdt_tree (category_text, 0,
                            text_options->current_lang_translations,
-                           0, text_options->DEBUG, translation_context);
+                           0, translation_context, text_options->DEBUG, 0);
         }
       else
         {
         /* if there is no current lang translations, we use the
            documentlanguage available in the tree. */
 
-          LANG_TRANSLATION *lang_translation
-            = new_element_language_translation (element);
+          const LANG_TRANSLATION *lang_translation
+           = new_element_language_translation (&converters_translation_cache,
+                                            element, TXI_CONVERT_STRINGS_NR);
 
           /* there is a possibility that some small strings are associated
              to the tree, and there is no document to get them.  However
@@ -1070,10 +1061,7 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
              converted tree should be very simple and is a string only,
              no macro, no file */
           tree = gdt_tree (category_text, 0, lang_translation,
-                           0, 0, translation_context);
-
-          free_lang_translation (lang_translation);
-          free (lang_translation);
+                           0, translation_context, text_options->DEBUG, 0);
         }
 
       if (tree)
@@ -1090,15 +1078,15 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
       int in_code = 0;
       int in_raw = 0;
       if ((data_cmd
-           && (builtin_command_data[data_cmd].flags & CF_preformatted_code
-               || builtin_command_data[data_cmd].flags & CF_math
-               || (builtin_command_data[data_cmd].flags & CF_block
-                   && builtin_command_data[data_cmd].data == BLOCK_raw)))
+           && (command_data[data_cmd].other_flags & CF_preformatted_code
+               || command_data[data_cmd].flags & CF_math
+               || (command_data[data_cmd].flags & CF_block
+                   && command_data[data_cmd].data == BLOCK_raw)))
           || element->type == ET_menu_entry_node)
         in_code = 1;
       else if (data_cmd
-               && builtin_command_data[data_cmd].flags & CF_block
-               && builtin_command_data[data_cmd].data == BLOCK_format_raw)
+               && command_data[data_cmd].flags & CF_block
+               && command_data[data_cmd].data == BLOCK_format_raw)
         in_raw = 1;
 
       if (in_raw)
@@ -1129,8 +1117,8 @@ convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
 #undef ADD
 
 /* Return value to be freed by caller. */
-char *
-convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options)
+TEXT
+convert_to_text_text (const ELEMENT *root, TEXT_OPTIONS *text_options)
 {
   TEXT result;
 
@@ -1143,5 +1131,13 @@ convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options)
     merge_error_messages_lists (&text_options->converter->error_messages,
                                 &text_options->error_messages);
 
+  return result;
+}
+
+/* Return value to be freed by caller. */
+char *
+convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options)
+{
+  TEXT result = convert_to_text_text (root, text_options);
   return result.text;
 }

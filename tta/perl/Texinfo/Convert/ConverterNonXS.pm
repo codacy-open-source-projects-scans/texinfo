@@ -24,6 +24,7 @@ package Texinfo::Convert::Converter;
 
 use 5.006;
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -44,8 +45,6 @@ use Texinfo::Document;
 
 use Texinfo::Convert::Utils;
 use Texinfo::Convert::Text;
-
-our $VERSION = '7.3dev';
 
 # values for integer and string options in code generated from
 # Texinfo/Convert/converters_defaults.txt
@@ -88,14 +87,20 @@ my %all_converters_defaults
 sub set_document($$) {
   my ($converter, $document) = @_;
 
-  confess('set_document: document undef') if (!defined($document));
+  if (defined($document)) {
+    $converter->{'document'} = $document;
 
-  $converter->{'document'} = $document;
-
-  Texinfo::Common::set_output_encoding($converter, $document);
+    Texinfo::Common::set_output_encoding($converter, $document);
+  } else {
+    delete $converter->{'document'};
+  }
 
   $converter->{'convert_text_options'}
      = Texinfo::Convert::Text::copy_options_for_convert_text($converter);
+
+  delete $converter->{'sorted_indices_by_letter'};
+  delete $converter->{'sorted_indices_by_index'};
+  delete $converter->{'index_entries_sort_strings'};
 }
 
 # initialization either in generic XS converter or in Perl
@@ -167,17 +172,17 @@ sub _generic_converter_init($$;$) {
   $converter->{'error_warning_messages'} = [];
 }
 
-# ALTIMP convert/texinfo.c txi_converter_remove_output_units
+# ALTIMP convert/converter.c converter_remove_output_units
 sub converter_remove_output_units($) {
   my $self = shift;
 
   $self->perl_converter_remove_output_units();
 }
 
-# ALTIMP convert/texinfo.c txi_destroy_converter
-#        convert/converter.c destroy_converter
+# ALTIMP convert/converter.c destroy_converter
 # Has an XS override, that calls the converter_perl_release Perl function
-# in addition to C code.
+# in addition to C code.  The texi2any.c code also calls both Perl
+# and C code.
 sub destroy_converter($) {
   my $self = shift;
 
@@ -425,58 +430,101 @@ sub converter_find_identifier_target($$) {
   return undef;
 }
 
+sub _get_collation_lang_info($) {
+  my $self = shift;
+
+  return (undef, undef, undef) if (!exists($self->{'document'}));
+
+  my $indices_information = $self->{'document'}->indices_information();
+  return (undef, undef, undef) if (!defined($indices_information));
+
+  my $use_unicode_collation = $self->get_conf('USE_UNICODE_COLLATION');
+
+  my $lang_key;
+  my $lang_sorting_locale;
+  if (defined($use_unicode_collation) and !$use_unicode_collation) {
+    $lang_key = '';
+  } else {
+    $lang_sorting_locale = $self->get_conf('COLLATION_LANGUAGE');
+    if (!defined($lang_sorting_locale)
+        and $self->get_conf('DOCUMENTLANGUAGE_COLLATION')
+        and defined($self->{'current_lang_translations'})) {
+      my $lang_info = $self->{'current_lang_translations'}->[0];
+      if (exists($lang_info->{'lang'})) {
+        # use a name expected by Unicode::Collate::Locale
+        $lang_sorting_locale = $lang_info->{'lang'};
+        if (exists($lang_info->{'script'})) {
+          $lang_sorting_locale .= '_'.$lang_info->{'script'};
+        }
+      }
+    }
+    if (!defined($lang_sorting_locale)) {
+      # special name corresponding to Unicode Collation with 'Non-Ignorable'
+      # set for variable collation elements
+      $lang_key = '-';
+    } else {
+      $lang_key = $lang_sorting_locale;
+    }
+  }
+  return ($lang_key, $lang_sorting_locale, $use_unicode_collation);
+}
+
 sub get_converter_indices_sorted_by_letter($) {
   my $self = shift;
 
-  my $indices_information;
-  if (exists($self->{'document'})) {
-    $indices_information = $self->{'document'}->indices_information();
+  my ($lang_key, $lang_sorting_locale, $use_unicode_collation)
+    = _get_collation_lang_info($self);
 
-    if (defined($indices_information)) {
-      my $use_unicode_collation
-        = $self->get_conf('USE_UNICODE_COLLATION');
-      my $locale_lang;
-      if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
-        $locale_lang = $self->get_conf('COLLATION_LANGUAGE');
-        if (!defined($locale_lang)
-            and $self->get_conf('DOCUMENTLANGUAGE_COLLATION')) {
-          $locale_lang = $self->get_conf('documentlanguage');
-        }
-      }
+  return undef if (!defined($lang_key));
 
-      return Texinfo::Document::sorted_indices_by_letter($self->{'document'},
-                            $self, $use_unicode_collation, $locale_lang);
-    }
+  $self->{'sorted_indices_by_letter'} = {}
+    if (!exists($self->{'sorted_indices_by_letter'}));
+
+  # calls Texinfo::Indices::sort_indices_by_letter and caches the result.
+  if (!exists($self->{'sorted_indices_by_letter'}->{$lang_key})) {
+    my $indices_sort_strings = _converter_indices_sort_strings($self);
+
+    $self->{'sorted_indices_by_letter'}->{$lang_key}
+      = Texinfo::Indices::sort_indices_by_letter(
+                 $indices_sort_strings,
+                 $use_unicode_collation, $lang_sorting_locale);
   }
-  return undef;
+
+  return $self->{'sorted_indices_by_letter'}->{$lang_key};
 }
 
 sub get_converter_indices_sorted_by_index($) {
   my $self = shift;
 
-  my $indices_information;
-  if (exists($self->{'document'})) {
-    $indices_information = $self->{'document'}->indices_information();
+  my ($lang_key, $lang_sorting_locale, $use_unicode_collation)
+    = _get_collation_lang_info($self);
 
-    if (defined($indices_information)) {
-      my $use_unicode_collation
-        = $self->get_conf('USE_UNICODE_COLLATION');
-      my $locale_lang;
-      if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
-        $locale_lang = $self->get_conf('COLLATION_LANGUAGE');
-        if (!defined($locale_lang)
-            and $self->get_conf('DOCUMENTLANGUAGE_COLLATION')) {
-          $locale_lang = $self->get_conf('documentlanguage');
-        }
-      }
+  return undef if (!defined($lang_key));
 
-      return Texinfo::Document::sorted_indices_by_index($self->{'document'},
-                            $self, $use_unicode_collation, $locale_lang);
-    }
+  $self->{'sorted_indices_by_index'} = {}
+    if (!exists($self->{'sorted_indices_by_index'}));
+
+  # calls Texinfo::Indices::sort_indices_by_index and caches the result.
+  if (!exists($self->{'sorted_indices_by_index'}->{$lang_key})) {
+    my $indices_sort_strings = _converter_indices_sort_strings($self);
+
+    $self->{'sorted_indices_by_index'}->{$lang_key}
+      = Texinfo::Indices::sort_indices_by_index(
+                   $indices_sort_strings,
+                   $use_unicode_collation, $lang_sorting_locale);
   }
-  return undef;
+  return $self->{'sorted_indices_by_index'}->{$lang_key};
+}
+
+sub print_converter_indices_sort_strings($) {
+  my $self = shift;
+
+  my $indices_sort_strings = _converter_indices_sort_strings($self);
+
+  my $sorted_index_entries = $self->get_converter_indices_sorted_by_index();
+
+  return Texinfo::Indices::print_indices_sort_strings($sorted_index_entries,
+                                                      $indices_sort_strings);
 }
 
 1;
-
-__END__

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'index_special_region_titlepage_no_nodes_footnotes_default'} = '*document_root C7
  *before_node_section C2
@@ -166,6 +169,8 @@ $result_tree_text{'index_special_region_titlepage_no_nodes_footnotes_default'} =
     {spaces_after_argument:\\n}
  *@chapter C15 index_special_region.texi:l35 {Chapter}
  |EXTRA
+ |identifier:{Chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -598,6 +603,30 @@ list:
 $result_headings_list{'index_special_region_titlepage_no_nodes_footnotes_default'} = '';
 
 $result_indices_sort_strings{'index_special_region_titlepage_no_nodes_footnotes_default'} = 'cp:
+ Copying appendix
+ Copying this document
+ Public domain
+ Titlepage footnote
+ Titlepage index
+fn:
+ another fun
+ findex entry
+ fun
+';
+
+$result_converted_sort_strings{'file_html'}->{'index_special_region_titlepage_no_nodes_footnotes_default'} = 'cp:
+ Copying appendix
+ Copying this document
+ Public domain
+ Titlepage footnote
+ Titlepage index
+fn:
+ another fun
+ findex entry
+ fun
+';
+
+$result_converted_sort_strings{'file_plaintext'}->{'index_special_region_titlepage_no_nodes_footnotes_default'} = 'cp:
  Copying appendix
  Copying this document
  Public domain

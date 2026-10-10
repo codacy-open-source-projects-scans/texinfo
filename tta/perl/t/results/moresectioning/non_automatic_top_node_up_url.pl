@@ -1,11 +1,14 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'non_automatic_top_node_up_url'} = 'U0 unit{N:Top}{s:internal top node up}
+use Encode;
+
+$result_tree_text{'non_automatic_top_node_up_url'} = 'U0 unit{C3}{N:Top}{s:@top internal top node up}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
@@ -14,7 +17,8 @@ NodeNext: [U1]
 NodePrev: (dir)
 NodeUp: (dir)
 NodeForward: [U1]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -78,7 +82,7 @@ NodeForward: [U1]
      {menu}
      {spaces_after_argument:\\n}
   {empty_line:\\n}
-U1 unit{N:chap}
+U1 unit{C1}{N:chap}
 unit_directions:D[prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -168,7 +172,7 @@ list:
 $result_headings_list{'non_automatic_top_node_up_url'} = '';
 
 
-$result_converted{'info'}->{'non_automatic_top_node_up_url'} = 'This is , produced from .
+$result_converted{'info'}->{'non_automatic_top_node_up_url'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Prev: (dir),  Up: (dir)
@@ -194,7 +198,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'non_automatic_top_node_up_url'} = '<!DOCTYPE html>

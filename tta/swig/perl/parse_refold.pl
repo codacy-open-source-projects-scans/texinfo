@@ -100,12 +100,7 @@ my $result_options = Getopt::Long::GetOptions (
  'I=s' => sub { push @include_dirs, split(/$quoted_path_separator/, $_[1]); },
 );
 
-# do not use a Perl interpreter, as it is not needed anywhere in the called
-# functions.  If used, the updirs argument should also be given as it is
-# 2 and not the default.
-Texinfo::setup(1, $Texinfo::txi_interpreter_use_no_interpreter);
-# With an interpreter
-#Texinfo::setup(1, $Texinfo::txi_interpreter_use_interpreter, 2);
+Texinfo::setup(1);
 
 my $curdir = File::Spec->curdir();
 

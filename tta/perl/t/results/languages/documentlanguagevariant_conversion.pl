@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'documentlanguagevariant_conversion'} = '*document_root C5
  *before_node_section C2
@@ -18,24 +21,6 @@ $result_tree_text{'documentlanguagevariant_conversion'} = '*document_root C5
      *def_line C1 l3
      |EXTRA
      |def_command:{defivar}
-     |def_index_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{BBB}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{SSS}
-     |def_index_ref_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{BBB}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{SSS}
      |element_region:{copying}
      |index_entry:I{vr,1}
      |original_def_cmdname:{defivar}
@@ -154,24 +139,6 @@ $result_tree_text{'documentlanguagevariant_conversion'} = '*document_root C5
    *def_line C1 l19
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{other}
-     |{ v1234-o-v }
-     |* C1
-      |*def_line_arg C1
-       |{some}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{other}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{some}
    |documentlanguage:{qaa}
    |documentlanguagevariant:A{1234}
    |element_node:{chap}
@@ -219,24 +186,6 @@ $result_tree_text{'documentlanguagevariant_conversion'} = '*document_root C5
    *def_line C1 l24
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{reset}
-     |{ l-o-l }
-     |* C1
-      |*def_line_arg C1
-       |{after}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{reset}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{after}
    |documentlanguage:{qaa}
    |element_node:{chap}
    |index_entry:I{vr,3}
@@ -331,24 +280,6 @@ $result_tree_text{'documentlanguagevariant_conversion'} = '*document_root C5
    *def_line C1 l37
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{before}
-     |{ l-o-l }
-     |* C1
-      |*def_line_arg C1
-       |{script}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{before}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{script}
    |documentlanguage:{qaa}
    |element_node:{chap}
    |index_entry:I{vr,4}
@@ -532,10 +463,17 @@ See f: Top.  A dp_v1234-(Akl)
  -- p_L-l-InstV-l of script: p_L-before change
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'documentlanguagevariant_conversion'} = 'vr:
+ BBB of SSS
+ before l-o-l script
+ other v1234-o-v some
+ reset l-o-l after
+';
 
-$result_converted{'info'}->{'documentlanguagevariant_conversion'} = 'This is , produced from .
 
- -- p_L-Instance Variable of SSS: p_L-BBB CCC
+$result_converted{'info'}->{'documentlanguagevariant_conversion'} = Encode::encode('utf-8', 'This is , produced from .
+
+ -- p_V1234-Instance Variable of SSS: p_V1234-BBB CCC
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -567,8 +505,8 @@ File: ,  Node: chap,  Prev: Top,  Up: Top
 
 
 Tag Table:
-Node: Top74
-Node: chap149
+Node: Top82
+Node: chap157
 
 End Tag Table
 
@@ -576,7 +514,15 @@ End Tag Table
 Local Variables:
 coding: utf-8
 Info-documentlanguage: qaa
+Info-documentlanguagevariant: 1234
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'documentlanguagevariant_conversion'} = 'vr:
+ BBB of SSS
+ before l-o-l script
+ other v1234-o-v some
+ reset l-o-l after
 ';
 
 
@@ -654,6 +600,13 @@ strong.def-name {font-family: monospace; font-weight: bold}
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'documentlanguagevariant_conversion'} = 'vr:
+ BBB of SSS
+ before l-o-l script
+ other v1234-o-v some
+ reset l-o-l after
+';
+
 
 $result_converted{'docbook_doc'}->{'documentlanguagevariant_conversion'} = '<?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
@@ -695,6 +648,13 @@ $result_converted{'latex'}->{'documentlanguagevariant_conversion'} = '\\document
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -708,6 +668,8 @@ $result_converted{'latex'}->{'documentlanguagevariant_conversion'} = '\\document
 \\usepackage{babel}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
 \\usepackage[hidelinks]{hyperref}
+
+\\hypersetup{pdftitle={top}}
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}
@@ -796,6 +758,7 @@ See \\hyperref[anchor:Top]{\\chaptername~\\ref*{anchor:Top} [Top], page~\\pagere
 A dp\\_v1234-(Akl)
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{other \\EmbracOn{}\\textnormal{\\textsl{ivar}}\\EmbracOff{}}& [v1234-InstV-v of \\texttt{some}]
@@ -806,6 +769,7 @@ A dp\\_v1234-(Akl)
 \\selectlanguage{qaa}%
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{reset \\EmbracOn{}\\textnormal{\\textsl{ivar}}\\EmbracOff{}}& [l-InstV-l of \\texttt{after}]
@@ -824,6 +788,7 @@ C dp\\_l-(Ckl)
 
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{before \\EmbracOn{}\\textnormal{\\textsl{change}}\\EmbracOff{}}& [l-InstV-l of \\texttt{script}]

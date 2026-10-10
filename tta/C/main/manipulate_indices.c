@@ -18,15 +18,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
+/* for locale_t */
 #include <locale.h>
 #include <ctype.h>
+#include <unitypes.h>
 #include "unictype.h"
 #include "unistr.h"
 
 #include "text.h"
 #include "command_ids.h"
 #include "element_types.h"
-#include "types_data.h"
 #include "tree_types.h"
 #include "document_types.h"
 #include "converter_types.h"
@@ -37,14 +39,16 @@
 /* whitespace_chars ultimate_index indices_info_index_by_name
    to_upper_or_lower_multibyte */
 #include "utils.h"
+#include "translations.h"
+#include "manipulate_tree.h"
 #include "errors.h"
 #include "debug.h"
-#include "unicode.h"
-#include "document.h"
 #include "convert_to_text.h"
 #include "convert_to_texinfo.h"
 #include "call_perl_function.h"
 #include "api_to_perl.h"
+#include "unicode-collation/collation_key.h"
+#include "unicode.h"
 #include "manipulate_indices.h"
 
 /* corresponding perl code in Texinfo::Indices */
@@ -55,6 +59,7 @@ merge_indices (INDEX_LIST *indices_information)
   size_t merged_indices_space = 4;
   size_t merged_indices_number = 0;
   size_t i;
+  const INDEX **sorted_index_names;
 
   if (!indices_information->number)
     return 0;
@@ -65,18 +70,22 @@ merge_indices (INDEX_LIST *indices_information)
   MERGED_INDICES *merged_indices
     = (MERGED_INDICES *) malloc (sizeof (MERGED_INDICES));
 
+  /* sort for reproducible error or debug messages if there are
+     messages with translations */
+  sorted_index_names = sort_index_names(indices_information);
+
   for (i = 0; i < indices_information->number; i++)
     {
-      INDEX *idx = indices_information->list[i];
+      const INDEX *idx = sorted_index_names[i];
       if (idx->index_entries && idx->entries_number)
         {
           size_t j;
-          INDEX *ultimate_idx;
+          const INDEX *ultimate_idx;
           char *in_idx_name;
           MERGED_INDEX *merged_idx = 0;
 
           if (idx->merged_in)
-            ultimate_idx = ultimate_index (idx);
+            ultimate_idx = ultimate_index_const (idx);
           else
             ultimate_idx = idx;
 
@@ -131,6 +140,8 @@ merge_indices (INDEX_LIST *indices_information)
   merged_indices->indices = merged_indices_list;
   merged_indices->number = merged_indices_number;
 
+  free (sorted_index_names);
+
   return merged_indices;
 }
 
@@ -149,74 +160,208 @@ destroy_merged_indices (MERGED_INDICES *merged_indices)
 
 
 
+/* getting index content element */
+
+static void
+remove_def_types (ELEMENT *element)
+{
+  element->type = ET_NONE;
+
+  if (element->e.c->contents.number
+      && element->e.c->contents.list[0]->type == ET_bracketed_arg)
+    element->e.c->contents.list[0]->type = ET_brace_arg;
+}
+
+static void
+unexpected_def_name_class_message (enum command_id def_command)
+{
+  char *msg;
+        /* set index_entry to a value to avoid a compiler warning
+           on uninitialized value.  Incorrect for the code below, but
+            we do not care as fatal is called. */
+  xasprintf (&msg, "BUG: unexpected def command with name "
+                   "and class: %s",
+             builtin_command_name (def_command));
+  fatal (msg);
+  free (msg);
+}
+
+/* return index content element if there is no need for translation,
+   otherwise return information for translation in DEF_COMMAND_OUT,
+   NAME_COPY_OUT and CLASS_COPY_OUT.
+ */
+ELEMENT *
+get_index_content_info_element (const ELEMENT *element,
+                                int prefer_reference_element,
+                                enum command_id *def_command_out,
+                                ELEMENT **name_copy_out,
+                                ELEMENT **class_copy_out)
+{
+  ELEMENT *name = 0;
+  ELEMENT *class = 0;
+  const char *def_cmdname = lookup_extra_string (element, AI_key_def_command);
+  ELEMENT *def_l_e;
+
+  /* Not strictly needed here, but could be helpful to debug */
+  *name_copy_out = 0;
+  *class_copy_out = 0;
+
+  if (!def_cmdname)
+    {
+      ELEMENT *element_copy
+        = copy_element_tree (element->e.c->contents.list[0], 0);
+      return element_copy;
+    }
+
+  def_l_e = element->e.c->contents.list[0];
+  if (def_l_e->e.c->contents.number > 0)
+    {
+      size_t ic;
+      for (ic = 0; ic < def_l_e->e.c->contents.number; ic++)
+        {
+          ELEMENT *arg = def_l_e->e.c->contents.list[ic];
+          if (arg->type == ET_def_name)
+            name = arg;
+          else if (arg->type == ET_def_class)
+            class = arg;
+          else if (arg->type == ET_def_arg
+                   || arg->type == ET_def_typearg
+                   || arg->type == ET_delimiter)
+            break;
+        }
+    }
+
+  if (name)
+    {
+      enum command_id def_command
+        = lookup_builtin_command (def_cmdname);
+      ELEMENT *name_copy = copy_element_tree (name, 0);
+      remove_def_types (name_copy);
+      if (!(command_data[def_command].flags & CF_def_class_method)
+          && !(command_data[def_command].flags
+                                       & CF_def_class_variable))
+        {
+          return name_copy;
+        }
+      else
+        {
+          ELEMENT *class_copy = copy_element_tree (class, 0);
+          remove_def_types (class_copy);
+
+          if (prefer_reference_element)
+            {
+              ELEMENT *text_element = new_text_element (ET_normal_text);
+              /* container without type */
+              ELEMENT *index_entry_normalized = new_element (ET_NONE);
+
+              if (command_data[def_command].flags
+                                             & CF_def_class_method)
+                text_append (text_element->e.text, " on ");
+              else if (command_data[def_command].flags
+                                            & CF_def_class_variable)
+                text_append (text_element->e.text, " of ");
+           /* should not be possible, still considered for more robust code */
+              else
+                unexpected_def_name_class_message (def_command);
+
+              add_to_contents_as_array (index_entry_normalized, name_copy);
+              add_to_contents_as_array (index_entry_normalized, text_element);
+              add_to_contents_as_array (index_entry_normalized, class_copy);
+              return index_entry_normalized;
+            }
+          else
+            {
+              *name_copy_out = name_copy;
+              *class_copy_out = class_copy;
+              *def_command_out = def_command;
+              return 0;
+            }
+        }
+    }
+  /*
+  *name_copy_out = 0;
+  *class_copy_out = 0;
+   */
+  *def_command_out = CM_NONE;
+  return 0;
+}
+
+/* The DOCUMENT argument is only used for memory management, to gather
+   small strings from translated strings trees.  Also it should not be
+   useful, and could have been set to NULL, as this function is only called
+   with the default translations, which do not include any @-command
+   requiring small strings. It is better to keep it, though to avoid
+   surprises, for instance if the translations used through this function
+   could be customized.
+ */
+ELEMENT *
+element_index_content_element (const ELEMENT *element,
+                               int prefer_reference_element,
+                               DOCUMENT *document, int debug_level)
+{
+  enum command_id def_command;
+  ELEMENT *class_copy;
+  ELEMENT *name_copy;
+  NAMED_STRING_ELEMENT_LIST *substrings;
+  const LANG_TRANSLATION *element_lang_translations;
+
+  ELEMENT *index_element
+    = get_index_content_info_element (element, prefer_reference_element,
+                                      &def_command, &name_copy, &class_copy);
+
+  if (index_element || !class_copy)
+    return index_element;
+
+  substrings = new_named_string_element_list ();
+  add_element_to_named_string_element_list (substrings,
+                                            "name", name_copy);
+  add_element_to_named_string_element_list (substrings,
+                                            "class", class_copy);
+
+  element_lang_translations
+    = new_element_language_translation (&converters_translation_cache,
+                                        element, TXI_CONVERT_STRINGS_NR);
+
+  if (command_data[def_command].flags & CF_def_class_method)
+    {
+      index_element = gdt_tree ("{name} on {class}",
+                document, element_lang_translations,
+                substrings, 0, debug_level, 0);
+    }
+  else if (command_data[def_command].flags & CF_def_class_variable)
+    {
+      index_element = gdt_tree ("{name} of {class}",
+                document, element_lang_translations,
+                substrings, 0, debug_level, 0);
+    }
+  /* should not be possible, still considered for more robust code */
+  else
+    unexpected_def_name_class_message (def_command);
+
+  destroy_named_string_element_list (substrings);
+
+  /* prefer a type-less container rather than 'root_line' returned by gdt */
+  index_element->type = ET_NONE;
+
+  return index_element;
+}
+
+/* wrapper called as function reference, to have a common prototype */
+static ELEMENT *
+wrap_element_index_content_element (const ELEMENT *element,
+                               int prefer_reference_element,
+                               DOCUMENT *document, int debug_level,
+                               CONVERTER *converter)
+{
+  return element_index_content_element (element, prefer_reference_element,
+                                        document, debug_level);
+}
+
+
+
 /* indices entries sorting */
 
-void
-destroy_indices_sorted_by_index (
-         INDEX_SORTED_BY_INDEX *indices_entries_by_index)
-{
-  INDEX_SORTED_BY_INDEX *index;
-
-  for (index = indices_entries_by_index; index->name; index++)
-    {
-      free (index->name);
-      free (index->entries);
-    }
-  free (indices_entries_by_index);
-}
-
-void
-destroy_indices_sorted_by_letter (
-         INDEX_SORTED_BY_LETTER *indices_entries_by_letter)
-{
-  INDEX_SORTED_BY_LETTER *index;
-
-  for (index = indices_entries_by_letter; index->name; index++)
-    {
-      size_t i;
-      free (index->name);
-      for (i = 0; i < index->letter_number; i++)
-        {
-          LETTER_INDEX_ENTRIES *letter_entries = &index->letter_entries[i];
-          free (letter_entries->letter);
-          free (letter_entries->entries);
-        }
-      free (index->letter_entries);
-    }
-  free (indices_entries_by_letter);
-}
-
-/* corresponding perl code in Texinfo::Common */
-
-/* It would have been better to return a const element, as the calling codes
-   are not supposed to modify the tree, however in the calling code the
-   elements are put in arrays of non-const elements, even though they are not
-   modified */
-ELEMENT *
-index_content_element (const ELEMENT *element, int prefer_reference_element)
-{
-  const char *def_command = lookup_extra_string (element, AI_key_def_command);
-  if (def_command)
-   {
-     ELEMENT *def_index_element;
-     if (prefer_reference_element)
-       {
-         ELEMENT *def_index_ref_element
-           = lookup_extra_element_oot (element, AI_key_def_index_ref_element);
-         if (def_index_ref_element)
-           return def_index_ref_element;
-       }
-     def_index_element
-       = lookup_extra_element_oot (element, AI_key_def_index_element);
-     return def_index_element;
-   }
-  else
-   {
-     return element->e.c->contents.list[0];
-   }
-}
-
-static char *
+char *
 strip_index_ignore_chars (const char *string, const char *index_ignore_chars)
 {
   TEXT result_text;
@@ -246,33 +391,51 @@ strip_index_ignore_chars (const char *string, const char *index_ignore_chars)
   return result_text.text;
 }
 
-/* corresponding perl code in Texinfo::Indices */
-
+/* the index_content_element_fn function is passed to be
+   able to use another function when called from converters and, at
+   the same time, do not depend on the libtexinfo-converter library. */
 char *
 index_entry_element_sort_string (const INDEX_ENTRY *main_entry,
                                  const ELEMENT *index_entry_element,
                                  TEXT_OPTIONS *options, int in_code,
-                                 int prefer_reference_element)
+                                 int prefer_reference_element,
+                                 DOCUMENT *document, int debug_level,
+                                 CONVERTER *converter,
+      ELEMENT * (* index_content_element_fn) (
+                                   const ELEMENT *index_entry_element,
+                                   int prefer_reference_element,
+                                   DOCUMENT *document, int debug_level,
+                                   CONVERTER *converter)
+                                )
 {
   char *sort_string;
-  char *index_ignore_chars;
+  const char *index_ignore_chars;
   ELEMENT *entry_tree_element;
 
   if (!index_entry_element)
     {
-      fatal ("index_entry_element_sort_string: NUL element");
+      fatal ("index_entry_element_sort_string: NULL element");
     }
+
+  if (index_content_element_fn == 0)
+    index_content_element_fn
+      = &wrap_element_index_content_element;
 
   char *sortas = lookup_extra_string (index_entry_element, AI_key_sortas);
   if (sortas)
     return strdup (sortas);
 
-  entry_tree_element = index_content_element (index_entry_element,
-                                          prefer_reference_element);
+  entry_tree_element = (* index_content_element_fn) (index_entry_element,
+                                          prefer_reference_element,
+                                          document, debug_level,
+                                          converter);
 
   if (in_code)
     options->code_state++;
   sort_string = convert_to_text (entry_tree_element, options);
+
+  destroy_element_and_children (entry_tree_element);
+
   if (in_code)
     options->code_state--;
 
@@ -285,67 +448,8 @@ index_entry_element_sort_string (const INDEX_ENTRY *main_entry,
       free (sort_string);
       sort_string = sort_string_text;
     }
+
   return sort_string;
-}
-
-typedef struct INDEX_COLLATOR {
-    enum collation_type_name type;
-    union {
-      /* perl element. This should be SV *sv,
-         but we don't want to include the Perl headers everywhere; */
-      /* not const because of refcount increase/decrease */
-      void *sv;
-  #ifdef HAVE_NEWLOCALE
-      locale_t locale;
-  #endif
-    } coll;
-} INDEX_COLLATOR;
-
-static BYTES_STRING *
-get_sort_key (const INDEX_COLLATOR *collator, const char *sort_string)
-{
-  BYTES_STRING *sort_key;
-  switch (collator->type)
-    {
-      case ctn_no_unicode:
-        sort_key = (BYTES_STRING *) malloc (sizeof (BYTES_STRING));
-        sort_key->len = strlen (sort_string);
-        sort_key->bytes = (unsigned char *)
-           malloc (sizeof (unsigned char) * sort_key->len);
-        memcpy (sort_key->bytes, (unsigned char *) sort_string,
-                sort_key->len);
-        break;
-      #ifdef HAVE_STRXFRM_L
-      case ctn_locale_collation:
-        {
-          size_t check_len;
-          char *char_sort_key;
-          sort_key = (BYTES_STRING *) malloc (sizeof (BYTES_STRING));
-          sort_key->len = strxfrm_l (0, sort_string, 0, collator->coll.locale);
-          char_sort_key = (char *) malloc (sizeof (char) * sort_key->len);
-          /* there is uninitialized memory without the next line.  Somewhat
-             unclear why it is needed, strxfrm_l could have done it. */
-          memset (char_sort_key, 0, sizeof (char) * sort_key->len);
-          check_len = strxfrm_l (char_sort_key, sort_string, sort_key->len,
-                                 collator->coll.locale);
-          if (check_len != sort_key->len)
-            fatal ("strxfrm_l returns a different length");
-          sort_key->bytes = (unsigned char *)
-                     malloc (sizeof (unsigned char) * sort_key->len);
-          memcpy (sort_key->bytes, (unsigned char *) char_sort_key,
-                  sort_key->len);
-          free (char_sort_key);
-        }
-        break;
-      #endif
-      case ctn_unicode:
-      case ctn_language_collation:
-      default: /* !HAVE_STRXFRM_L && ctn_locale_collation */
-        sort_key = call_collator_getSortKey (collator->coll.sv,
-                                             sort_string);
-        break;
-    }
-  return sort_key;
 }
 
 void
@@ -385,10 +489,36 @@ destroy_index_entries_sort_strings (INDICES_SORT_STRINGS *indices_sort_strings)
   free (indices_sort_strings);
 }
 
+/* the index_content_element_fn function is passed to be
+   able to use another function when called from converters and at
+   the same time, do not depend on the libtexinfo-converter library.
+
+   There are two cases:
+    * called from converter, the common case, both CONVERTER and
+      INDEX_CONTENT_ELEMENT_FN are set, the function ignores
+      DEBUG_LEVEL and DOCUMENT (which is NULL in that
+      case).  In that case (for HTML), the translations may be
+      user-defined.
+    * called otherwise, from tests or SWIG.  CONVERTER and
+      INDEX_ENTRY_ELEMENT_SORT_STRING_FN are not set, DOCUMENT is set,
+      element_index_content_element is used, which uses DOCUMENT,
+      although it is only to hold small strings from translations,
+      and there should be none, the translations cannot be user-defined,
+      DOCUMENT could also have been NULL.
+ */
 INDICES_SORT_STRINGS *
 setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
-                    OPTIONS *options, const MERGED_INDICES *merged_indices,
-                    INDEX_LIST *indices_information, int prefer_reference_element)
+                    const MERGED_INDICES *merged_indices,
+                    INDEX_LIST *indices_information,
+                    int prefer_reference_element,
+                    DOCUMENT *document, int debug_level,
+                    CONVERTER *converter,
+      ELEMENT * (* index_content_element_fn) (
+                                 const ELEMENT *index_entry_element,
+                                 int prefer_reference_element,
+                                 DOCUMENT *document, int debug_level,
+                                 CONVERTER *converter)
+                    )
 {
   size_t i;
   TEXT_OPTIONS *convert_text_options;
@@ -403,12 +533,6 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
      independently of input and output encodings */
   convert_text_options = new_text_options ();
   convert_text_options->encoding = strdup ("utf-8");
-  /*  It could be possible to set INCLUDE_DIRECTORIES, but there is no
-      point doing so, as it is only useful for @verbatiminclude, which
-      cannot appear in index entries.
-  copy_strings (&convert_text_options->include_directories,
-                options->INCLUDE_DIRECTORIES.strlist);
-   */
 
   INDICES_SORT_STRINGS *indices_sort_strings
     = (INDICES_SORT_STRINGS *) malloc (sizeof (INDICES_SORT_STRINGS));
@@ -450,10 +574,12 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
                                               index_entry->index_name);
 
               sort_string
-               = index_entry_element_sort_string (index_entry,
+                = index_entry_element_sort_string (index_entry,
                                      main_entry_element, convert_text_options,
                                      entry_index->in_code,
-                                     prefer_reference_element);
+                                     prefer_reference_element, document,
+                                     debug_level, converter,
+                                     index_content_element_fn);
 
               entry_sort_string.entry = index_entry;
               entry_sort_string.subentries_number = 1;
@@ -479,8 +605,7 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
                                                   AI_key_original_def_cmdname);
                     }
 
-                  message_list_command_warn (error_messages,
-                                      (options && options->DEBUG.o.integer > 0),
+                  message_list_command_warn (error_messages, debug_level,
                                              main_entry_element, 0,
                                       "empty index key in @%s", entry_cmdname);
                 }
@@ -494,6 +619,7 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
               for (l = 0; l < subentries_list.number; l++)
                 {
                   const ELEMENT *subentry = subentries_list.list[l];
+                  INDEX_SUBENTRY_SORT_STRING *subentry_sort_string;
 
                   entry_sort_string.subentries_number++;
 
@@ -512,7 +638,9 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
                   sort_string
                     = index_entry_element_sort_string (index_entry,
                                      subentry, convert_text_options,
-                                     entry_index->in_code, 0);
+                                     entry_index->in_code, 0, document,
+                                     debug_level, converter,
+                                     index_content_element_fn);
 
                   if (sort_string[strspn
                      (sort_string, whitespace_chars)] == '\0')
@@ -530,8 +658,7 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
                                                  AI_key_original_def_cmdname);
                         }
 
-                      message_list_command_warn (error_messages,
-                                      (options && options->DEBUG.o.integer > 0),
+                      message_list_command_warn (error_messages, debug_level,
                                              main_entry_element, 0,
                                "empty index sub entry %zu key in @%s",
                                entry_sort_string.subentries_number -1,
@@ -551,23 +678,16 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
 
                   for (k = 0; k < entry_sort_string.subentries_number; k++)
                     {
-                      uint8_t *encoded_u8;
                       ucs4_t next_char;
-                      int new_len;
-
-                      subentry_sort_string
+                      INDEX_SUBENTRY_SORT_STRING *subentry_sort_string
                         = &entry_sort_string.sort_string_subentries[k];
-             /* TODO somewhat inefficient, only need the first character */
-                      encoded_u8
-                       = utf8_from_string (subentry_sort_string->sort_string);
-                      new_len = u8_strmbtouc (&next_char, encoded_u8);
+                      int new_len = u8_strmbtouc (&next_char,
+                               (uint8_t *) subentry_sort_string->sort_string);
                       if (new_len > 0
                           && uc_is_property (next_char, UC_PROPERTY_ALPHABETIC))
                         subentry_sort_string->alpha = 1;
                       else
                         subentry_sort_string->alpha = 0;
-
-                      free (encoded_u8);
                     }
 
                   memcpy (&index_sort_strings->sort_string_entries[nr-1],
@@ -596,6 +716,79 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
   return indices_sort_strings;
 }
 
+typedef struct INDEX_COLLATOR {
+    enum collation_type_name type;
+    union {
+  #ifdef HAVE_NEWLOCALE
+      locale_t locale;
+  #endif
+    } coll;
+} INDEX_COLLATOR;
+
+static BYTES_STRING *
+get_sort_key (const INDEX_COLLATOR *collator, const char *sort_string)
+{
+  BYTES_STRING *sort_key;
+
+  switch (collator->type)
+    {
+      case ctn_no_unicode:
+        sort_key = (BYTES_STRING *) malloc (sizeof (BYTES_STRING));
+        sort_key->len = strlen (sort_string);
+        sort_key->bytes = (unsigned char *)
+           malloc (sizeof (unsigned char) * sort_key->len);
+        memcpy (sort_key->bytes, (unsigned char *) sort_string,
+                sort_key->len);
+        break;
+      #ifdef HAVE_STRXFRM_L
+      case ctn_locale_collation:
+        {
+          size_t check_len;
+          char *char_sort_key;
+          sort_key = (BYTES_STRING *) malloc (sizeof (BYTES_STRING));
+          sort_key->len = strxfrm_l (0, sort_string, 0, collator->coll.locale);
+          char_sort_key = (char *) malloc (sizeof (char) * sort_key->len);
+          /* there is uninitialized memory without the next line.  Somewhat
+             unclear why it is needed, strxfrm_l could have done it. */
+          memset (char_sort_key, 0, sizeof (char) * sort_key->len);
+          check_len = strxfrm_l (char_sort_key, sort_string, sort_key->len,
+                                 collator->coll.locale);
+          if (check_len != sort_key->len)
+            fatal ("strxfrm_l returns a different length");
+          sort_key->bytes = (unsigned char *)
+                     malloc (sizeof (unsigned char) * sort_key->len);
+          memcpy (sort_key->bytes, (unsigned char *) char_sort_key,
+                  sort_key->len);
+          free (char_sort_key);
+        }
+        break;
+      #endif
+  /* impossible to go here, collator->type is never set to ctn_language_collation
+     Could do something here if there was native C linguistic tailoring.
+      case ctn_language_collation:
+        ......
+   */
+      case ctn_unicode:
+      default:
+        sort_key = (BYTES_STRING *) malloc (sizeof (BYTES_STRING));
+
+        static Collation_choice collation;
+        if (!collation)
+          {
+            collation = unicoll_default ();
+            collation = unicoll_set_variable (collation,
+                                              UNICOLL_VARIABLE_NONIGNORABLE);
+          }
+
+        sort_key->bytes = u8_make_collation_key (collation,
+          sort_string, strlen (sort_string),
+          NULL, &sort_key->len);
+
+        break;
+    }
+  return sort_key;
+}
+
 static INDEX_COLLATOR *
 setup_collator (int use_unicode_collation, const char *collation_language,
                 const char *collation_locale,
@@ -608,55 +801,69 @@ setup_collator (int use_unicode_collation, const char *collation_language,
     {
       result->type = ctn_no_unicode;
     }
-  else if (collation_language)
-    {
-      result->type = ctn_language_collation;
-      result->coll.sv = call_setup_collator (1, collation_language);
-    }
   else
     {
-      #ifdef HAVE_STRXFRM_L
-      #ifdef HAVE_NEWLOCALE
-      if (collation_locale)
+      if (collation_language)
         {
-          result->coll.locale
-            = newlocale (LC_COLLATE_MASK, collation_locale, 0);
-          if (result->coll.locale)
-            {
-              result->type = ctn_locale_collation;
-              return result;
-            }
-          else
-            {
-              message_list_document_warn (error_messages, options, 0,
-                         "collation locale not found: %s", collation_locale);
-            }
+ /* Could do something here if there was native C collation linguistic tailoring
+          .....
+          if (.....)
+            result->type = ctn_language_collation;
+  */
         }
-      #endif
-      #endif
 
-      result->coll.sv = call_setup_collator (1, 0);
-      if (result->coll.sv == 0)
-        /* if not linked against Perl or there is no strxfrm_l, this is
-           a likely outcome.  This also happens if called as ctexi2any
-           without embedded Perl and XS_STRXFRM_COLLATION_LOCALE=undef */
-        result->type = ctn_no_unicode;
-      else
-        result->type = ctn_unicode;
+      if (!result->type)
+        {
+          #ifdef HAVE_STRXFRM_L
+          #ifdef HAVE_NEWLOCALE
+          if (collation_locale)
+            {
+              result->coll.locale
+                = newlocale (LC_COLLATE_MASK, collation_locale, 0);
+              if (result->coll.locale)
+                {
+                  result->type = ctn_locale_collation;
+                  return result;
+                }
+              else
+                {
+                  message_list_document_warn (error_messages, options, 0,
+                             "collation locale not found: %s", collation_locale);
+                }
+            }
+          #endif
+          #endif
+
+          result->type = ctn_unicode;
+        }
     }
   return result;
 }
 
+/* Take textual index sort strings INDICES_SORT_STRINGS (by index)
+   in input, setup and use a collator to produce sortable byte string
+   sort keys that can be compared directly based on their value.
+ */
 static INDICES_SORTABLE_ENTRIES *
-setup_sortable_index_entries (const INDEX_COLLATOR *collator,
-                         const INDICES_SORT_STRINGS *indices_sort_strings)
+setup_sort_sortable_strings_collator (
+                      const INDICES_SORT_STRINGS *indices_sort_strings,
+                      ERROR_MESSAGE_LIST *error_messages,
+                      OPTIONS *options,
+                      int use_unicode_collation,
+                      const char *collation_language,
+                      const char *collation_locale,
+                      INDEX_COLLATOR **collator)
 {
   size_t i;
+  INDICES_SORTABLE_ENTRIES *indices_sortable_entries;
+
+  *collator = setup_collator (use_unicode_collation, collation_language,
+                              collation_locale, error_messages, options);
 
   if (!indices_sort_strings || indices_sort_strings->number <= 0)
     return 0;
 
-  INDICES_SORTABLE_ENTRIES *indices_sortable_entries
+  indices_sortable_entries
     = (INDICES_SORTABLE_ENTRIES *) malloc (sizeof (INDICES_SORTABLE_ENTRIES));
 
   indices_sortable_entries->number = indices_sort_strings->number;
@@ -699,7 +906,6 @@ setup_sortable_index_entries (const INDEX_COLLATOR *collator,
 
               for (k = 0; k < index_entry_sort_string->subentries_number; k++)
                 {
-                  char *uc_sort_string;
                   SORTABLE_INDEX_SUBENTRY *sortable_subentry
                     = &sortable_entry->sortable_subentries[k];
                   INDEX_SUBENTRY_SORT_STRING *subenty_sort_string
@@ -708,40 +914,15 @@ setup_sortable_index_entries (const INDEX_COLLATOR *collator,
                   sortable_subentry->sort_string
                     = strdup (subenty_sort_string->sort_string);
                   sortable_subentry->alpha = subenty_sort_string->alpha;
-                  uc_sort_string = to_upper_or_lower_multibyte
-                                         (subenty_sort_string->sort_string, 1);
-                  sortable_subentry->sort_key = get_sort_key (collator,
-                                                            uc_sort_string);
-                  free (uc_sort_string);
+                  sortable_subentry->sort_key
+                    = get_sort_key (*collator,
+                                    subenty_sort_string->sort_string);
                 }
             }
         }
     }
+
   return indices_sortable_entries;
-}
-
-
-static INDICES_SORTABLE_ENTRIES *
-setup_sort_sortable_strings_collator (DOCUMENT *document,
-                      ERROR_MESSAGE_LIST *error_messages,
-                      OPTIONS *options, int use_unicode_collation,
-                      const char *collation_language,
-                      const char *collation_locale,
-                      INDEX_COLLATOR **collator)
-{
-  const INDICES_SORT_STRINGS *indices_sort_strings;
-  INDICES_SORTABLE_ENTRIES *index_sortable_index_entries;
-
-  indices_sort_strings = document_indices_sort_strings (document,
-                                                error_messages, options);
-
-  *collator = setup_collator (use_unicode_collation, collation_language,
-                              collation_locale, error_messages, options);
-
-  index_sortable_index_entries = setup_sortable_index_entries (*collator,
-                                                       indices_sort_strings);
-
-  return index_sortable_index_entries;
 }
 
 
@@ -925,14 +1106,14 @@ destroy_collator (INDEX_COLLATOR *collator)
       freelocale (collator->coll.locale);
   #endif
     }
-  else if (collator->coll.sv)
-    unregister_perl_data (collator->coll.sv);
   free (collator);
 }
 
 INDEX_SORTED_BY_INDEX *
-sort_indices_by_index (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
-                       OPTIONS *options, int use_unicode_collation,
+sort_indices_by_index (const INDICES_SORT_STRINGS *indices_sort_strings,
+                       ERROR_MESSAGE_LIST *error_messages,
+                       OPTIONS *options,
+                       int use_unicode_collation,
                        const char *collation_language,
                        const char *collation_locale)
 {
@@ -941,7 +1122,8 @@ sort_indices_by_index (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
   INDEX_COLLATOR *collator;
 
   INDICES_SORTABLE_ENTRIES *indices_sortable_entries
-    = setup_sort_sortable_strings_collator (document, error_messages, options,
+    = setup_sort_sortable_strings_collator (indices_sort_strings,
+                                            error_messages, options,
                                     use_unicode_collation, collation_language,
                                     collation_locale, &collator);
 
@@ -1002,10 +1184,11 @@ sort_indices_by_index (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
   return sorted_index_entries;
 }
 
-
 INDEX_SORTED_BY_LETTER *
-sort_indices_by_letter (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
-                        OPTIONS *options, int use_unicode_collation,
+sort_indices_by_letter (const INDICES_SORT_STRINGS *indices_sort_strings,
+                        ERROR_MESSAGE_LIST *error_messages,
+                        OPTIONS *options,
+                        int use_unicode_collation,
                         const char *collation_language,
                         const char *collation_locale)
 {
@@ -1015,7 +1198,8 @@ sort_indices_by_letter (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
   INDEX_COLLATOR *collator;
 
   INDICES_SORTABLE_ENTRIES *indices_sortable_entries
-    = setup_sort_sortable_strings_collator (document, error_messages, options,
+    = setup_sort_sortable_strings_collator (indices_sort_strings,
+                                            error_messages, options,
                                     use_unicode_collation, collation_language,
                                     collation_locale, &collator);
 
@@ -1104,13 +1288,12 @@ sort_indices_by_letter (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
               if (!uc_is_general_category (next_char, UC_NON_SPACING_MARK))
                 {
                   char *first_char_text;
-                  uint8_t *first_char_u8 = malloc (7 * sizeof (uint8_t));
+                  uint8_t first_char_u8[7];
                   int first_char_len = u8_uctomb (first_char_u8, next_char, 6);
                   if (first_char_len < 0)
                     fatal ("u8_uctomb returns negative value");
                   first_char_u8[first_char_len] = 0;
                   first_char_text = string_from_utf8 (first_char_u8);
-                  free (first_char_u8);
                   text_append (&letter_text, first_char_text);
                   free (first_char_text);
                 }
@@ -1255,176 +1438,306 @@ sort_indices_by_letter (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
   return sorted_index_entries;
 }
 
-
-
-/* representation of index entries letter */
-
-static INDEX_ENTRY_TEXT_OR_COMMAND *
-new_index_entry_text_or_command (const char *text, ELEMENT *command)
+static COLLATION_INDICES_SORTED_BY_INDEX *
+new_collation_sorted_indices_by_index (
+            COLLATIONS_INDICES_SORTED_BY_INDEX *collations,
+            enum collation_type_name type,
+            const char *language)
 {
-  INDEX_ENTRY_TEXT_OR_COMMAND *result = (INDEX_ENTRY_TEXT_OR_COMMAND *)
-     malloc (sizeof (INDEX_ENTRY_TEXT_OR_COMMAND));
+  COLLATION_INDICES_SORTED_BY_INDEX *result = 0;
+  if (collations->number <= collations->space)
+    {
+      collations->collation_sorted_indices
+        = (COLLATION_INDICES_SORTED_BY_INDEX *) realloc
+           (collations->collation_sorted_indices,
+             (collations->space += 3)
+                * sizeof (COLLATION_INDICES_SORTED_BY_INDEX));
+      if (!collations->collation_sorted_indices)
+        fatal ("realloc failed");
+    }
 
-  if (text)
-    result->text = strdup (text);
-  else
-    result->text = 0;
-  result->command = command;
+  result = &collations->collation_sorted_indices[collations->number];
+  memset (result, 0, sizeof (COLLATION_INDICES_SORTED_BY_INDEX));
+  result->type = type;
+  result->language = strdup (language);
+
+  collations->number++;
 
   return result;
 }
 
-/* Return the first non empty text or textual @-command.
-   To be freed by caller.
-   NOTE quotes and dash are not handled especially and it is not known
-   if the text was in code or not. */
-static INDEX_ENTRY_TEXT_OR_COMMAND *
-idx_leading_text_or_command (ELEMENT *tree, const char *ignore_chars)
+COLLATIONS_INDICES_SORTED_BY_INDEX *
+new_base_collations_sorted_indices_by_index (void)
 {
-  size_t i;
+  COLLATIONS_INDICES_SORTED_BY_INDEX *collations
+       = (COLLATIONS_INDICES_SORTED_BY_INDEX *)
+           malloc (sizeof (COLLATIONS_INDICES_SORTED_BY_INDEX));
+  memset (collations, 0,
+              sizeof (COLLATIONS_INDICES_SORTED_BY_INDEX));
 
-  if (tree->e.c->contents.number <= 0)
-    return new_index_entry_text_or_command (0, 0);
+  /* order is important, to match enum */
+  new_collation_sorted_indices_by_index (collations, ctn_unicode, "-");
+  new_collation_sorted_indices_by_index (collations, ctn_no_unicode, "");
 
-  for (i = 0; i < tree->e.c->contents.number; i++)
-    {
-      ELEMENT *content = tree->e.c->contents.list[i];
-
-      if (type_data[content->type].flags & TF_text)
-        {
-          if (content->e.text->end > 0
-              && content->e.text->text[strspn
-                           (content->e.text->text, whitespace_chars)] != '\0')
-            {
-              char *p = content->e.text->text;
-              p += strspn (p, whitespace_chars);
-              if (ignore_chars)
-                {
-                  char *text = strip_index_ignore_chars (p, ignore_chars);
-                  INDEX_ENTRY_TEXT_OR_COMMAND *result = 0;
-
-                  if (text[strspn (text, whitespace_chars)] != '\0')
-                    result = new_index_entry_text_or_command (text, 0);
-
-                  free (text);
-
-                  if (result)
-                    return result;
-                  else
-                    continue;
-                }
-              else
-                return new_index_entry_text_or_command (p, 0);
-            }
-          else
-            continue;
-        }
-
-      if (content->e.c->cmd)
-        {
-          enum command_id data_cmd = element_builtin_data_cmd (content);
-
-          if (builtin_command_data[data_cmd].other_flags & CF_formatted_nobrace)
-            {
-              if (ignore_chars && data_cmd == CM_AT_SIGN
-                  && strchr (ignore_chars, '@'))
-                continue;
-              return new_index_entry_text_or_command (0, content);
-            }
-          else
-            {
-              if (builtin_command_data[data_cmd].flags & CF_brace)
-                {
-                  int brace_command_type = builtin_command_data[data_cmd].data;
-
-                  if ((builtin_command_data[data_cmd].other_flags
-                       & CF_non_formatted_brace)
-                      || data_cmd == CM_footnote
-                      || data_cmd == CM_dmn
-                      || data_cmd == CM_value
-                      || (builtin_command_data[data_cmd].other_flags
-                          & CF_in_index))
-                    continue;
-                  else if (brace_command_type == BRACE_accent
-                           || brace_command_type == BRACE_noarg
-                           || data_cmd == CM_U)
-                    {
-                      return new_index_entry_text_or_command (0, content);
-                    }
-                  else if (brace_command_type != BRACE_inline)
-                    {
-                      if (content->e.c->contents.number > 0)
-                        {
-                          return idx_leading_text_or_command (
-                                               content->e.c->contents.list[0],
-                                                              ignore_chars);
-                        }
-                    }
-                  else
-                    {
-                      int status;
-                      int expand_index
-                       = lookup_extra_integer (content, AI_key_expand_index,
-                                               &status);
-                      if (expand_index > 0)
-                        return idx_leading_text_or_command (
-                                   content->e.c->contents.list[expand_index],
-                                                            ignore_chars);
-                    }
-                }
-              else if ((builtin_command_data[data_cmd].other_flags
-                        & CF_formatted_line)
-                       && data_cmd != CM_page)
-                {
-                   return idx_leading_text_or_command (
-                                           content->e.c->contents.list[0],
-                                                              ignore_chars);
-                }
-            }
-        }
-      else if (content->e.c->contents.number > 0)
-        return idx_leading_text_or_command (content, ignore_chars);
-    }
-  return new_index_entry_text_or_command (0, 0);
+  return collations;
 }
 
-/* Return the leading text or textual command that could be used
-   for sorting.
-   To be freed by caller.
-*/
-INDEX_ENTRY_TEXT_OR_COMMAND *
-index_entry_first_letter_text_or_command (const INDEX_ENTRY *index_entry)
+static COLLATION_INDICES_SORTED_BY_INDEX *
+find_collation_sorted_indices_by_index (
+            COLLATIONS_INDICES_SORTED_BY_INDEX *collations,
+            enum collation_type_name type,
+            const char *language)
 {
-  ELEMENT *index_entry_element = index_entry->entry_element;
-  char *sortas = lookup_extra_string (index_entry_element, AI_key_sortas);
-
-  INDEX_ENTRY_TEXT_OR_COMMAND *result;
-
-  if (sortas)
+  size_t i;
+  for (i = 2; i < collations->number; i++)
     {
-      return new_index_entry_text_or_command (sortas, 0);
+      COLLATION_INDICES_SORTED_BY_INDEX *collation_sorted_indices
+        = &collations->collation_sorted_indices[i];
+      if (collation_sorted_indices->type == type
+          && !strcmp (collation_sorted_indices->language, language))
+        return collation_sorted_indices;
     }
+  return 0;
+}
+
+COLLATION_INDICES_SORTED_BY_INDEX *
+get_collation_sorted_indices_by_index (
+                              COLLATIONS_INDICES_SORTED_BY_INDEX *collations,
+                                       int use_unicode_collation,
+                                       const char *input_lang_sorting_locale,
+                                       const char *collation_locale,
+                                       const char **lang_sorting_locale_out)
+{
+  const char *lang_sorting_locale = 0;
+  COLLATION_INDICES_SORTED_BY_INDEX *collation_sorted_indices = 0;
+
+  if (use_unicode_collation == 0)
+    collation_sorted_indices
+      = &collations->collation_sorted_indices[ctn_no_unicode];
+  /* use ctn_unicode collation for input_lang_sorting_locale until there is a
+     native C possibility for collation linguistic tailoring */
+  else if (/* !input_lang_sorting_locale && */ !collation_locale)
+    collation_sorted_indices
+      = &collations->collation_sorted_indices[ctn_unicode];
   else
     {
-      ELEMENT *entry_tree_element
-         = index_content_element (index_entry_element, 0);
-      char *index_ignore_chars = lookup_extra_string (index_entry_element,
-                                                  AI_key_index_ignore_chars);
-      ELEMENT *parsed_element;
+      enum collation_type_name type;
 
-      if (entry_tree_element->e.c->contents.number <= 0)
+    /*
+      if (input_lang_sorting_locale)
         {
-          parsed_element = new_element (ET_NONE);
-          add_to_contents_as_array (parsed_element, index_entry_element);
+          type = ctn_language_collation;
+          lang_sorting_locale = input_lang_sorting_locale;
         }
       else
-        parsed_element = entry_tree_element;
+     */
+        {
+          type = ctn_locale_collation;
+          lang_sorting_locale = collation_locale;
+        }
 
-      result = idx_leading_text_or_command (parsed_element, index_ignore_chars);
-      if (parsed_element != entry_tree_element)
-        destroy_element (parsed_element);
+      collation_sorted_indices
+        = find_collation_sorted_indices_by_index (collations, type,
+                                                 lang_sorting_locale);
+      if (!collation_sorted_indices)
+        collation_sorted_indices
+          = new_collation_sorted_indices_by_index (collations,
+                                                   type, lang_sorting_locale);
+    }
 
-      return result;
+  *lang_sorting_locale_out = lang_sorting_locale;
+  return collation_sorted_indices;
+}
+
+static COLLATION_INDICES_SORTED_BY_LETTER *
+new_collation_sorted_indices_by_letter (
+            COLLATIONS_INDICES_SORTED_BY_LETTER *collations,
+            enum collation_type_name type,
+            const char *language)
+{
+  COLLATION_INDICES_SORTED_BY_LETTER *result = 0;
+  if (collations->number <= collations->space)
+    {
+      collations->collation_sorted_indices
+        = (COLLATION_INDICES_SORTED_BY_LETTER *) realloc
+           (collations->collation_sorted_indices,
+             (collations->space += 3)
+                * sizeof (COLLATION_INDICES_SORTED_BY_LETTER));
+      if (!collations->collation_sorted_indices)
+        fatal ("realloc failed");
+    }
+
+  result = &collations->collation_sorted_indices[collations->number];
+  memset (result, 0, sizeof (COLLATION_INDICES_SORTED_BY_LETTER));
+  result->type = type;
+  result->language = strdup (language);
+
+  collations->number++;
+
+  return result;
+}
+
+static COLLATION_INDICES_SORTED_BY_LETTER *
+find_collation_sorted_indices_by_letter (
+            COLLATIONS_INDICES_SORTED_BY_LETTER *collations,
+            enum collation_type_name type,
+            const char *language)
+{
+  size_t i;
+  for (i = 2; i < collations->number; i++)
+    {
+      COLLATION_INDICES_SORTED_BY_LETTER *collation_sorted_indices
+        = &collations->collation_sorted_indices[i];
+      if (collation_sorted_indices->type == type
+          && !strcmp (collation_sorted_indices->language, language))
+        return collation_sorted_indices;
+    }
+  return 0;
+}
+
+COLLATIONS_INDICES_SORTED_BY_LETTER *
+new_base_collations_sorted_indices_by_letter (void)
+{
+  COLLATIONS_INDICES_SORTED_BY_LETTER *collations
+      = (COLLATIONS_INDICES_SORTED_BY_LETTER *)
+           malloc (sizeof (COLLATIONS_INDICES_SORTED_BY_LETTER));
+  memset (collations, 0,
+              sizeof (COLLATIONS_INDICES_SORTED_BY_LETTER));
+
+    /* order is important, to match enum */
+  new_collation_sorted_indices_by_letter (collations, ctn_unicode, "-");
+  new_collation_sorted_indices_by_letter (collations, ctn_no_unicode, "");
+
+  return collations;
+}
+
+COLLATION_INDICES_SORTED_BY_LETTER *
+get_collation_sorted_indices_by_letter (
+                          COLLATIONS_INDICES_SORTED_BY_LETTER *collations,
+                                       int use_unicode_collation,
+                                       const char *input_lang_sorting_locale,
+                                       const char *collation_locale,
+                                       const char **lang_sorting_locale_out)
+{
+  const char *lang_sorting_locale = 0;
+  COLLATION_INDICES_SORTED_BY_LETTER *collation_sorted_indices = 0;
+
+  if (use_unicode_collation == 0)
+    collation_sorted_indices
+      = &collations->collation_sorted_indices[ctn_no_unicode];
+  /* use ctn_unicode collation for input_lang_sorting_locale until there is a
+     native C possibility for collation linguistic tailoring */
+  else if (/* !input_lang_sorting_locale && */ !collation_locale)
+    collation_sorted_indices
+      = &collations->collation_sorted_indices[ctn_unicode];
+  else
+    {
+      enum collation_type_name type;
+
+    /*
+      if (input_lang_sorting_locale)
+        {
+          type = ctn_language_collation;
+          lang_sorting_locale = input_lang_sorting_locale;
+        }
+      else
+     */
+        {
+          type = ctn_locale_collation;
+          lang_sorting_locale = collation_locale;
+        }
+
+      collation_sorted_indices
+        = find_collation_sorted_indices_by_letter (collations, type,
+                                                   lang_sorting_locale);
+      if (!collation_sorted_indices)
+        collation_sorted_indices
+          = new_collation_sorted_indices_by_letter (collations,
+                                                    type, lang_sorting_locale);
+    }
+
+  *lang_sorting_locale_out = lang_sorting_locale;
+  return collation_sorted_indices;
+}
+
+static void
+destroy_indices_sorted_by_index (
+         INDEX_SORTED_BY_INDEX *indices_entries_by_index)
+{
+  INDEX_SORTED_BY_INDEX *index;
+
+  for (index = indices_entries_by_index; index->name; index++)
+    {
+      free (index->name);
+      free (index->entries);
+    }
+  free (indices_entries_by_index);
+}
+
+void
+destroy_sorted_indices_by_index (COLLATIONS_INDICES_SORTED_BY_INDEX *collations)
+{
+  if (collations)
+    {
+      if (collations->number > 0)
+        {
+          size_t i;
+          for (i = 0; i < collations->number; i++)
+            {
+              COLLATION_INDICES_SORTED_BY_INDEX *collation_sorted_indices
+                = &collations->collation_sorted_indices[i];
+              free (collation_sorted_indices->language);
+              if (collation_sorted_indices->sorted_indices)
+                destroy_indices_sorted_by_index (
+                                collation_sorted_indices->sorted_indices);
+            }
+        }
+      free (collations->collation_sorted_indices);
+      free (collations);
+    }
+}
+
+static void
+destroy_indices_sorted_by_letter (
+         INDEX_SORTED_BY_LETTER *indices_entries_by_letter)
+{
+  INDEX_SORTED_BY_LETTER *index;
+
+  for (index = indices_entries_by_letter; index->name; index++)
+    {
+      size_t i;
+      free (index->name);
+      for (i = 0; i < index->letter_number; i++)
+        {
+          LETTER_INDEX_ENTRIES *letter_entries = &index->letter_entries[i];
+          free (letter_entries->letter);
+          free (letter_entries->entries);
+        }
+      free (index->letter_entries);
+    }
+  free (indices_entries_by_letter);
+}
+
+void
+destroy_sorted_indices_by_letter (COLLATIONS_INDICES_SORTED_BY_LETTER *collations)
+{
+  if (collations)
+    {
+      if (collations->number > 0)
+        {
+          size_t i;
+          for (i = 0; i < collations->number; i++)
+            {
+              COLLATION_INDICES_SORTED_BY_LETTER *collation_sorted_indices
+                 = &collations->collation_sorted_indices[i];
+              free (collation_sorted_indices->language);
+              if (collation_sorted_indices->sorted_indices)
+                destroy_indices_sorted_by_letter (
+                                collation_sorted_indices->sorted_indices);
+            }
+        }
+      free (collations->collation_sorted_indices);
+      free (collations);
     }
 }
 
@@ -1488,3 +1801,264 @@ print_indices_information (INDEX_LIST *indices_info)
 
   return result.text;
 }
+
+/* structures and functions used to find sort strings based on the
+   sorted index index entry, using the original index name and
+   index entry position in the original index
+ */
+typedef struct INDEX_ENTRIES_SORT_STRINGS {
+  const char *index_name;
+  const INDEX_ENTRY_SORT_STRING **sort_strings;
+} INDEX_ENTRIES_SORT_STRINGS;
+
+typedef struct INDICES_ENTRIES_SORT_STRINGS {
+  size_t space;
+  size_t number;
+  INDEX_ENTRIES_SORT_STRINGS *list;
+} INDICES_ENTRIES_SORT_STRINGS;
+
+/* if the INDEX_NAME is not already in MAP_IDX_SORT_STR, allocate a new
+   slot, find INDEX_NAME in INDICES_INFO and allocate in the new slot
+   an array with length the number of entries for INDEX_NAME found
+   in INDICES_INFO */
+static size_t
+find_indices_entries_sort_strings_index (const INDEX_LIST *indices_info,
+                         INDICES_ENTRIES_SORT_STRINGS *map_idx_sort_str,
+                                   const char *index_name)
+{
+  size_t i;
+  size_t result_index;
+  INDEX_ENTRIES_SORT_STRINGS *idx_sort_str;
+  INDEX *index_info = 0;
+
+  for (i = 0; i < map_idx_sort_str->number; i++)
+    {
+      if (!strcmp (map_idx_sort_str->list[i].index_name, index_name))
+        return i;
+    }
+
+  if (map_idx_sort_str->number >= map_idx_sort_str->space)
+    {
+      map_idx_sort_str->list = realloc (map_idx_sort_str->list,
+                    (map_idx_sort_str->space += 1)
+                           * sizeof (INDEX_ENTRIES_SORT_STRINGS));
+      if (!map_idx_sort_str->list)
+        fatal ("realloc failed");
+    }
+
+  result_index = map_idx_sort_str->number;
+  idx_sort_str = &map_idx_sort_str->list[result_index];
+
+  for (i = 0; i < indices_info->number; i++)
+    {
+      if (indices_info->list[i]->name == index_name)
+        {
+          index_info = indices_info->list[i];
+          break;
+        }
+    }
+
+  if (!index_info)
+    {
+      char *msg;
+      xasprintf (&msg, "sort strings index not found: %s\n", index_name);
+      fatal (msg);
+      free (msg);
+    }
+
+  /* use this name as it is supposed to be long living (another one would
+     have been ok, too) */
+  idx_sort_str->index_name = index_info->name;
+
+  idx_sort_str->sort_strings = (const INDEX_ENTRY_SORT_STRING **)
+   malloc (index_info->entries_number
+           * sizeof (const INDEX_ENTRY_SORT_STRING *));
+  memset (idx_sort_str->sort_strings, 0, index_info->entries_number
+                * sizeof (const INDEX_ENTRY_SORT_STRING *));
+
+  map_idx_sort_str->number++;
+
+  return result_index;
+}
+
+char *
+print_indices_sort_strings (
+      const INDEX_SORTED_BY_INDEX *sorted_index_entries,
+      const INDICES_SORT_STRINGS *indices_sort_strings,
+      const DOCUMENT *document)
+{
+  TEXT result;
+  size_t i;
+  /* associate index name to position of index in indices_sort_strings,
+     sorted by index name through a function call */
+  NAME_NUMBER_LIST indices_sort_strings_n_nr;
+  /* associate index name to position of index in sorted_index_entries,
+     sorted by index name because it is based on indices_sort_strings_n_nr */
+  NAME_NUMBER_LIST sorted_index_entries_n_nr;
+  INDICES_ENTRIES_SORT_STRINGS indices_entries_sort_string;
+
+  if (!indices_sort_strings)
+    return 0;
+
+  memset (&indices_entries_sort_string,
+          0, sizeof (INDICES_ENTRIES_SORT_STRINGS));
+
+
+  /* 1. setup indices_sort_strings_n_nr */
+
+  memset (&indices_sort_strings_n_nr, 0, sizeof (NAME_NUMBER_LIST));
+
+  allocate_name_number_list (&indices_sort_strings_n_nr,
+                             indices_sort_strings->number);
+
+  for (i = 0; i < indices_sort_strings->number; i++)
+    {
+      NAME_NUMBER *index_name_number = &indices_sort_strings_n_nr.list[i];
+      index_name_number->name = indices_sort_strings->indices[i].index->name;
+      index_name_number->number = i;
+    }
+
+  sort_name_number_list (&indices_sort_strings_n_nr);
+
+
+  /* 2. setup sorted_index_entries_n_nr */
+
+  memset (&sorted_index_entries_n_nr, 0, sizeof (NAME_NUMBER_LIST));
+
+  allocate_name_number_list (&sorted_index_entries_n_nr,
+                             indices_sort_strings->number);
+
+  /* use the sorting of indices_sort_strings and find the number,
+     index +1 of the sorted index name with a linear search.  The number
+     is used and not the index in order to use 0 to mean not found */
+  for (i = 0; i < indices_sort_strings->number; i++)
+    {
+      size_t j;
+      const char *index_name = indices_sort_strings_n_nr.list[i].name;
+      NAME_NUMBER *index_name_number = &sorted_index_entries_n_nr.list[i];
+
+      index_name_number->name = index_name;
+      index_name_number->number = 0;
+
+      for (j = 0; sorted_index_entries[j].name; j++)
+        {
+          if (! strcmp(sorted_index_entries[j].name,
+                       index_name))
+            {
+              index_name_number->number = j+1;
+              break;
+            }
+        }
+    }
+
+
+  /* 3. go through indexes sorted entries, associate index entries number
+        in original index to sort strings and then print sort strings
+        in result */
+
+  text_init (&result);
+  text_append (&result, "");
+
+  for (i = 0; i < indices_sort_strings_n_nr.number; i++)
+    {
+      NAME_NUMBER *sorted_indices_number = &sorted_index_entries_n_nr.list[i];
+      size_t sorted_index_nr = sorted_indices_number->number;
+      const INDEX_SORTED_BY_INDEX *sorted_index;
+
+      if (sorted_index_nr == 0)
+        continue;
+
+      sorted_index = &sorted_index_entries[sorted_index_nr -1];
+      if (sorted_index->entries_number > 0)
+        {
+          size_t j;
+          NAME_NUMBER *sort_string_number = &indices_sort_strings_n_nr.list[i];
+          const INDEX_SORT_STRINGS *index_sort_strings
+            = &indices_sort_strings->indices[sort_string_number->number];
+
+          /* go through sort strings to associate to an entry number
+             in index its sort string */
+          /* done in Texinfo::Indices format_index_entries_sort_strings */
+          for (j = 0; j < index_sort_strings->entries_number; j++)
+            {
+              INDEX_ENTRY_SORT_STRING *sort_string
+                = &index_sort_strings->sort_string_entries[j];
+              size_t index_idx
+               = find_indices_entries_sort_strings_index (
+                                            &document->indices_info,
+                                            &indices_entries_sort_string,
+                                            sort_string->entry->index_name);
+              indices_entries_sort_string.list[index_idx]
+                    .sort_strings[sort_string->entry->number -1]
+                = sort_string;
+            }
+
+          text_printf (&result, "%s:\n", sorted_index->name);
+          /* now go through sorted index entries to print the corresponding
+             sort string */
+          for (j = 0; j < sorted_index->entries_number; j++)
+            {
+              const INDEX_ENTRY *idx_entry = sorted_index->entries[j];
+              const INDEX_ENTRY_SORT_STRING *sort_string = 0;
+              size_t k;
+              for (k = 0; k < indices_entries_sort_string.number; k++)
+                {
+                  if (!strcmp (indices_entries_sort_string.list[k].index_name,
+                               idx_entry->index_name))
+                    {
+                      sort_string = indices_entries_sort_string.list[k]
+                                       .sort_strings[idx_entry->number -1];
+                      break;
+                    }
+                }
+              if (!sort_string)
+                {
+                  char *msg;
+                  xasprintf (&msg, "sort string not found: %s",
+                                    idx_entry->index_name);
+                  fatal (msg);
+                  free (msg);
+                }
+
+              text_append_n (&result, " ", 1);
+              /* following done in
+                 Texinfo::Indices format_index_entries_sort_strings */
+              text_append (&result,
+                  sort_string->sort_string_subentries[0].sort_string);
+              if (sort_string->subentries_number > 1)
+                {
+                  size_t n;
+                  for (n = 1; n < sort_string->subentries_number; n++)
+                    {
+                      text_append_n (&result, ", ", 2);
+                      text_append (&result,
+                        sort_string->sort_string_subentries[n].sort_string);
+                    }
+                }
+              text_append_n (&result, "\n", 1);
+            }
+
+           /* reset indices_entries_sort_string */
+          for (j = 0; j < indices_entries_sort_string.number; j++)
+            {
+              free (indices_entries_sort_string.list[j].sort_strings);
+              indices_entries_sort_string.list[j].index_name = 0;
+            }
+          indices_entries_sort_string.number = 0;
+        }
+    }
+
+  free (indices_entries_sort_string.list);
+
+  free_name_number_list (&sorted_index_entries_n_nr);
+  free_name_number_list (&indices_sort_strings_n_nr);
+
+  if (result.end == 0)
+    {
+      free (result.text);
+      return 0;
+    }
+
+  return result.text;
+}
+

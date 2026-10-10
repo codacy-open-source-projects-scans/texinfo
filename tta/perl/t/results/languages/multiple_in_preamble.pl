@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'multiple_in_preamble'} = '*document_root C5
  *before_node_section C1
@@ -11,10 +14,10 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
    *@documentlanguage C1 l1
    |EXTRA
    |global_command_number:{1}
-   |text_arg:{fr}
+   |text_arg:{hr}
     *line_arg C3
      {spaces_before_argument: }
-     {fr}
+     {hr}
      {spaces_after_argument:\\n}
    {empty_line:\\n}
    *@copying C3 l3
@@ -25,25 +28,7 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
      *def_line C1 l4
      |EXTRA
      |def_command:{defivar}
-     |def_index_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{a}
-       |{ de }
-       |* C1
-        |*def_line_arg C1
-         |{copying}
-     |def_index_ref_element:
-      |* C3
-       |* C1
-        |*def_line_arg C1
-         |{a}
-       |{ of }
-       |* C1
-        |*def_line_arg C1
-         |{copying}
-     |documentlanguage:{fr}
+     |documentlanguage:{hr}
      |element_region:{copying}
      |index_entry:I{vr,1}
      |original_def_cmdname:{defivar}
@@ -54,7 +39,7 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
        |inserted:{1}
         *untranslated_def_line_arg C1
         |EXTRA
-        |documentlanguage:{fr}
+        |documentlanguage:{hr}
         |translation_context:{category of instance variables in object-oriented programming for @defivar}
          {untranslated:Instance Variable}
        {spaces: }
@@ -93,10 +78,10 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
    *@documentlanguage C1 l9
    |EXTRA
    |global_command_number:{2}
-   |text_arg:{hr}
+   |text_arg:{fr_BE}
     *line_arg C3
      {spaces_before_argument: }
-     {hr}
+     {fr_BE}
      {spaces_after_argument:\\n}
    {empty_line:\\n}
  *@node C1 l11 {Top}
@@ -144,25 +129,7 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
    *def_line C1 l17
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ od }
-     |* C1
-      |*def_line_arg C1
-       |{hr}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{BBB}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{hr}
-   |documentlanguage:{hr}
+   |documentlanguage:{fr_BE}
    |element_node:{chapter}
    |index_entry:I{vr,2}
    |original_def_cmdname:{defivar}
@@ -173,7 +140,7 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
      |inserted:{1}
       *untranslated_def_line_arg C1
       |EXTRA
-      |documentlanguage:{hr}
+      |documentlanguage:{fr_BE}
       |translation_context:{category of instance variables in object-oriented programming for @defivar}
        {untranslated:Instance Variable}
      {spaces: }
@@ -215,24 +182,6 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
    *def_line C1 l23
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{FFF}
-     |{ von }
-     |* C1
-      |*def_line_arg C1
-       |{de}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{FFF}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{de}
    |documentlanguage:{de}
    |element_node:{chapter}
    |index_entry:I{vr,3}
@@ -270,7 +219,7 @@ $result_tree_text{'multiple_in_preamble'} = '*document_root C5
 ';
 
 
-$result_texis{'multiple_in_preamble'} = '@documentlanguage fr
+$result_texis{'multiple_in_preamble'} = '@documentlanguage hr
 
 @copying
 @defivar copying a b
@@ -278,7 +227,7 @@ $result_texis{'multiple_in_preamble'} = '@documentlanguage fr
 @end defivar
 @end copying
 
-@documentlanguage hr
+@documentlanguage fr_BE
 
 @node Top
 @top top section
@@ -306,7 +255,7 @@ top section
 1 chap
 ******
 
-Primjerak varijable od hr: BBB CCC
+Variable d\'instance de hr: BBB CCC
 error->
 
 
@@ -353,8 +302,8 @@ list:
 $result_headings_list{'multiple_in_preamble'} = '';
 
 $result_indices_sort_strings{'multiple_in_preamble'} = 'vr:
- a de copying
- BBB od hr
+ a od copying
+ BBB de hr
  FFF von de
 ';
 
@@ -365,17 +314,23 @@ $result_converted{'plaintext'}->{'multiple_in_preamble'} = 'top section
 1 chap
 ******
 
- -- Primjerak varijable od hr: BBB CCC
-     greška→
+ -- Variable d\'instance de hr : BBB CCC
+     erreur→
 
  -- Instanzvariable of de: FFF GGG
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'multiple_in_preamble'} = 'vr:
+ a od copying
+ BBB de hr
+ FFF von de
+';
 
-$result_converted{'info'}->{'multiple_in_preamble'} = 'This is , produced from .
 
- -- Primjerak varijable od copying: a b
-     greška→
+$result_converted{'info'}->{'multiple_in_preamble'} = Encode::encode('utf-8', 'This is , produced from .
+
+ -- Variable d\'instance de copying : a b
+     erreur→
 
 
 File: ,  Node: Top,  Next: chapter,  Up: (dir)
@@ -393,23 +348,29 @@ File: ,  Node: chapter,  Prev: Top,  Up: Top
 1 chap
 ******
 
- -- Primjerak varijable od hr: BBB CCC
-     greška→
+ -- Variable d\'instance de hr : BBB CCC
+     erreur→
 
  -- Instanzvariable of de: FFF GGG
 
 
 Tag Table:
-Node: Top81
-Node: chapter178
+Node: Top84
+Node: chapter181
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
-Info-documentlanguage: de
+Info-documentlanguage: fr_BE
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'multiple_in_preamble'} = 'vr:
+ a od copying
+ BBB de hr
+ FFF von de
 ';
 
 
@@ -418,8 +379,8 @@ $result_converted{'html'}->{'multiple_in_preamble'} = '<!DOCTYPE html>
 <!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- Primjerak varijable od copying: a b
-greška→ -->
+<!-- Variable d\'instance de copying: a b
+erreur→ -->
 <title>top section</title>
 
 <meta name="description" content="top section">
@@ -439,13 +400,13 @@ strong.def-name {font-family: monospace; font-weight: bold}
 
 </head>
 
-<body lang="hr">
+<body lang="fr-BE">
 
 
 
 <div class="top-level-extent" id="Top">
 <p class="nav-panel">
-<span class="nav-button"><span class="nav-label">Sljedeće: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
+<span class="nav-button"><span class="nav-label">Suivant: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top-section"><span>top section<a class="copiable-link" href="#top-section"> &para;</a></span></h1>
 
 <ul class="mini-toc">
@@ -454,12 +415,12 @@ strong.def-name {font-family: monospace; font-weight: bold}
 <hr>
 <div class="chapter-level-extent" id="chapter">
 <p class="nav-panel">
-<span class="nav-button"><span class="nav-label">Prethodno: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top section</a></span></span>, <span class="nav-button"><span class="nav-label">Gore: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top section</a></span></span><span class="nav-button"> &nbsp; </span></p>
+<span class="nav-button"><span class="nav-label">Pr&eacute;c&eacute;dent: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top section</a></span></span>, <span class="nav-button"><span class="nav-label">Monter: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top section</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="chap"><span>1 chap<a class="copiable-link" href="#chap"> &para;</a></span></h2>
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">
-<dt class="defcv defivar-alias-defcv def-line" id="index-BBB-of-hr"><span class="category-def">Primjerak varijable od <code class="code">hr</code>: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-hr"> &para;</a></span></dt>
-<dd><p>greška&rarr;
+<dt class="defcv defivar-alias-defcv def-line" id="index-BBB-of-hr"><span class="category-def">Variable d&rsquo;instance de <code class="code">hr</code>&nbsp;: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-hr"> &para;</a></span></dt>
+<dd><p>erreur<span class="arrow">&rarr;</span>
 </p></dd></dl>
 
 
@@ -475,16 +436,22 @@ strong.def-name {font-family: monospace; font-weight: bold}
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'multiple_in_preamble'} = 'vr:
+ a od copying
+ BBB de hr
+ FFF von de
+';
 
-$result_converted{'xml'}->{'multiple_in_preamble'} = '<documentlanguage xml:lang="fr"> fr</documentlanguage>
+
+$result_converted{'xml'}->{'multiple_in_preamble'} = '<documentlanguage xml:lang="hr"> hr</documentlanguage>
 
 <copying endspaces=" ">
-<defivar endspaces=" "><definitionterm><indexterm index="vr" number="1">a de copying</indexterm> <defcategory automatic="on">Instance Variable</defcategory> <defclass>copying</defclass> <defclassvar>a</defclassvar> <defparam>b</defparam></definitionterm>
+<defivar endspaces=" "><definitionterm><indexterm index="vr" number="1">a od copying</indexterm> <defcategory automatic="on">Instance Variable</defcategory> <defclass>copying</defclass> <defclassvar>a</defclassvar> <defparam>b</defparam></definitionterm>
 <definitionitem><para>&errorglyph;
 </para></definitionitem></defivar>
 </copying>
 
-<documentlanguage xml:lang="hr"> hr</documentlanguage>
+<documentlanguage xml:lang="fr_BE"> fr_BE</documentlanguage>
 
 <node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> chapter</nodenext></node>
 <top><sectiontitle> top section</sectiontitle>
@@ -493,7 +460,7 @@ $result_converted{'xml'}->{'multiple_in_preamble'} = '<documentlanguage xml:lang
 <node identifier="chapter"><nodename> chapter</nodename><nodeprev automatic="on"> Top</nodeprev><nodeup automatic="on"> Top</nodeup></node>
 <chapter><sectiontitle> chap</sectiontitle>
 
-<defivar endspaces=" "><definitionterm><indexterm index="vr" number="2">BBB od hr</indexterm> <defcategory automatic="on">Instance Variable</defcategory> <defclass>hr</defclass> <defclassvar>BBB</defclassvar> <defparam>CCC</defparam></definitionterm>
+<defivar endspaces=" "><definitionterm><indexterm index="vr" number="2">BBB de hr</indexterm> <defcategory automatic="on">Instance Variable</defcategory> <defclass>hr</defclass> <defclassvar>BBB</defclassvar> <defparam>CCC</defparam></definitionterm>
 <definitionitem><para>&errorglyph;
 </para></definitionitem></defivar>
 
@@ -510,17 +477,17 @@ $result_converted{'docbook_doc'}->{'multiple_in_preamble'} = '<?xml version="1.0
   <!ENTITY tex "TeX">
   <!ENTITY latex "LaTeX">
 ]>
-<book lang="hr">
+<book lang="fr-BE">
 <title>top section</title>
 <bookinfo><title>top section</title>
-<legalnotice><synopsis><indexterm role="vr"><primary>a de copying</primary></indexterm><phrase role="category"><emphasis role="bold">Instance Variable</emphasis>:</phrase> <ooclass><classname>copying</classname></ooclass> <property>a</property> <emphasis role="arg">b</emphasis></synopsis>
-<blockquote><para>greška&#8594;
+<legalnotice><synopsis><indexterm role="vr"><primary>a od copying</primary></indexterm><phrase role="category"><emphasis role="bold">Instance Variable</emphasis>:</phrase> <ooclass><classname>copying</classname></ooclass> <property>a</property> <emphasis role="arg">b</emphasis></synopsis>
+<blockquote><para>erreur&#8594;
 </para></blockquote></legalnotice></bookinfo>
 <chapter label="1" id="chapter">
 <title>chap</title>
 
-<synopsis><indexterm role="vr"><primary>BBB od hr</primary></indexterm><phrase role="category"><emphasis role="bold">Instance Variable</emphasis>:</phrase> <ooclass><classname>hr</classname></ooclass> <property>BBB</property> <emphasis role="arg">CCC</emphasis></synopsis>
-<blockquote><para>greška&#8594;
+<synopsis><indexterm role="vr"><primary>BBB de hr</primary></indexterm><phrase role="category"><emphasis role="bold">Instance Variable</emphasis>:</phrase> <ooclass><classname>hr</classname></ooclass> <property>BBB</property> <emphasis role="arg">CCC</emphasis></synopsis>
+<blockquote><para>erreur&#8594;
 </para></blockquote>
 
 <synopsis><indexterm role="vr"><primary>FFF von de</primary></indexterm><phrase role="category"><emphasis role="bold">Instance Variable</emphasis>:</phrase> <ooclass><classname>de</classname></ooclass> <property>FFF</property> <emphasis role="arg">GGG</emphasis></synopsis>

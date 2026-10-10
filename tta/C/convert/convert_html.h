@@ -18,17 +18,15 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include "command_ids.h"
+#include "text.h"
 #include "tree_types.h"
 #include "converter_types.h"
-#include "html_converter_types.h"
+#include "html_converter_state.h"
 
 /* NOTE the intermediate level functions are declared in
         html_conversion_api.h */
 
-ELEMENT *html_cdt_tree (const char *string, CONVERTER *self,
-               NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-               const char *translation_context);
-char *html_cdt_string (const char *string, CONVERTER *self,
+TEXT html_cdt_string (const char *string, CONVERTER *self,
                  NAMED_STRING_ELEMENT_LIST *replaced_substrings,
                  const char *translation_context);
 ELEMENT *html_pcdt_tree (const char *translation_context, const char *string,
@@ -40,9 +38,9 @@ void remove_tree_to_build (CONVERTER *self, ELEMENT *e);
 
 void html_convert_tree_append (CONVERTER *self, const ELEMENT *e,
                                TEXT *result, const char *explanation);
-char *html_convert_tree_explanation (CONVERTER *self, const ELEMENT *tree,
+TEXT html_convert_tree_explanation (CONVERTER *self, const ELEMENT *tree,
                                      const char *explanation);
-char *html_convert_tree (CONVERTER *self, const ELEMENT *tree);
+TEXT html_convert_tree (CONVERTER *self, const ELEMENT *tree);
 void html_translate_convert_tree_append (const char *string,
                      CONVERTER *self,
                      NAMED_STRING_ELEMENT_LIST *replaced_substrings,
@@ -68,6 +66,10 @@ void html_reset_translated_special_unit_info_tree (CONVERTER *self);
 
 /* void html_translate_names (CONVERTER *self) */
 
+TRANSLATION_TREE *html_cache_translate_string (CONVERTER *self,
+                             const char *string,
+                             const LANG_TRANSLATION *lang_translation,
+                             const char *translation_context);
 
 int html_run_stage_handlers (CONVERTER *self,
                              enum html_stage_handler_stage_type stage);
@@ -87,9 +89,9 @@ void html_free_direction_icons_array (CONVERTER *self, char ***direction_icons);
 
 char *debug_print_html_contexts (const CONVERTER *self);
 
-/* char *html_convert_convert (CONVERTER *self, const ELEMENT *root); */
+/* TEXT html_convert_convert (CONVERTER *self, const ELEMENT *root); */
 
-/* char *html_convert_output (CONVERTER *self, const ELEMENT *root,
+/* TEXT html_convert_output (CONVERTER *self, const ELEMENT *root,
                            const char *output_file,
                            const char *destination_directory,
                            const char *output_filename,
@@ -130,6 +132,12 @@ int html_node_redirections (CONVERTER *self,
 
 /* int html_finish_output (CONVERTER *self, const char *output_file,
                         const char *destination_directory); */
+
+
+
+/* Global arrays */
+extern const char *html_conversion_context_type_names[];
+extern const char *html_stage_handler_stage_type_names[];
 
 
 #endif

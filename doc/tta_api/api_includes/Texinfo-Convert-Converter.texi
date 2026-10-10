@@ -24,12 +24,9 @@ Texinfo::Convert::Converter - Parent class for Texinfo tree converters
   }
 
   sub conversion_initialization($;$) {
-    my $self = shift;
-    my $document = shift;
+    my ($self, $document) = @_;
 
-    if ($document) {
-      $self->set_document($document);
-    }
+    $self->set_document($document);
 
     $self->set_global_document_commands('before', \@global_commands);
     ...
@@ -47,8 +44,7 @@ Texinfo::Convert::Converter - Parent class for Texinfo tree converters
   }
 
   sub convert($$) {
-    my $self = shift;
-    my $document = shift;
+    my ($self, $document) = @_;
 
     $self->conversion_initialization($document);
 
@@ -57,8 +53,7 @@ Texinfo::Convert::Converter - Parent class for Texinfo tree converters
   }
 
   sub output($$) {
-    my $self = shift;
-    my $document = shift;
+    my ($self, $document) = @_;
 
     $self->conversion_initialization($document);
 
@@ -259,8 +254,10 @@ implementations.
 
 Associate @emph{$document} to @emph{$converter}.  Also set the encoding related customization
 options based on @emph{$converter} customization information and information on
-document encoding, and setup converter hash @code{convert_text_options} value that
+document encoding, setup converter hash @code{convert_text_options} value that
 can be used to call @ref{Texinfo@asis{::}Convert@asis{::}Text $result = convert_to_text($tree@comma{} $text_options),, @code{Texinfo::Convert::Text::convert_to_text}}.
+Also resets generic converter information that is invalidated by
+a new document.
 
 @end table
 
@@ -465,7 +462,8 @@ was not set.
 
 @code{Texinfo::Convert::Converter} implements an interface to register error and
 warning messages in the converter, that can be retrieved later on.
-Underneath, @code{Texinfo::Report} is used to setup the messages data structure.
+Underneath, @ref{Texinfo@asis{::}Report NAME,, @code{Texinfo::Report}} is used to setup the
+messages data structure.
 
 @table @asis
 @item $converter->converter_document_error($text, $continuation)
@@ -515,13 +513,9 @@ described in @ref{Texinfo@asis{::}Report $error_count
 @node Texinfo@asis{::}Convert@asis{::}Converter Translations in output documents
 @subsection Translations in output documents
 
-@code{Texinfo::Convert::Converter} provides wrappers around
-@ref{Texinfo@asis{::}Translations NAME,, Texinfo::Translations} methods that use the current language.  The
-current language is set by a call to @code{converter_set_documentlanguage}, like:
-
-@verbatim
- $converter->converter_set_documentlanguage($documentlanguage);
-@end verbatim
+@code{Texinfo::Convert::Converter} provides methods useful for translation.
+These methods use the current language and are wrappers around
+@ref{Texinfo@asis{::}Translations NAME,, Texinfo::Translations} methods.
 
 The @code{cdt} and @code{pcdt} methods are used to translate strings to be output in
 converted documents, and return a Texinfo tree.  The @code{cdt_string} is similar
@@ -592,11 +586,12 @@ the best to use for output.
 When simply sorting, the array of the sorted index entries is associated
 with the index name.
 
-The functions call @ref{Texinfo@asis{::}Document $sorted_indices = sorted_indices_by_letter($document@comma{} $converter@comma{} $use_unicode_collation@comma{} $locale_lang),, @code{Texinfo::Document::sorted_indices_by_letter}}
-or @ref{Texinfo@asis{::}Document $sorted_indices = sorted_indices_by_index($document@comma{} $converter@comma{} $use_unicode_collation@comma{} $locale_lang),, @code{Texinfo::Document::sorted_indices_by_index}}
+The functions call @ref{Texinfo@asis{::}Indices $index_entries_sorted = sort_indices_by_letter($indices_sort_strings@comma{} $use_unicode_collation@comma{} $lang_sorting_locale),, @code{Texinfo::Indices::sort_indices_by_letter}}
+or
+ @ref{Texinfo@asis{::}Indices $index_entries_sorted = sort_indices_by_index($indices_sort_strings@comma{} $use_unicode_collation@comma{} $lang_sorting_locale),, @code{Texinfo::Indices::sort_indices_by_index}}
 with arguments based on @code{USE_UNICODE_COLLATION}, @code{COLLATION_LANGUAGE} and
-@code{DOCUMENTLANGUAGE_COLLATION} customization options, and, if relevant, current
-@code{@@documentlanguage}.
+@code{DOCUMENTLANGUAGE_COLLATION} customization options, and, if relevant, the
+current language.
 
 @end table
 
@@ -623,6 +618,12 @@ command argument (usually a letter), is also converted, by calling
 @ref{Texinfo@asis{::}Convert@asis{::}Converter $result = $converter->convert_tree($tree),, @code{$converter->convert_tree}}. If @emph{$in_upper_case} is
 set, the result should be uppercased.
 
+@end table
+
+The user-defined accent formatting function reference given in argument of
+@code{convert_accents} is called like:
+
+@table @asis
 @item $result = &$format_accents($self, $text, $accent_command, $index_in_stack, $accents_stack, $in_upper_case)
 @anchor{Texinfo@asis{::}Convert@asis{::}Converter $result = &$format_accents($self@comma{} $text@comma{} $accent_command@comma{} $index_in_stack@comma{} $accents_stack@comma{} $in_upper_case)}
 
@@ -735,6 +736,17 @@ used in converters that do not inherit from @code{Texinfo::Convert::Converter}, 
 @ref{Texinfo@asis{::}Convert@asis{::}Utils NAME,, Texinfo::Convert::Utils}.
 
 @table @asis
+@item $entry_content_element = $converter->converter_index_content_element($element, $prefer_reference_element)
+@anchor{Texinfo@asis{::}Convert@asis{::}Converter $entry_content_element = $converter->converter_index_content_element($element@comma{} $prefer_reference_element)}
+@cindex @code{converter_index_content_element}
+
+Return a Texinfo tree element corresponding to the content of the index
+entry associated to @emph{$element}.  If @emph{$prefer_reference_element} is set,
+prefer an untranslated element.  If the element is an index command like
+@code{@@cindex} or an @code{@@ftable} @code{@@item}, the content element is the argument
+of the command.  If the element is an object-oriented definition, the index
+entry element is based on the name and class, with a translation.
+
 @item $succeeded = $converter->create_destination_directory($destination_directory_path, $destination_directory_name)
 @anchor{Texinfo@asis{::}Convert@asis{::}Converter $succeeded = $converter->create_destination_directory($destination_directory_path@comma{} $destination_directory_name)}
 @cindex @code{create_destination_directory}
@@ -812,6 +824,19 @@ of the float.
 @emph{$float} is a Texinfo tree @code{@@float} element.  This function
 returns the type and number of the float as a Texinfo tree with
 translations.
+
+@item ($text, $command) = $converter->index_entry_first_letter_text_or_command($index_entry)
+@anchor{Texinfo@asis{::}Convert@asis{::}Converter ($text@comma{} $command) = $converter->index_entry_first_letter_text_or_command($index_entry)}
+@cindex @code{index_entry_first_letter_text_or_command}
+
+Return the @emph{$index_entry} leading text @emph{$text} or textual command Texinfo
+tree hash reference @emph{$command}.  Here textual commands means accent
+commands, brace commands without arguments used for character and glyph
+insertion and @code{@@U}.
+
+This method can in particular be used to format the leading letter
+of an index entry using @emph{$command} instead of using the sort string letters
+returned by @code{sort_indices_by_letter}.
 
 @item $filename = $converter->node_information_filename($normalized, $label_element)
 @anchor{Texinfo@asis{::}Convert@asis{::}Converter $filename = $converter->node_information_filename($normalized@comma{} $label_element)}

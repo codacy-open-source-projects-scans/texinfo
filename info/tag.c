@@ -24,7 +24,7 @@ struct tag_handler
 {
   const char *name;
   size_t len;
-  int (*handler) (char *, struct text_buffer *);
+  int (*handler) (const char *, struct text_buffer *);
 };
 
 struct info_tag
@@ -83,7 +83,7 @@ tag_found_keyword (struct text_buffer *tmpbuf_ptr, char **kw)
 /* Handle the image tag.  */
 
 static int
-tag_image (char *text, struct text_buffer *outbuf)
+tag_image (const char *text, struct text_buffer *outbuf)
 {
   mbi_iterator_t iter;
   enum { state_kw, state_val, state_qstr, state_delim } state = state_kw;
@@ -100,70 +100,70 @@ tag_image (char *text, struct text_buffer *outbuf)
       size_t cur_len;
       
       if (mb_isspace (mbi_cur (iter)))
-	{
-	  if (state == state_val)
-	    {
+        {
+          if (state == state_val)
+            {
               struct info_tag *new_kw = tag_found_keyword (&tmpbuf, &kw);
               new_kw->next = tag_head;
               tag_head = new_kw;
               state = state_delim;
               continue;
-	    }
-	  if (state == state_delim)
-	    continue;
-	}
+            }
+          if (state == state_delim)
+            continue;
+        }
       else if (state == state_delim)
-	state = state_kw;
+        state = state_kw;
       cur_len = mb_len (mbi_cur (iter));
       cur_ptr = mbi_cur_ptr (iter);
       
       if (state == state_qstr && escaped)
-	{
-	  escaped = 0;
-	}
+        {
+          escaped = 0;
+        }
       else if (cur_len == 1)
-	{
-	  switch (*cur_ptr)
-	    {
-	    case '=':
-	      if (state != state_kw)
-		break;
-	      text_buffer_add_char (&tmpbuf, 0);
-	      kw = tmpbuf.base;
-	      if (!mbi_avail (iter))
-		break;
-	      mbi_advance (iter);
-	      state = state_val;
-	      cur_len = mb_len (mbi_cur (iter));
-	      cur_ptr = mbi_cur_ptr (iter);
-	      if (!(cur_len == 1 && *cur_ptr == '"'))
-		break;
-	      /* fall through */
+        {
+          switch (*cur_ptr)
+            {
+            case '=':
+              if (state != state_kw)
+                break;
+              text_buffer_add_char (&tmpbuf, 0);
+              kw = tmpbuf.base;
+              if (!mbi_avail (iter))
+                break;
+              mbi_advance (iter);
+              state = state_val;
+              cur_len = mb_len (mbi_cur (iter));
+              cur_ptr = mbi_cur_ptr (iter);
+              if (!(cur_len == 1 && *cur_ptr == '"'))
+                break;
+              /* fall through */
 
-	    case '"':
-	      if (state == state_val)
-		{
-		  state = state_qstr;
-		  continue;
-		}
-	      if (state == state_qstr)
-		{
-		  struct info_tag *new_kw = tag_found_keyword (&tmpbuf, &kw);
-		  new_kw->next = tag_head;
-		  tag_head = new_kw;
-		  state = state_delim;
-		  continue;
-		}
-	      break;
+            case '"':
+              if (state == state_val)
+                {
+                  state = state_qstr;
+                  continue;
+                }
+              if (state == state_qstr)
+                {
+                  struct info_tag *new_kw = tag_found_keyword (&tmpbuf, &kw);
+                  new_kw->next = tag_head;
+                  tag_head = new_kw;
+                  state = state_delim;
+                  continue;
+                }
+              break;
 
-	    case '\\':
-	      if (state == state_qstr)
-		{
-		  escaped = 1;
-		  continue;
-		}
-	    }
-	}
+            case '\\':
+              if (state == state_qstr)
+                {
+                  escaped = 1;
+                  continue;
+                }
+            }
+        }
       text_buffer_add_string (&tmpbuf, cur_ptr, cur_len);
     }
 
@@ -191,7 +191,7 @@ static struct tag_handler tagtab[] = {
 };
 
 static struct tag_handler *
-find_tag_handler (char *tag, size_t taglen)
+find_tag_handler (const char *tag, size_t taglen)
 {
   struct tag_handler *tp;
 
@@ -207,11 +207,11 @@ find_tag_handler (char *tag, size_t taglen)
    *INPUT points into a null-terminated area which may however contain other 
    null characters.  INPUT_END points to the end of this area. */
 int
-tag_expand (char **input, char *input_end,
+tag_expand (const char **input, const char *input_end,
             struct text_buffer *outbuf, int *is_index)
 {
-  char *p = *input;
-  char *q;
+  const char *p = *input;
+  const char *q;
   size_t len;
   struct tag_handler *tp;
 

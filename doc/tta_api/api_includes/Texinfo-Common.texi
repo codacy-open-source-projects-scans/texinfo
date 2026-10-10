@@ -99,18 +99,13 @@ outside of the module.
 Keys are customization options corresponding to @@-commands.  For example
 @code{frenchspacing} or @code{footnotestyle}.
 
-@item %null_device_file
-@anchor{Texinfo@asis{::}Common %null_device_file}
-
-Keys are null devices names, such as @code{/dev/null} or @code{NUL}.
-
 @item %texinfo_output_formats
 @anchor{Texinfo@asis{::}Common %texinfo_output_formats}
 @cindex @code{%texinfo_output_formats}
 
 Cannonical output formats that have associated conditionals.  In
-practice corresponds to @code{format_raw} @code{%block_commands} plus @code{info}
-and @code{plaintext}.
+practice corresponds to @code{format_raw} @code{%block_commands} plus @code{info},
+@code{plaintext} and @code{epub}.
 
 @end table
 
@@ -269,16 +264,6 @@ Find the parent root command (sectioning command or node) of a tree element.
 The @emph{$object} argument is optional, its @code{global_commands} field is used
 to continue through @code{@@insertcopying} if in a @code{@@copying}.
 
-@item $entry_content_element = index_content_element($element, $prefer_reference_element)
-@anchor{Texinfo@asis{::}Common $entry_content_element = index_content_element($element@comma{} $prefer_reference_element)}
-
-Return a Texinfo tree element corresponding to the content of the index
-entry associated to @emph{$element}.  If @emph{$prefer_reference_element} is set,
-prefer an untranslated element.  If the element is an index command like
-@code{@@cindex} or an @code{@@ftable} @code{@@item}, the content element is the argument
-of the command.  If the element is a definition line, the index entry
-element is based on the name and class.
-
 @item $encoding = input_file_name_encoding($name_encoding, $doc_encoding_for_input_file_name, $locale_encoding, $document, $input_file_encoding)
 @anchor{Texinfo@asis{::}Common $encoding = input_file_name_encoding($name_encoding@comma{} $doc_encoding_for_input_file_name@comma{} $locale_encoding@comma{} $document@comma{} $input_file_encoding)}
 @cindex @code{input_file_encoding}
@@ -301,16 +286,25 @@ Return true if the @emph{$tree} has content that could be formatted.
 @emph{$do_not_ignore_index_entries} is optional.  If set, index entries
 are considered to be formatted.
 
-@item $file = locate_include_file($customization_information, $file_path)
-@anchor{Texinfo@asis{::}Common $file = locate_include_file($customization_information@comma{} $file_path)}
+@item $result = is_null_device_file($file_name)
+@anchor{Texinfo@asis{::}Common $result = is_null_device_file($file_name)}
+
+Return 1 if @emph{$file_name} is the platform null device name, such as
+@code{/dev/null} or @code{NUL}.
+
+@item ($file, $use_inc_dir) = locate_include_file($file_path, \@@include_directories)
+@anchor{Texinfo@asis{::}Common ($file@comma{} $use_inc_dir) = locate_include_file($file_path@comma{} \@@include_directories)}
 @cindex @code{locate_include_file}
 
-Locate @emph{$file_path}.  If @emph{$file_path} is an absolute path or has @code{.}
-or @code{..} in the path directories it is checked that the path exists and is a
-file.  Otherwise, the file name in @emph{$file_path} is located in include
-directories also used to find texinfo files included in Texinfo documents.
-@emph{$file_path} should be a binary string.  @code{undef} is returned if the file was
-not found, otherwise the file found is returned as a binary string.
+Locate @emph{$file_path}.  Returns the file path found in @emph{$file} and set
+@emph{$use_inc_dir} to indicate if the include directories were used.  If
+@emph{$file_path} is an absolute path or has @code{.} or @code{..} in the path directories
+it is checked that the path exists and is a file.  In that case @emph{$use_inc_dir}
+is set to 0.  Otherwise, the file name in @emph{$file_path} is located in the
+include directories passed in @emph{\@@include_directories}.  In that case
+@emph{$use_inc_dir} is set to 1.  @emph{$file_path} should be a binary string.
+@code{undef} is returned if the file was not found, otherwise the file found is
+returned as a binary string.
 
 @item ($index_entry, $index_info) = lookup_index_entry($index_entry_info, $indices_information)
 @anchor{Texinfo@asis{::}Common ($index_entry@comma{} $index_info) = lookup_index_entry($index_entry_info@comma{} $indices_information)}

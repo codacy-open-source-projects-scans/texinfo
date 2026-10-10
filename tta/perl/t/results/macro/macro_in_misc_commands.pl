@@ -1,42 +1,46 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'macro_in_misc_commands'} = '*document_root C6
- *before_node_section C4
-  *@macro C3 l1
-  |EXTRA
-  |formal_args:A{}
-  |macro_name:{text}
-   *arguments_line C1
-    {macro_line: text \\n}
-   {raw:atext\\n}
-   *@end C1 l3
+ *before_node_section C1
+  *preamble_before_content C4
+   *@macro C3 l1
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  *@macro C3 l5
-  |EXTRA
-  |formal_args:A{}
-  |macro_name:{Top}
-   *arguments_line C1
-    {macro_line: Top\\n}
-   {raw:Top\\n}
-   *@end C1 l7
+   |formal_args:A{}
+   |macro_name:{text}
+    *arguments_line C1
+     {macro_line: text \\n}
+    {raw:atext\\n}
+    *@end C1 l3
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
+   *@macro C3 l5
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
+   |formal_args:A{}
+   |macro_name:{Top}
+    *arguments_line C1
+     {macro_line: Top\\n}
+    {raw:Top\\n}
+    *@end C1 l7
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l9 {Top}
  |EXTRA
  |identifier:{Top}

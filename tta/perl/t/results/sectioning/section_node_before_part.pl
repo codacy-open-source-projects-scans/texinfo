@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'section_node_before_part'} = '*document_root C4
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C1 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -50,8 +55,7 @@ $result_texis{'section_node_before_part'} = '
 ';
 
 
-$result_texts{'section_node_before_part'} = '
-1 section
+$result_texts{'section_node_before_part'} = '1 section
 =========
 
 part
@@ -86,7 +90,7 @@ list:
 $result_headings_list{'section_node_before_part'} = '';
 
 
-$result_converted{'info'}->{'section_node_before_part'} = 'This is , produced from .
+$result_converted{'info'}->{'section_node_before_part'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -104,7 +108,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'section_node_before_part'} = '<!DOCTYPE html>
@@ -130,7 +134,6 @@ span:hover a.copiable-link {visibility: visible}
 </head>
 
 <body>
-
 <div class="section-level-extent" id="Top">
 <h3 class="section" id="section"><span>1 section<a class="copiable-link" href="#section"> &para;</a></span></h3>
 
@@ -152,8 +155,8 @@ $result_converted_errors{'html'}->{'section_node_before_part'} = '* W |must spec
 ';
 
 
-$result_converted{'xml'}->{'section_node_before_part'} = '
-<node identifier="Top"><nodename> Top</nodename></node>
+$result_converted{'xml'}->{'section_node_before_part'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><node identifier="Top"><nodename> Top</nodename></node>
 <section><sectiontitle> section </sectiontitle>
 
 </section>

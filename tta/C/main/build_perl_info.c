@@ -34,6 +34,8 @@
    reason to overflow.
  */
 
+/* for intptr_t */
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -53,6 +55,7 @@
 #include "element_types.h"
 #include "types_data.h"
 #include "source_mark_types.h"
+#include "text.h"
 #include "tree_types.h"
 #include "global_commands_types.h"
 #include "option_types.h"
@@ -61,6 +64,8 @@
 /* CONVERTER sv_string_type CONVERTER_INITIALIZATION_INFO
    enum sv_string_type */
 #include "converter_types.h"
+/* HTML_CONVERTER_STATE */
+#include "html_converter_state.h"
 /* non_perl_* */
 #include "xs_utils.h"
 /* fatal */
@@ -68,8 +73,6 @@
 /* for associated_info_table elt_info_names
    add_to_element_list */
 #include "tree.h"
-/* for lookup_extra */
-#include "extra.h"
 /* for element_command_name */
 #include "builtin_commands.h"
 /* for c_hashmap_iterator_next_value */
@@ -83,8 +86,6 @@
 #include "customization_options.h"
 /* for debugging */
 #include "debug.h"
-/* for clear_error_message_list */
-#include "errors.h"
 #include "convert_to_texinfo.h"
 #include "document.h"
 #include "output_unit.h"
@@ -930,9 +931,11 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
         {
           static TEXT message;
           char *debug_str = print_element_debug (e, 1);
+          char *element_texi = convert_to_texinfo (e);
           text_init (&message);
           text_printf (&message, "parent %p sv not set in %s '%s'\n",
-                            e->e.c->parent, debug_str, convert_to_texinfo (e));
+                            e->e.c->parent, debug_str, element_texi);
+          free (element_texi);
           fatal (message.text);
           non_perl_free (debug_str);
         }
@@ -951,6 +954,7 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
 
   /* node */
   store_flag(isindex)
+  store_flag(added)
   /* node, anchor, float */
   store_flag(is_target)
   /* def_line for block/line for @def*x */
@@ -1367,9 +1371,9 @@ build_integer_stack (const INTEGER_STACK *integer_stack)
 
   av = newAV ();
 
-  for (i = 0; i < integer_stack->top; i++)
+  for (i = 0; i < integer_stack->number; i++)
     {
-      int value = integer_stack->stack[i];
+      int value = integer_stack->list[i];
       av_push (av, newSViv (value));
     }
   return av;
@@ -1566,7 +1570,7 @@ build_listoffloats_list (LISTOFFLOATS_TYPE_LIST *listoffloats)
   for (i = 0; i < listoffloats->number; i++)
     {
       size_t j;
-      LISTOFFLOATS_TYPE *listoffloat = &listoffloats->float_types[i];
+      LISTOFFLOATS_TYPE *listoffloat = &listoffloats->list[i];
       FLOAT_INFORMATION_LIST *float_list = &listoffloat->float_list;
       SV *float_type = newSVpv_utf8 (listoffloat->type, 0);
       AV *av = newAV ();
@@ -1992,7 +1996,6 @@ fill_document_hv (HV *hv, DOCUMENT *document)
   HV *hv_commands_info;
   HV *hv_index_names;
   HV *hv_listoffloats_list;
-  HV *hv_indices_sort_strings = 0;
   AV *av_internal_xref;
   HV *hv_identifiers_target;
   AV *av_labels_list;
@@ -2033,11 +2036,6 @@ fill_document_hv (HV *hv, DOCUMENT *document)
   if (document->sectioning_root)
     hv_sectioning_root = build_sectioning_root (document->sectioning_root);
 
-  if (document->indices_sort_strings)
-    hv_indices_sort_strings = build_indices_sort_strings (
-                                      document->indices_sort_strings,
-                                      hv_index_names);
-
 #define STORE(key, value) hv_store (hv, key, strlen (key), newRV_noinc ((SV *) value), 0)
 
   /* must be kept in sync with Texinfo::Document register keys */
@@ -2073,12 +2071,6 @@ fill_document_hv (HV *hv, DOCUMENT *document)
 
   STORE("headings_list", av_headings_list);
   document->modified_information &= ~F_DOCM_headings_list;
-
-  if (hv_indices_sort_strings)
-    {
-      STORE("index_entries_sort_strings", hv_indices_sort_strings);
-      document->modified_information &= ~F_DOCM_indices_sort_strings;
-    }
 #undef STORE
 }
 
@@ -2099,7 +2091,7 @@ build_document (DOCUMENT *document, int no_store)
     hv = document->hv;
   else
     {
-      /* we go there through parse_texi_line called with no_store set as is
+      /* we go there through parse_string called with no_store set as is
          the case in Translations.pm */
       /* reference retained in C, unless the document is not stored */
       hv = newHV ();
@@ -2149,7 +2141,7 @@ build_document (DOCUMENT *document, int no_store)
        /* This situation cannot happen with the current code.  Indeed,
           the parse_texi* functions lead either to a minimal document
           being built, with an hv set, or to a Perl only tree, with
-          no_store set (in parse_texi_line only) */
+          no_store set (in parse_string only) */
         document->hv = (void *) hv;
 
       /* a new reference returned to keep the reference held in C */
@@ -2522,6 +2514,9 @@ store_output_units_texinfo_tree (CONVERTER *converter, SV *converter_sv)
 
   if (converter->document)
     {
+      /* Used to access output_units_descriptors. */
+      HTML_CONVERTER_STATE *self_html = converter->html_converter;
+
  /* need to setup the Perl tree before rebuilding the output units as
     they refer to Perl root command elements */
       store_document_texinfo_tree (converter->document);
@@ -2537,7 +2532,7 @@ store_output_units_texinfo_tree (CONVERTER *converter, SV *converter_sv)
          information.
        */
           output_units_list_to_perl_hash (converter->document,
-            converter->output_units_descriptors[OUDT_external_nodes_units]);
+            self_html->output_units_descriptors[OUDT_external_nodes_units]);
 
           /* reuse "document_units" array if set */
           document_units_sv
@@ -2548,7 +2543,7 @@ store_output_units_texinfo_tree (CONVERTER *converter, SV *converter_sv)
             {
               AV *av_output_units = (AV *) SvRV (*document_units_sv);
               size_t output_units_descriptor
-                 = converter->output_units_descriptors[OUDT_units];
+                 = self_html->output_units_descriptors[OUDT_units];
 
               av_clear (av_output_units);
               if (!fill_output_units_descriptor_av (converter->document,
@@ -2570,23 +2565,24 @@ store_output_units_texinfo_tree (CONVERTER *converter, SV *converter_sv)
             {
               SV *output_units_sv
                 = build_output_units_list (converter->document,
-                   converter->output_units_descriptors[OUDT_units]);
+                   self_html->output_units_descriptors[OUDT_units]);
               hv_store (converter_hv, "document_units",
                         strlen ("document_units"),
                         output_units_sv, 0);
             }
 
           output_units_list_to_perl_hash (converter->document,
-                      converter->output_units_descriptors[OUDT_special_units]);
+                      self_html->output_units_descriptors[OUDT_special_units]);
           output_units_list_to_perl_hash (converter->document,
-            converter->output_units_descriptors[OUDT_associated_special_units]);
+            self_html->output_units_descriptors[OUDT_associated_special_units]);
 
           converter->document->modified_information &= ~F_DOCM_output_units;
         }
     }
 }
 
-/* Can be called to rebuild output units when the converter is not known.
+/* Can be called to (re)build the tree and rebuild output units when the
+   converter is not known or when there is only a Document.
    Output units are kept in the document, but are setup and destroyed by
    converters.  If converters accessed concurently documents, there may
    be trouble here (and in other codes too).
@@ -2628,7 +2624,7 @@ store_document_tree_output_units (DOCUMENT *document)
    document could be found and if HANDLER_ONLY is not set, else from
    a Perl document, if possible the one associated with C data, otherwise
    DOCUMENT_IN.
-   If the C document data was not stored, the tree will be only be
+   If the C document data was not stored, the tree will only be
    in DOCUMENT_IN. */
 SV *
 document_tree (SV *document_in, int handler_only)
@@ -2640,43 +2636,59 @@ document_tree (SV *document_in, int handler_only)
 
   document = get_sv_document_document (document_in, 0);
 
-  if (!handler_only && document)
+  if (document)
     {
-      store_document_tree_output_units (document);
-      if (document->tree && document->tree->sv)
-        return newSVsv (document->tree->sv);
-    }
-
-  if (document && document->tree)
-    {
-      build_new_base_element (document->tree);
-
-      /* in that case, we do not reuse the "tree" reference
-         in document->hv.  We therefore need to readd anything
-         relevant, in practice only "tree_document_descriptor" */
-      if (document->tree->sv)
+      if (document->tree)
         {
-          const char *document_key = "tree_document_descriptor";
-          HV *element_hv;
-          SV **element_document_descriptor_sv;
-
-          element_hv = (HV *) SvRV ((SV *) document->tree->sv);
-
-          element_document_descriptor_sv
-            = hv_fetch (element_hv, document_key, strlen (document_key), 0);
-
-          if (!element_document_descriptor_sv)
+          if (!handler_only)
             {
-              hv_store (element_hv, document_key, strlen (document_key),
-                        newSViv (document->descriptor), 0);
+              store_document_tree_output_units (document);
+            }
+          else
+            {
+              const char *document_key = "tree_document_descriptor";
+              HV *element_hv;
+              SV **element_document_descriptor_sv;
+
+              build_new_base_element (document->tree);
+
+          /* in that case, we do not reuse the "tree" reference
+             in document->hv.  We therefore need to readd anything
+             relevant, in practice only "tree_document_descriptor" */
+
+              element_hv = (HV *) SvRV ((SV *) document->tree->sv);
+
+              element_document_descriptor_sv
+               = hv_fetch (element_hv, document_key, strlen (document_key), 0);
+
+              if (!element_document_descriptor_sv)
+                {
+                  hv_store (element_hv, document_key, strlen (document_key),
+                            newSViv (document->descriptor), 0);
+                }
+              /* the element_document_descriptor_sv may already exist if
+                 $document->tree(1) is called twice, which should probably
+                 never be particularly useful, but is not frowned upon either.
+                 In 2026 it never happened in the tests.
+               */
+              else
+                {
+                  size_t stored_document_descriptor
+                    = (size_t) SvIV (*element_document_descriptor_sv);
+                  if (stored_document_descriptor != document->descriptor)
+                    fatal ("Handle only tree inconsistent document descriptor");
+                  /* to check that it never happens
+                  fatal ("tree_document_descriptor already existing");
+                   */
+                }
             }
           return newSVsv (document->tree->sv);
         }
-    }
 
-  /* Prefer the tree of the Perl document associated to the C data */
-  if (document)
-    sv_reference = hv_fetch (document->hv, "tree", strlen ("tree"), 0);
+  /* No C tree.
+     Prefer the tree of the Perl document associated to the C data */
+      sv_reference = hv_fetch (document->hv, "tree", strlen ("tree"), 0);
+    }
 
   if (!sv_reference)
     {
@@ -2900,6 +2912,7 @@ find_idx_name_entry_number_sv (HV *indices_information_hv,
   return index_entry_sv;
 }
 
+/* Currently unused */
 HV *
 build_indices_sort_strings (const INDICES_SORT_STRINGS *indices_sort_strings,
                             HV *indices_information_hv)
@@ -3285,6 +3298,13 @@ pass_document_sv_to_converter_sv (SV *converter_sv, SV *document_in)
       hv_store (converter_hv, "document", strlen ("document"),
                 newSVsv (document_in), 0);
     }
+
+  hv_delete (converter_hv, "sorted_indices_by_letter",
+             strlen ("sorted_indices_by_letter"), G_DISCARD);
+  hv_delete (converter_hv, "sorted_indices_by_index",
+             strlen ("sorted_indices_by_index"), G_DISCARD);
+  hv_delete (converter_hv, "index_entries_sort_strings",
+             strlen ("index_entries_sort_strings"), G_DISCARD);
 }
 
 void
@@ -3416,6 +3436,8 @@ html_build_buttons_specification (CONVERTER *converter,
   buttons_av = newAV ();
 
   buttons->av = buttons_av;
+  HTML_CONVERTER_STATE *self_html = converter
+                                    ? converter->html_converter : NULL;
 
   for (i = 0; i < buttons->number; i++)
     {
@@ -3426,8 +3448,8 @@ html_build_buttons_specification (CONVERTER *converter,
                                          &user_function_number);
       buttons->BIT_user_function_number += user_function_number;
 
-      if (converter)
-        converter->external_references_number += user_function_number;
+      if (self_html)
+        self_html->external_references_number += user_function_number;
 
       button->sv = button_sv;
 
@@ -3532,8 +3554,7 @@ build_sv_option (const OPTION *option, CONVERTER *converter)
    This is only used when there is no converter, when a function is called with
    a class name only and returns an option hash */
 SV *
-build_sv_options_from_options_list (const OPTIONS_LIST *options_list,
-                                    CONVERTER *converter)
+build_sv_options_from_options_list (const OPTIONS_LIST *options_list)
 {
   size_t i;
   HV *options_hv;
@@ -3547,7 +3568,7 @@ build_sv_options_from_options_list (const OPTIONS_LIST *options_list,
       size_t index = options_list->list[i] -1;
       const OPTION *option = options_list->sorted_options[index];
       const char *key = option->name;
-      SV *option_sv = build_sv_option (option, converter);
+      SV *option_sv = build_sv_option (option, 0);
 
       /* we store all values as they appear, the later overriding earlier
          values, and do not treat undef nor C option configured field
@@ -3588,8 +3609,8 @@ build_deprecated_directories (
 
 /* Build a converter info hash reference based on CONF */
 SV *
-build_sv_converter_info_from_converter_initialization_info
-  (const CONVERTER_INITIALIZATION_INFO *conf, CONVERTER *converter)
+build_sv_converter_info_from_converter_initialization_info (
+                             const CONVERTER_INITIALIZATION_INFO *conf)
 {
   SV *result;
   HV *deprecated_directories_hv;
@@ -3598,7 +3619,7 @@ build_sv_converter_info_from_converter_initialization_info
 
   dTHX;
 
-  result = build_sv_options_from_options_list (&conf->conf, converter);
+  result = build_sv_options_from_options_list (&conf->conf);
 
   result_hv = (HV *) SvRV (result);
 #define STORE(key, sv) hv_store (result_hv, key, strlen (key), sv, 0);
@@ -3831,7 +3852,7 @@ build_output_files_unclosed_files (HV *hv,
          interface.  Therefore here, the unclosed file name is registered,
          the stream can then be passed to Perl through a call of
          the XS interface
-         Texinfo::Convert::ConvertConverterXS::get_unclosed_stream.
+         Texinfo::Convert::ConvertConverterXS::XS_get_unclosed_stream.
 
          Register that there is an unclosed file from XS by associating
          with undef; if from Perl, it would be associated with a file handle */

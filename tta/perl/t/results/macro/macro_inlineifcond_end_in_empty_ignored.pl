@@ -1,26 +1,30 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'macro_inlineifcond_end_in_empty_ignored'} = '*document_root C1
  *before_node_section C4
-  *@macro C3 l1
-  |EXTRA
-  |formal_args:A{}
-  |macro_name:{setargendignored}
-   *arguments_line C1
-    {macro_line: setargendignored\\n}
-   {raw:ag,\\n}
-   *@end C1 l3
+  *preamble_before_content C1
+   *@macro C3 l1
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
+   |formal_args:A{}
+   |macro_name:{setargendignored}
+    *arguments_line C1
+     {macro_line: setargendignored\\n}
+    {raw:ag,\\n}
+    *@end C1 l3
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
   *paragraph C3
    {Toto }
    *@inlineifset C2 l4

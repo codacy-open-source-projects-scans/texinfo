@@ -27,6 +27,7 @@
 #include "echo-area.h"
 #include "footnotes.h"
 #include "variables.h"
+#include "signals.h"
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -277,9 +278,6 @@ info_read_and_dispatch (void)
     }
 }
 
-/* Found in signals.c */
-extern void initialize_info_signal_handler (void );
-
 /* Initialize terminal, read configuration file and set key bindings. */
 void
 initialize_terminal_and_keymaps (char *init_file)
@@ -412,6 +410,7 @@ fill_input_buffer (int wait)
       int success;
       do
         {
+          maybe_update_after_signal ();
           success = info_gather_typeahead (wait);
         }
       while (!success && errno == EINTR); /* Try again if the read was

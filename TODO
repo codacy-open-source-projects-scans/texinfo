@@ -25,20 +25,14 @@ If you are interested in working on any of these, email bug-texinfo@gnu.org.
     https://lists.gnu.org/archive/html/bug-texinfo/2003-11/msg00092.html
     An issue with the proposal is that glossary definitions could be quite
     long and not suitable for an optional argument.
-  - related to the @documentinfo command, add more metadata, in particular
-    for books but not only:
-     * make it easier to gather author metadata
-     * short information on licence
-
-    It could be relevant to have up to three dates:
-     * Last modified date.  In EPUB the dcterms:modified property.  Defaults
-       to the generation date;
+  - related to the @documentinfo command, add more metadata:
+     * short information on licence (shorter than @copying), stating the
+       licence only, with an @-command?
      * a date corresponding to the modification of the Texinfo manual (what is
        currectly set with automake and accessible as @value{UPDATED}),
        with default set with the modification timestamp of the main texinfo
        file (or the newest for the main and all @include'd files);
-     * a publication date.  In EPUB the dc:date optional element, to be set
-       manually by the user.
+       could be the "created" term in Dublin Core.
 
   - unique identifiers/way to disambiguate manuals with the same name?
   - reflection on guide/topic document structure and pluggable content
@@ -72,6 +66,16 @@ If you are interested in working on any of these, email bug-texinfo@gnu.org.
       scale to be used by Emacs.
      https://lists.gnu.org/archive/html/emacs-devel/2025-01/msg00339.html
      https://lists.gnu.org/archive/html/emacs-devel/2025-02/msg00089.html
+   - adding image for the Texinfo manual
+    https://lists.gnu.org/archive/html/help-texinfo/2020-11/msg00154.html
+  - Tests: reference test files should have LF end of lines only.
+    Native end of lines are output for text-based output formats (most
+    formats except Info).  If tests are regenerated using current Perl code
+    (in tta/perl/t/test_utils.pl) and cp (in tta/tests/run_parser_all.sh)
+    on platforms where CRLF are output (such as Windows), the newly
+    regenerated reference files will not have LF end of lines anymore.
+    This task could be handled by developpers on platforms where CRLF are
+    output.
 
 * TeX:
   - Index above @item allows page break.
@@ -87,10 +91,11 @@ If you are interested in working on any of these, email bug-texinfo@gnu.org.
   - Include hyperlink \special's in the DVI output for xdvi, etc.
   - clear out support for \ as the index file escape character (instead
     of @).
+  - some issue with image file set with @value?
+   https://lists.gnu.org/archive/html/help-texinfo/2020-11/msg00116.html
 
 * texindex:
-  - check if messages are translated via po/POTFILES.in.  check if twjr
-    format can be supported in po/Makevars and "make po-check" target.
+  - check if messages are translated via po/POTFILES.in.
 
 * Doc:
   - Verify/proofread Documentation of the HTML customization.
@@ -159,7 +164,8 @@ After next release:
 
 * texi2any:
   Remove TEXINFO_DTD_VERSION and TXI_MARKUP_NO_SECTION_EXTENT customization
-  variables completely (leave at least for one release after X.Y).
+  variables completely from texi2any and from txivarcheck (leave at least
+  for one release after X.Y).
 
 * texi2any, Texinfo TeX:
   Remove completely @xml, @ifxml and @ifnotxml (leave at least for a few
@@ -172,6 +178,22 @@ After next release:
   few releases after X.Y).
   Decide at that time if the Perl modules in Example and the formats in
   texi2any formats_table should be removed.
+
+* texi2any:
+  Remove completly insert_nodes_for_sectioning_commands as tree
+  transformation, in texi2any, in valid transformations names
+  and transformation flags.  Leave the effect for a few releases (for
+  the sake of outputs other than Info and HTML, for Info and HTML it is
+  already the default).  Leave the name as a valid transformation name
+  for some more years after X.Y even if it has no effect anymore.
+
+* tta:
+  The following gnulib modules are only needed for
+  tta/C/main/unicode-collation, and could be considered for removal
+  if unicode-collation is not shipped in texinfo:
+   unictype/property-unified-ideograph uninorm/nfd
+   uninorm/u32-normalize unistr/u8-to-u32 unistr/u32-strdup
+   and uchar-h-c23 instead of uchar-h (although it could be more robust)
 
 ***********************************************************************
 

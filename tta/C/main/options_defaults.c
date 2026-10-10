@@ -87,12 +87,12 @@ set_converter_customization_options_defaults (OPTIONS *options)
 {
   option_set_conf (&options->TOP_NODE_UP, -2, "(dir)");
   option_set_conf (&options->BASEFILENAME_LENGTH, 255-10, 0);
-  option_set_conf (&options->DOC_ENCODING_FOR_INPUT_FILE_NAME, 1, 0);
-  option_set_conf (&options->DOC_ENCODING_FOR_OUTPUT_FILE_NAME, 0, 0);
-  option_set_conf (&options->IMAGE_LINK_PREFIX, -2, 0);
   option_set_conf (&options->CASE_INSENSITIVE_FILENAMES, 0, 0);
   option_set_conf (&options->DEBUG, 0, 0);
+  option_set_conf (&options->DOC_ENCODING_FOR_INPUT_FILE_NAME, 1, 0);
+  option_set_conf (&options->DOC_ENCODING_FOR_OUTPUT_FILE_NAME, 0, 0);
   option_set_conf (&options->HANDLER_FATAL_ERROR_LEVEL, 100, 0);
+  option_set_conf (&options->IMAGE_LINK_PREFIX, -2, 0);
   option_set_conf (&options->TEST, 0, 0);
   option_set_conf (&options->TEXTCONTENT_COMMENT, -1, 0);
   option_set_conf (&options->TEXINFO_DTD_VERSION, -2, "7.3");
@@ -140,6 +140,7 @@ set_converter_customization_options_defaults (OPTIONS *options)
   option_set_conf (&options->HEADER_IN_TABLE, -1, 0);
   option_set_conf (&options->HIGHLIGHT_SYNTAX, -2, 0);
   option_set_conf (&options->HIGHLIGHT_SYNTAX_DEFAULT_LANGUAGE, -2, 0);
+  option_set_conf (&options->HTML_COPY_IMAGES, 0, 0);
   option_set_conf (&options->HTML_MATH, -2, 0);
   option_set_conf (&options->HTML_ROOT_ELEMENT_ATTRIBUTES, -2, 0);
   option_set_conf (&options->HTMLXREF_FILE, -2, 0);
@@ -148,7 +149,7 @@ set_converter_customization_options_defaults (OPTIONS *options)
   option_set_conf (&options->INDEX_ENTRY_COLON, -2, 0);
   option_set_conf (&options->INDEX_SPECIAL_CHARS_WARNING, -1, 0);
   option_set_conf (&options->INFO_JS_DIR, -2, 0);
-  option_set_conf (&options->INFO_SPECIAL_CHARS_QUOTE, -2, 0);
+  option_set_conf (&options->INFO_SPECIAL_CHARS_QUOTE, -1, 0);
   option_set_conf (&options->INFO_SPECIAL_CHARS_WARNING, -1, 0);
   option_set_conf (&options->INFO_MATH_IMAGES, -1, 0);
   option_set_conf (&options->IGNORE_REF_TO_TOP_NODE_UP, -1, 0);
@@ -157,6 +158,7 @@ set_converter_customization_options_defaults (OPTIONS *options)
   option_set_conf (&options->JS_WEBLABELS, -2, 0);
   option_set_conf (&options->JS_WEBLABELS_FILE, -2, 0);
   option_set_conf (&options->LATEX_FLOATS_FILE_EXTENSION, -2, "tfl");
+  option_set_conf (&options->LATEX_TAGGED_PDF, -2, 0);
   option_set_conf (&options->LOCALE_ENCODING, -2, 0);
   option_set_conf (&options->L2H_CLEAN, -1, 0);
   option_set_conf (&options->L2H_FILE, -2, 0);
@@ -214,7 +216,6 @@ set_converter_customization_options_defaults (OPTIONS *options)
   option_set_conf (&options->USE_NUMERIC_ENTITY, -1, 0);
   option_set_conf (&options->USE_SETFILENAME_EXTENSION, -1, 0);
   option_set_conf (&options->USE_TITLEPAGE_FOR_TITLE, -1, 0);
-  option_set_conf (&options->USE_UNIDECODE, -1, 0);
   option_set_conf (&options->USE_XML_SYNTAX, -1, 0);
   option_set_conf (&options->VERTICAL_HEAD_NAVIGATION, -1, 0);
   option_set_conf (&options->WORDS_IN_PAGE, -1, 0);
@@ -231,12 +232,12 @@ add_converter_customization_options_defaults (OPTIONS_LIST *options_list)
 {
   add_option_value (options_list, "TOP_NODE_UP", -2, "(dir)");
   add_option_value (options_list, "BASEFILENAME_LENGTH", 255-10, 0);
-  add_option_value (options_list, "DOC_ENCODING_FOR_INPUT_FILE_NAME", 1, 0);
-  add_option_value (options_list, "DOC_ENCODING_FOR_OUTPUT_FILE_NAME", 0, 0);
-  add_option_value (options_list, "IMAGE_LINK_PREFIX", -2, 0);
   add_option_value (options_list, "CASE_INSENSITIVE_FILENAMES", 0, 0);
   add_option_value (options_list, "DEBUG", 0, 0);
+  add_option_value (options_list, "DOC_ENCODING_FOR_INPUT_FILE_NAME", 1, 0);
+  add_option_value (options_list, "DOC_ENCODING_FOR_OUTPUT_FILE_NAME", 0, 0);
   add_option_value (options_list, "HANDLER_FATAL_ERROR_LEVEL", 100, 0);
+  add_option_value (options_list, "IMAGE_LINK_PREFIX", -2, 0);
   add_option_value (options_list, "TEST", 0, 0);
   add_option_value (options_list, "TEXTCONTENT_COMMENT", -1, 0);
   add_option_value (options_list, "TEXINFO_DTD_VERSION", -2, "7.3");
@@ -284,6 +285,7 @@ add_converter_customization_options_defaults (OPTIONS_LIST *options_list)
   add_option_value (options_list, "HEADER_IN_TABLE", -1, 0);
   add_option_value (options_list, "HIGHLIGHT_SYNTAX", -2, 0);
   add_option_value (options_list, "HIGHLIGHT_SYNTAX_DEFAULT_LANGUAGE", -2, 0);
+  add_option_value (options_list, "HTML_COPY_IMAGES", 0, 0);
   add_option_value (options_list, "HTML_MATH", -2, 0);
   add_option_value (options_list, "HTML_ROOT_ELEMENT_ATTRIBUTES", -2, 0);
   add_option_value (options_list, "HTMLXREF_FILE", -2, 0);
@@ -292,7 +294,7 @@ add_converter_customization_options_defaults (OPTIONS_LIST *options_list)
   add_option_value (options_list, "INDEX_ENTRY_COLON", -2, 0);
   add_option_value (options_list, "INDEX_SPECIAL_CHARS_WARNING", -1, 0);
   add_option_value (options_list, "INFO_JS_DIR", -2, 0);
-  add_option_value (options_list, "INFO_SPECIAL_CHARS_QUOTE", -2, 0);
+  add_option_value (options_list, "INFO_SPECIAL_CHARS_QUOTE", -1, 0);
   add_option_value (options_list, "INFO_SPECIAL_CHARS_WARNING", -1, 0);
   add_option_value (options_list, "INFO_MATH_IMAGES", -1, 0);
   add_option_value (options_list, "IGNORE_REF_TO_TOP_NODE_UP", -1, 0);
@@ -301,6 +303,7 @@ add_converter_customization_options_defaults (OPTIONS_LIST *options_list)
   add_option_value (options_list, "JS_WEBLABELS", -2, 0);
   add_option_value (options_list, "JS_WEBLABELS_FILE", -2, 0);
   add_option_value (options_list, "LATEX_FLOATS_FILE_EXTENSION", -2, "tfl");
+  add_option_value (options_list, "LATEX_TAGGED_PDF", -2, 0);
   add_option_value (options_list, "LOCALE_ENCODING", -2, 0);
   add_option_value (options_list, "L2H_CLEAN", -1, 0);
   add_option_value (options_list, "L2H_FILE", -2, 0);
@@ -358,7 +361,6 @@ add_converter_customization_options_defaults (OPTIONS_LIST *options_list)
   add_option_value (options_list, "USE_NUMERIC_ENTITY", -1, 0);
   add_option_value (options_list, "USE_SETFILENAME_EXTENSION", -1, 0);
   add_option_value (options_list, "USE_TITLEPAGE_FOR_TITLE", -1, 0);
-  add_option_value (options_list, "USE_UNIDECODE", -1, 0);
   add_option_value (options_list, "USE_XML_SYNTAX", -1, 0);
   add_option_value (options_list, "VERTICAL_HEAD_NAVIGATION", -1, 0);
   add_option_value (options_list, "WORDS_IN_PAGE", -1, 0);
@@ -455,7 +457,7 @@ set_multiple_at_command_options_defaults (OPTIONS *options)
   option_set_conf (&options->microtype, -2, 0);
   option_set_conf (&options->oddheading, -2, 0);
   option_set_conf (&options->oddfooting, -2, 0);
-  option_set_conf (&options->paragraphindent, -2, "3");
+  option_set_conf (&options->paragraphindent, 3, 0);
   option_set_conf (&options->shortcontents, 0, 0);
   option_set_conf (&options->summarycontents, 0, 0);
   option_set_conf (&options->urefbreakstyle, -2, "after");
@@ -485,7 +487,7 @@ add_multiple_at_command_options_defaults (OPTIONS_LIST *options_list)
   add_option_value (options_list, "microtype", -2, 0);
   add_option_value (options_list, "oddheading", -2, 0);
   add_option_value (options_list, "oddfooting", -2, 0);
-  add_option_value (options_list, "paragraphindent", -2, "3");
+  add_option_value (options_list, "paragraphindent", 3, 0);
   add_option_value (options_list, "shortcontents", 0, 0);
   add_option_value (options_list, "summarycontents", 0, 0);
   add_option_value (options_list, "urefbreakstyle", -2, "after");
@@ -548,6 +550,7 @@ add_program_cmdline_options_defaults (OPTIONS_LIST *options_list)
 void
 set_program_customization_options_defaults (OPTIONS *options)
 {
+  option_set_conf (&options->AUTO_SECTION_NODE, -1, 0);
   option_set_conf (&options->CHECK_NORMAL_MENU_STRUCTURE, 1, 0);
   option_set_conf (&options->CHECK_MISSING_MENU_ENTRY, 1, 0);
   option_set_conf (&options->DUMP_STRUCTURE, -2, 0);
@@ -563,6 +566,7 @@ set_program_customization_options_defaults (OPTIONS *options)
 void
 add_program_customization_options_defaults (OPTIONS_LIST *options_list)
 {
+  add_option_value (options_list, "AUTO_SECTION_NODE", -1, 0);
   add_option_value (options_list, "CHECK_NORMAL_MENU_STRUCTURE", 1, 0);
   add_option_value (options_list, "CHECK_MISSING_MENU_ENTRY", 1, 0);
   add_option_value (options_list, "DUMP_STRUCTURE", -2, 0);

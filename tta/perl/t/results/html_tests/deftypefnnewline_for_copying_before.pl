@@ -1,75 +1,76 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'deftypefnnewline_for_copying_before'} = '*document_root C5
- *before_node_section C5
-  {empty_line:\\n}
-  *@deftypefnnewline C1 l2
-  |EXTRA
-  |global_command_number:{1}
-  |misc_args:A{on}
-   *line_arg C3
-    {spaces_before_argument: }
-    {on}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  *@copying C3 l4
-   *arguments_line C1
-    *block_line_arg C1
-     {spaces_before_argument:\\n}
-   *@deftypefun C3 l5
-    *def_line C1 l5
-    |EXTRA
-    |def_command:{deftypefun}
-    |def_index_element:
-     |* C1
-      |*def_line_arg C1
-       |{NAME}
-    |element_region:{copying}
-    |index_entry:I{fn,1}
-    |original_def_cmdname:{deftypefun}
-     *block_line_arg C9
-      (i){spaces_before_argument: }
-      *def_category C1
-      |INFO
-      |inserted:{1}
-       *def_line_arg C1
-        {Function}
-      {spaces: }
-      *def_type C1
-       *def_line_arg C1
-        {TYPE}
-      {spaces: }
-      *def_name C1
-       *def_line_arg C1
-        {NAME}
-      {spaces: }
-      *def_typearg C1
-       *def_line_arg C1
-        {ARGUMENTS...}
-      {spaces_after_argument:\\n}
-    *def_item C1
-     *paragraph C1
-      {BODY-OF-DESCRIPTION\\n}
-    *@end C1 l7
-    |EXTRA
-    |text_arg:{deftypefun}
-     *line_arg C3
-      {spaces_before_argument: }
-      {deftypefun}
-      {spaces_after_argument:\\n}
-   *@end C1 l8
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C4
+   *@deftypefnnewline C1 l2
    |EXTRA
-   |text_arg:{copying}
+   |global_command_number:{1}
+   |misc_args:A{on}
     *line_arg C3
      {spaces_before_argument: }
-     {copying}
+     {on}
      {spaces_after_argument:\\n}
-  {empty_line:\\n}
+   {empty_line:\\n}
+   *@copying C3 l4
+    *arguments_line C1
+     *block_line_arg C1
+      {spaces_before_argument:\\n}
+    *@deftypefun C3 l5
+     *def_line C1 l5
+     |EXTRA
+     |def_command:{deftypefun}
+     |element_region:{copying}
+     |index_entry:I{fn,1}
+     |original_def_cmdname:{deftypefun}
+      *block_line_arg C9
+       (i){spaces_before_argument: }
+       *def_category C1
+       |INFO
+       |inserted:{1}
+        *def_line_arg C1
+         {Function}
+       {spaces: }
+       *def_type C1
+        *def_line_arg C1
+         {TYPE}
+       {spaces: }
+       *def_name C1
+        *def_line_arg C1
+         {NAME}
+       {spaces: }
+       *def_typearg C1
+        *def_line_arg C1
+         {ARGUMENTS...}
+       {spaces_after_argument:\\n}
+     *def_item C1
+      *paragraph C1
+       {BODY-OF-DESCRIPTION\\n}
+     *@end C1 l7
+     |EXTRA
+     |text_arg:{deftypefun}
+      *line_arg C3
+       {spaces_before_argument: }
+       {deftypefun}
+       {spaces_after_argument:\\n}
+    *@end C1 l8
+    |EXTRA
+    |text_arg:{copying}
+     *line_arg C3
+      {spaces_before_argument: }
+      {copying}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l10 {Top}
  |EXTRA
  |identifier:{Top}
@@ -115,10 +116,6 @@ $result_tree_text{'deftypefnnewline_for_copying_before'} = '*document_root C5
    *def_line C1 l16
    |EXTRA
    |def_command:{deftypefun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{something}
    |element_node:{chap}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deftypefun}
@@ -179,7 +176,6 @@ do something with input
 
 
 $result_texts{'deftypefnnewline_for_copying_before'} = '
-
 
 top
 ***
@@ -266,7 +262,6 @@ strong.def-name {font-family: monospace; font-weight: bold}
 <body>
 
 
-
 <div class="top-level-extent" id="Top">
 <p class="nav-panel">
 <span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">Chapter</a></span></span><span class="nav-button"> &nbsp; </span></p>
@@ -293,6 +288,11 @@ strong.def-name {font-family: monospace; font-weight: bold}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'deftypefnnewline_for_copying_before'} = 'fn:
+ NAME
+ something
 ';
 
 1;

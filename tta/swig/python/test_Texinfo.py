@@ -54,11 +54,7 @@ def sectioning_command_output(element):
 
 if __name__ == '__main__':
     sys.stderr.write("Starting\n")
-    # FIXME there is an error with Perl embedding:
-    # python: symbol lookup error: ..../Cwd.so: undefined symbol: Perl_xs_handshake
-    # Therefore, so do not to start an embedded interpreter at runtime.
-    #Texinfo.setup(1)
-    Texinfo.setup(1, Texinfo.txi_interpreter_use_no_interpreter)
+    Texinfo.setup(1)
     sys.stderr.write("Texinfo interface is now setup\n")
     input_file_name = '../../../doc/texinfo.texi'
     #input_file_name = '../../../tta/perl/t/input_files/simplest.texi'
@@ -73,7 +69,7 @@ if __name__ == '__main__':
     sys.stderr.write("Parsing done ("+str(status)+")\n")
 
     Texinfo.set_document_options(document)
-    Texinfo.complete_document(document, Texinfo.STTF_nodes_tree | Texinfo.STTF_floats | Texinfo.STTF_setup_index_entries_sort_strings, 0)
+    Texinfo.complete_transform_document(document, Texinfo.STTF_nodes_tree | Texinfo.STTF_floats, 0)
     Texinfo.output_document_error_messages(document)
     sys.stderr.write("Structuring done\n")
 

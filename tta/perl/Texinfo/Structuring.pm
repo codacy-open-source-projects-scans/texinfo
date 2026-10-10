@@ -18,10 +18,11 @@
 
 package Texinfo::Structuring;
 
+use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '7.3dev';
+use Carp qw(cluck);
 
 use Texinfo::XSLoader;
 
@@ -42,15 +43,13 @@ use Texinfo::Convert::NodeNameNormalization;
 # for translations related to new master menu
 use Texinfo::Translations;
 
+our $VERSION = '7.3dev';
+
 BEGIN {
-  my $shared_library_name = "StructuringXS";
-  if (!Texinfo::XSLoader::XS_structuring_enabled()) {
-    undef $shared_library_name;
-  }
   Texinfo::XSLoader::init (
     "Texinfo::Structuring",
     "Texinfo::StructuringNonXS",
-    $shared_library_name,
+    'StructuringXS',
     undef,
     ['texinfo', 'texinfoxs'],
   );
@@ -376,21 +375,23 @@ sub _insert_menu_comment_content($$$;$) {
      Texinfo::TreeElement::new({'text' => "\n", 'type' => 'empty_line'});
   }
 
-  push @{$preformatted->{'contents'}},
-    @{$inserted_element->{'contents'}},
-    Texinfo::TreeElement::new({'text' => "\n", 'type' => 'empty_line'}),
-    Texinfo::TreeElement::new({'text' => "\n", 'type' => 'empty_line'});
+  # no contents if a section has a missing argument
+  if (exists($inserted_element->{'contents'})) {
+    push @{$preformatted->{'contents'}},
+      @{$inserted_element->{'contents'}},
+      Texinfo::TreeElement::new({'text' => "\n", 'type' => 'empty_line'}),
+      Texinfo::TreeElement::new({'text' => "\n", 'type' => 'empty_line'});
 
-  foreach my $content (@{$inserted_element->{'contents'}}) {
-    $content->{'parent'} = $preformatted unless(exists($content->{'text'}));
+    foreach my $content (@{$inserted_element->{'contents'}}) {
+      $content->{'parent'} = $preformatted unless(exists($content->{'text'}));
+    }
   }
   splice (@$menu_contents, $position, 0, $menu_comment);
 }
 
 # Creates a new @menu element based on $NODE sectioning information.
 # $LANG_TRANSLATIONS and $DEBUG are only used for the top menu.
-sub new_complete_node_menu($;$$$)
-{
+sub new_complete_node_menu($;$$$) {
   my ($node_relations, $lang_translations, $debug, $use_sections) = @_;
 
   my @node_childs
@@ -440,7 +441,7 @@ sub new_complete_node_menu($;$$$)
            = Texinfo::Translations::gdt('Part: {part_title}',
                                         $lang_translations,
                                      {'part_title' => $part_title_copy},
-                                         $debug);
+                                         undef, $debug);
           _insert_menu_comment_content($new_menu->{'contents'}, $content_index,
                                        $part_title, ($content_index == 0));
           $content_index++;
@@ -450,7 +451,7 @@ sub new_complete_node_menu($;$$$)
             and $appendix_commands{$child_section->{'cmdname'}}) {
           my $appendix_title
              = Texinfo::Translations::gdt('Appendices',
-                                 $lang_translations, undef, $debug);
+                                 $lang_translations, undef, undef, $debug);
           _insert_menu_comment_content($new_menu->{'contents'}, $content_index,
                                        $appendix_title,
                                        ($content_index == 0 or $part_added));
@@ -508,7 +509,7 @@ sub new_detailmenu($$$$$$;$$) {
     my $master_menu_title
            = Texinfo::Translations::gdt(' --- The Detailed Node Listing ---',
                   $lang_translations,
-                  undef, $debug);
+                  undef, undef, $debug);
     my @master_menu_title_contents;
     foreach my $content (@{$master_menu_title->{'contents'}}) {
       $content->{'parent'} = $first_preformatted

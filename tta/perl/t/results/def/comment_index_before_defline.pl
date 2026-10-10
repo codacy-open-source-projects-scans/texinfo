@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'comment_index_before_defline'} = '*document_root C1
  *before_node_section C2
@@ -34,10 +37,6 @@ $result_tree_text{'comment_index_before_defline'} = '*document_root C1
    *@defline C1 l6
    |EXTRA
    |def_command:{defline}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{b}
    |original_def_cmdname:{defline}
     *line_arg C9
      {spaces_before_argument: }
@@ -102,6 +101,10 @@ $result_indices_sort_strings{'comment_index_before_defline'} = 'cp:
 $result_converted{'plaintext'}->{'comment_index_before_defline'} = ' -- a: b c d
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'comment_index_before_defline'} = 'cp:
+ entry
+';
+
 
 $result_converted{'html'}->{'comment_index_before_defline'} = '<!DOCTYPE html>
 <html>
@@ -137,6 +140,10 @@ strong.def-name {font-family: monospace; font-weight: bold}
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'comment_index_before_defline'} = 'cp:
+ entry
+';
+
 $result_converted_errors{'html'}->{'comment_index_before_defline'} = '* W |must specify a title with a title command or @top
  warning: must specify a title with a title command or @top
 
@@ -148,6 +155,13 @@ $result_converted{'latex'}->{'comment_index_before_defline'} = '\\documentclass{
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -233,6 +247,7 @@ $result_converted{'latex'}->{'comment_index_before_defline'} = '\\documentclass{
 \\index[cp]{entry@entry}%
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{b \\EmbracOn{}\\textnormal{\\textsl{c d}}\\EmbracOff{}}& [a]

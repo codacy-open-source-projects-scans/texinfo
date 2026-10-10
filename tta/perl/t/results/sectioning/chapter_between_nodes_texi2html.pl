@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'chapter_between_nodes_texi2html'} = '*document_root C6
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -54,6 +58,8 @@ $result_tree_text{'chapter_between_nodes_texi2html'} = '*document_root C6
   {empty_line:\\n}
  *@chapter C4 l9 {Chapter}
  |EXTRA
+ |identifier:{Chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -190,7 +196,7 @@ list:
 $result_headings_list{'chapter_between_nodes_texi2html'} = '';
 
 
-$result_converted{'info'}->{'chapter_between_nodes_texi2html'} = 'This is , produced from .
+$result_converted{'info'}->{'chapter_between_nodes_texi2html'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: section node,  Up: (dir)
@@ -220,6 +226,7 @@ section.
 
 Tag Table:
 Node: Top27
+Ref: Chapter144
 Node: section node177
 
 End Tag Table
@@ -228,7 +235,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 
 $result_converted{'html'}->{'chapter_between_nodes_texi2html'} = '<!DOCTYPE html>

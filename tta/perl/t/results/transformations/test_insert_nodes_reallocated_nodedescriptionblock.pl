@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'test_insert_nodes_reallocated_nodedescriptionblock'} = '*document_root C9
  *before_node_section C1
@@ -49,8 +52,9 @@ $result_tree_text{'test_insert_nodes_reallocated_nodedescriptionblock'} = '*docu
     {Chap}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {Sec}
+ *@node C1 l7 {Sec}
  |EXTRA
+ |added:{1}
  |identifier:{Sec}
  |is_target:{1}
  |node_number:{3}
@@ -97,8 +101,9 @@ $result_tree_text{'test_insert_nodes_reallocated_nodedescriptionblock'} = '*docu
      {nodedescriptionblock}
      {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {Subsec}
+ *@node C1 l16 {Subsec}
  |EXTRA
+ |added:{1}
  |identifier:{Subsec}
  |is_target:{1}
  |node_number:{4}
@@ -313,7 +318,7 @@ Sec
 ';
 
 
-$result_converted{'info'}->{'test_insert_nodes_reallocated_nodedescriptionblock'} = 'This is , produced from .
+$result_converted{'info'}->{'test_insert_nodes_reallocated_nodedescriptionblock'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -374,6 +379,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

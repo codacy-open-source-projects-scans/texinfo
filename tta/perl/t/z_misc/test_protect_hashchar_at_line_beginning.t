@@ -16,8 +16,6 @@ use Texinfo::Document;
 use Texinfo::Parser;
 use Texinfo::Transformations;
 
-my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
-
 # For consistent error message, use the C locale
 $ENV{LC_ALL} = 'C';
 # also needed for consistent error message
@@ -25,21 +23,16 @@ $ENV{LANGUAGE} = 'C';
 
 ok(1, 'modules loading');
 
-sub run_test($$$;$)
-{
-  my $in = shift;
-  my $out = shift;
-  my $test_name = shift;
-  my $errors_references = shift;
+sub run_test($$$;$) {
+  my ($in, $out, $test_name, $errors_references) = @_;
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_piece($in, 1);
+  my $document = $parser->parse_piece($in, 1);
 
   Texinfo::Transformations::protect_hashchar_at_line_beginning_in_document(
                                     $document);
-  # rebuild tree if structuring with XS but conversion is in pure Perl,
-  # use a handler only if everything is in XS, with XS_convert set
-  my $corrected_tree = $document->tree($XS_convert);
+  # get a handle only if XS is used.
+  my $corrected_tree = $document->tree(1);
 
   my $reference_error_nrs = 0;
   if (defined($errors_references)) {
@@ -82,7 +75,7 @@ sub run_test($$$;$)
   }
 }
 
-run_test ('# line 4 "ggggg"
+run_test('# line 4 "ggggg"
 and
  # line 5 "fff"
 # 46
@@ -100,7 +93,7 @@ and
 @hashchar{} 7 "aaaa"
 ', 'two paragraphs');
 
-run_test ('
+run_test('
 @example
 # line 5 "fff"
 aaa
@@ -122,7 +115,7 @@ b
 @end example
 ', 'in example');
 
-run_test ('
+run_test('
 @table @asis
 @item truc
 
@@ -203,9 +196,3 @@ in quotation
 ', 'on quotation line');
 
 
-#{
-#  local $Data::Dumper::Purity = 1;
-#  local $Data::Dumper::Indent = 1;
-#
-#  print STDERR Data::Dumper->Dump([$tree]);
-#}

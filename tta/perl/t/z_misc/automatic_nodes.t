@@ -8,9 +8,9 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 3);
 BEGIN { plan tests => 5; }
 
 use Texinfo::Parser;
-use Texinfo::Transformations;
 use Texinfo::Convert::Texinfo;
 use Texinfo::Document;
+use Texinfo::ManipulateTree;
 use Texinfo::Structuring;
 use Texinfo::XSLoader;
 
@@ -71,25 +71,25 @@ Text.
 @node sub2
 @subsection sub2 @c comment
 
-@node section
+@node section [+1+]
 @section section
 
-@node section 1
+@node section [+2+]
 @section section
 
-@node  1
+@node  [+1+]
 @unnumbered
 
-@node @asis{} 2
+@node @asis{} [+2+]
 @section @asis{}
 
 @bye';
 
 my $parser = Texinfo::Parser::parser();
-my $document = $parser->parse_texi_text($sections_text);
+my $document = $parser->parse_text($sections_text);
 
 Texinfo::Structuring::associate_internal_references($document);
-Texinfo::Transformations::insert_nodes_for_sectioning_commands($document);
+Texinfo::ManipulateTree::insert_nodes_for_sectioning_commands($document);
 
 my $tree = $document->tree();
 my $result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
@@ -97,7 +97,7 @@ is($result, $reference, 'add nodes');
 #print STDERR "$result";
 
 $parser = Texinfo::Parser::parser();
-$document = $parser->parse_texi_text('@node Top
+$document = $parser->parse_text('@node Top
 @top top
 
 @chapter chap
@@ -109,7 +109,7 @@ $document = $parser->parse_texi_text('@node Top
 @end menu
 ');
 Texinfo::Structuring::associate_internal_references($document);
-Texinfo::Transformations::insert_nodes_for_sectioning_commands($document);
+Texinfo::ManipulateTree::insert_nodes_for_sectioning_commands($document);
 
 my $identifier_target = $document->labels_information();
 my $indices_information = $document->indices_information();

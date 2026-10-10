@@ -18,7 +18,6 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <stddef.h>
-#include <stdarg.h>
 /* for iconv_t */
 #include <iconv.h>
 /* for S_ISDIR, S_IFDIR and S_IFMT */
@@ -32,6 +31,7 @@
 #include "options_data.h"
 #include "document_types.h"
 #include "converter_types.h"
+#include "list_macros.h"
 
 #define gdt_noop(String) String
 /* only used for def_aliases.  Inverse the arguments to match with the
@@ -57,6 +57,7 @@ enum iconv_error_handling {
 extern const char *null_device_names[];
 
 extern const char *whitespace_chars;
+extern const char *whitespace_chars_except_newline;
 extern const char *digit_chars;
 extern enum command_id
   level_to_structuring_command[BUILTIN_CMD_NUMBER][SECTION_LEVEL_NR];
@@ -119,7 +120,7 @@ extern const enum command_id small_block_associated_command[][2];
 #define HMSF_translations            0x0004
 
 typedef struct ACCENTS_STACK {
-    ELEMENT_STACK stack;
+    CONST_ELEMENT_LIST stack;
     ELEMENT *argument;
 } ACCENTS_STACK;
 
@@ -144,7 +145,10 @@ int xasprintf (char **ptr, const char *template, ...);
 
 size_t count_multibyte (const char *text);
 char *to_upper_or_lower_multibyte (const char *text, int lower_or_upper);
-int width_multibyte (const char *text);
+int width_multibyte (const char *text, size_t n);
+/*
+int width_multibyte_with_nul (const char *text, size_t n);
+ */
 int word_bytes_len_multibyte (const char *text);
 
 void messages_and_encodings_setup (const char *datadir);
@@ -175,11 +179,14 @@ ELEMENT *new_element_from_names (const char *type_name,
                         const char *command_name, int is_text_element);
 ELEMENT *item_line_parent (ELEMENT *current);
 ELEMENT *get_label_element (const ELEMENT *e);
+char *normalize_top_node_name (char *node_name);
+void normalize_top_node_name_text (TEXT *node_name);
 int empty_spaces_argument (const ELEMENT *element);
 const TEXT *simple_arg_text (const ELEMENT *element, int *surplus_arg);
 INDEX *indices_info_index_by_name (const INDEX_LIST *indices_information,
                                    const char *name);
 INDEX *ultimate_index (INDEX *index);
+const INDEX *ultimate_index_const (const INDEX *index);
 INDEX_ENTRY_AND_INDEX *lookup_index_entry (
                     const INDEX_ENTRY_LOCATION *index_entry_info,
                     const INDEX_LIST *indices_info);
@@ -204,6 +211,8 @@ const char *analyze_documentlanguagevariant_argument_e (const ELEMENT *element,
                                             int *surplus_arg);
 STRING_LIST *documentlanguagevariant_variants (const ELEMENT *element);
 int is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries);
+CONST_ELEMENT_LIST *collect_commands_list_in_tree (const ELEMENT *root,
+                                    const enum command_id *commands_list);
 
 void allocate_name_number_list (NAME_NUMBER_LIST *name_number_list,
                                 size_t number);
@@ -212,11 +221,12 @@ size_t find_name_number (const NAME_NUMBER_LIST *name_number,
 void free_name_number_list (NAME_NUMBER_LIST *name_number_list);
 void sort_name_number_list (NAME_NUMBER_LIST *name_number_list);
 
+decl_list_fns(STRING_LIST, string, char *);
 STRING_LIST *new_string_list (void);
 void clear_strings_list (STRING_LIST *strings);
 void free_strings_list (STRING_LIST *strings);
 void destroy_strings_list (STRING_LIST *strings);
-char *add_string (const char *string, STRING_LIST *strings_list);
+char *add_string (STRING_LIST *strings_list, const char *string);
 void remove_from_strings_list (STRING_LIST *strings_list, size_t where);
 void merge_strings (STRING_LIST *strings_list,
                     const STRING_LIST *merged_strings);
@@ -242,7 +252,8 @@ void free_indices_info (INDEX_LIST *indices_info);
 void add_include_directory (const char *filename,
                             STRING_LIST *include_dirs_list);
 char *locate_include_file (const char *filename,
-                           const STRING_LIST *include_dirs_list);
+                           const STRING_LIST *include_dirs_list,
+                           int *use_include_directories);
 char *locate_file_in_dirs (const char *filename,
                      const STRING_LIST *directories,
                      STRING_LIST *all_files,
@@ -272,12 +283,14 @@ void add_new_deprecated_dir_info (DEPRECATED_DIRS_LIST *deprecated_dirs,
 void clear_deprecated_dirs_list (DEPRECATED_DIRS_LIST *deprecated_dirs);
 void free_deprecated_dirs_list (DEPRECATED_DIRS_LIST *deprecated_dirs);
 
+const char *map_encoding_name (const char *encoding);
+const char *processing_output_encoding (const char *encoding);
 ENCODING_CONVERSION *get_encoding_conversion (const char *encoding,
                                     ENCODING_CONVERSION_LIST *encodings_list);
-char *encode_with_iconv (iconv_t our_iconv,  char *s,
-                         const SOURCE_INFO *source_info,
-                         enum iconv_error_handling error_handling,
-                         int *iconv_status);
+TEXT encode_with_iconv (iconv_t our_iconv,  char *s, size_t len,
+                        const SOURCE_INFO *source_info,
+                        enum iconv_error_handling error_handling,
+                        int *iconv_status);
 void reset_encoding_list (ENCODING_CONVERSION_LIST *encodings_list);
 char *decode_string (char *input_string, const char *encoding, int *status,
                      const SOURCE_INFO *source_info);
@@ -339,4 +352,5 @@ FILE_NAME_PATH *new_file_name_path (void);
 TARGET_DIRECTORY_FILENAME *new_target_directory_filename (void);
 FORMATTED_BUTTON_INFO *new_formatted_button_info (void);
 
+void *malloc_free_realloc(void *p, size_t old_size, size_t size);
 #endif

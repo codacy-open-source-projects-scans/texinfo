@@ -14,14 +14,11 @@ use Texinfo::Transformations;
 
 ok(1, 'modules loading');
 
-sub run_test($$$)
-{
-  my $in = shift;
-  my $out = shift;
-  my $name = shift;
+sub run_test($$$) {
+  my ($in, $out, $name) = @_;
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_piece($in);
+  my $document = $parser->parse_piece($in);
 
   Texinfo::Transformations::reference_to_arg_in_document($document);
   # rebuild tree

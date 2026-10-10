@@ -19,6 +19,7 @@
 
 #include "command_ids.h"
 #include "tree_types.h"
+#include "list_macros.h"
 /* for fatal */
 #include "base_utils.h"
 #include "command_stack.h"
@@ -26,9 +27,12 @@
 #include "debug_parser.h"
 #include "context_stack.h"
 
-static enum context *context_stack;
-static size_t top; /* One above last pushed context. */
-static size_t space;
+def_list_type(PARSER_CONTEXT_STACK, enum context);
+
+def_list_fns(PARSER_CONTEXT_STACK, context_stack, enum context, 5);
+def_stack_fns(PARSER_CONTEXT_STACK, context_stack, enum context);
+
+static PARSER_CONTEXT_STACK context_stack;
 
 /* Kept in sync with context_stack. */
 static COMMAND_STACK command_stack;
@@ -38,12 +42,12 @@ current_context_command (void)
 {
   int i;
 
-  if (top == 0)
+  if (command_stack.number == 0)
     fatal ("command stack empty");
-  for (i = top -1; i > 0; i--)
+  for (i = command_stack.number -1; i > 0; i--)
     {
-      if (command_stack.stack[i] != CM_NONE)
-        return command_stack.stack[i];
+      if (command_stack.list[i] != CM_NONE)
+        return command_stack.list[i];
     }
   return CM_NONE;
 }
@@ -51,7 +55,7 @@ current_context_command (void)
 enum command_id
 top_context_command (void)
 {
-  return top_command (&command_stack);
+  return *top_(command) (&command_stack);
 }
 
 /* Context stacks */
@@ -59,7 +63,7 @@ top_context_command (void)
 void
 reset_context_stack (void)
 {
-  top = 0;
+  context_stack.number = 0;
   reset_command_stack (&command_stack);
 }
 
@@ -79,56 +83,30 @@ context_name (enum context c)
 void
 push_context (enum context c, enum command_id cmd)
 {
-  if (top >= space)
-    context_stack = realloc (context_stack,
-                             (space += 5) * sizeof (enum context));
-
-  /* debug not in perl parser
-  debug (">>>>>>>>>>>>>>>>>PUSHING STACK AT %d  -- %s @%s", top,
-         context_name (c), command_name(cmd));
-   */
-  context_stack[top] = c;
-  top++;
-
-  push_command (&command_stack, cmd);
+  add_(context_stack) (&context_stack, c);
+  add_(command) (&command_stack, cmd);
 }
 
 enum context
 pop_context (void)
 {
-  if (top == 0)
-    fatal ("context stack empty");
-
-  (void) pop_command (&command_stack);
-
-  /* debug not in perl parser
-  debug (">>>>>>>>>>>>>POPPING STACK AT %d", top - 1);
-   */
-  return context_stack[--top];
+  enum context context = *top_(context_stack) (&context_stack);
+  pop_(command) (&command_stack);
+  pop_(context_stack) (&context_stack);
+  return context;
 }
 
 enum context
 current_context (void)
 {
-  if (top == 0)
-    fatal ("context stack empty");
-
-  return context_stack[top - 1];
+  return *top_(context_stack) (&context_stack);
 }
 
 int
 is_context_empty (void)
 {
-  return (top == 0);
+  return (context_stack.number == 0);
 }
-
-
-
-/* Command nesting context. */
-
-NESTING_CONTEXT nesting_context;
-
-
 
 /* used for @kbd */
 int
@@ -136,20 +114,26 @@ in_preformatted_context_not_menu ()
 {
   int i;
 
-  if (top == 0)
+  if (context_stack.number == 0)
     return 0;
-  for (i = top -1; i >= 0; i--)
+  for (i = context_stack.number -1; i >= 0; i--)
     {
       enum context ct;
       enum command_id cmd;
-      ct = context_stack[i];
+      ct = context_stack.list[i];
       if (ct != ct_line && ct != ct_preformatted)
         return 0;
-      cmd = command_stack.stack[i];
-      if (command_data(cmd).flags & CF_block
-          && command_data(cmd).data != BLOCK_menu
+      cmd = command_stack.list[i];
+      if (parsed_command_data(cmd).flags & CF_block
+          && parsed_command_data(cmd).data != BLOCK_menu
           && ct == ct_preformatted)
         return 1;
     }
   return 0;
 }
+
+
+
+/* Command nesting context. */
+
+NESTING_CONTEXT nesting_context;

@@ -25,10 +25,11 @@
 
 #undef context
 
+#include <string.h>
+
 #include "tree_types.h"
 #include "document_types.h"
-/* new_list destroy_list */
-#include "tree.h"
+#include "xs_utils.h"
 /* new_document */
 #include "document.h"
 /* relate_index_entries_to_table_items_in_document
@@ -128,6 +129,16 @@ protect_node_after_label_in_document (SV *document_in)
         if (document)
           protect_node_after_label_in_document (document);
 
+void
+insert_nodes_for_sectioning_commands (SV *document_in)
+    PREINIT:
+        DOCUMENT *document = 0;
+    CODE:
+        document = get_sv_document_document (document_in,
+                               "insert_nodes_for_sectioning_commands");
+        if (document)
+          insert_nodes_for_sectioning_commands (document);
+
 # could that be called in a situation where the document is not found?
 SV *
 tree_print_details (SV *tree_in, SV *fname_encoding_in=0, SV *use_filename_in=0)
@@ -150,9 +161,9 @@ tree_print_details (SV *tree_in, SV *fname_encoding_in=0, SV *use_filename_in=0)
               use_filename = SvIV (use_filename_in);
 
             result = tree_print_details (document->tree,
-                                fname_encoding, use_filename);
+                                fname_encoding, use_filename, 0);
             result_sv = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
 
         if (result_sv)

@@ -54,21 +54,16 @@ ok(1, 'modules loading'); # If we made it this far, we're ok.
 # to run a specific test:
 my $arg_test_case = shift @ARGV;
 
-sub run_test($$$;$$$)
-{
-  my $in = shift;
-  my $out = shift;
-  my $name = shift;
-  my $external_pod_as_url = shift;
-  my $test_nodes = shift;
-  my $sectioning_base_level = shift;
+sub run_test($$$;$$$) {
+  my ($in, $out, $name, $external_pod_as_url, $test_nodes,
+      $sectioning_base_level) = @_;
 
   return if (defined($arg_test_case) and $name ne $arg_test_case);
 
   my $parser = Pod::Simple::Texinfo->new();
 
   # The default, based on Pod::Simple::XHTML perldoc_url_prefix changed in
-  # 2019.  For reproducible results, set it explicitely to the 2024 value
+  # 2019.  For reproducible results, set it explicitly to the 2024 value
   $parser->texinfo_perldoc_url_prefix('https://metacpan.org/pod/');
 
   $parser->set_source(\$in);
@@ -86,7 +81,7 @@ sub run_test($$$;$$$)
   $parser->bare_output(1);
   $parser->run();
   if (defined($out)) {
-    is ($result, $out, $name);
+    is($result, $out, $name);
   } else {
     print "$name:\n";
     print STDERR $result;

@@ -1,14 +1,19 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'test_new_node_empty_ref'} = '*document_root C9
- *before_node_section
- *@node C1 {Top}
+ *before_node_section C1
+  *preamble_before_content
+ *@node C1 l1 {Top}
  |EXTRA
+ |added:{1}
  |identifier:{Top}
  |is_target:{1}
  |node_number:{1}
@@ -27,8 +32,9 @@ $result_tree_text{'test_new_node_empty_ref'} = '*document_root C9
     {top}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {aa  g}
+ *@node C1 l3 {aa  g}
  |EXTRA
+ |added:{1}
  |identifier:{aa-g}
  |is_target:{1}
  |node_number:{2}
@@ -59,8 +65,9 @@ $result_tree_text{'test_new_node_empty_ref'} = '*document_root C9
     { g}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {b}
+ *@node C1 l5 {b}
  |EXTRA
+ |added:{1}
  |identifier:{b}
  |is_target:{1}
  |node_number:{3}
@@ -82,16 +89,17 @@ $result_tree_text{'test_new_node_empty_ref'} = '*document_root C9
      *brace_arg
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 { 1}
+ *@node C1 l7 { [+1+]}
  |EXTRA
- |identifier:{-1}
+ |added:{1}
+ |identifier:{-_005b_002b1_002b_005d}
  |is_target:{1}
  |node_number:{4}
   *arguments_line C1
    *line_arg C4
     {spaces_before_argument: }
     {}
-    { 1}
+    { [+1+]}
     {spaces_after_argument:\\n}
  *@subsection C2 l7 {@ref}
  |EXTRA
@@ -116,7 +124,7 @@ $result_texis{'test_new_node_empty_ref'} = '@node Top
 @node b 
 @section b @ref{}
 
-@node  1
+@node  [+1+]
 @subsection @ref
 
 ';
@@ -160,7 +168,7 @@ $result_nodes_list{'test_new_node_empty_ref'} = '1|Top
  associated_section: 1.1 b @ref{}
  node_directions:
   up->aa  g
-4| 1
+4| [+1+]
  associated_section: 1.1.1 @ref
  node_directions:
   up->b
@@ -188,7 +196,7 @@ $result_sections_list{'test_new_node_empty_ref'} = '1|top
  section_children:
   1|@ref
 4|@ref
- associated_node:  1
+ associated_node:  [+1+]
  section_directions:
   up->b @ref{}
 ';

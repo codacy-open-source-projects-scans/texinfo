@@ -2,8 +2,7 @@
 #ifndef CONVERT_TO_TEXT_H
 #define CONVERT_TO_TEXT_H
 
-#include <stddef.h>
-
+#include "text.h"
 #include "options_data.h"
 #include "tree_types.h"
 #include "document_types.h"
@@ -31,7 +30,7 @@ typedef struct TEXT_OPTIONS {
     ERROR_MESSAGE_LIST error_messages; /* used if there is a Perl text
                               converter, XS is used and there is no C
                               converter */
-    LANG_TRANSLATION *current_lang_translations;
+    const LANG_TRANSLATION *current_lang_translations;
     DOCUMENT *document;
 } TEXT_OPTIONS;
 
@@ -40,12 +39,13 @@ extern const char *nobrace_symbol_text[];
 extern const char *text_brace_no_arg_commands[];
 extern const char *sort_brace_no_arg_commands[];
 
+TEXT convert_to_text_text (const ELEMENT *root, TEXT_OPTIONS *text_options);
 char *convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options);
 TEXT_OPTIONS *new_text_options (void);
 void destroy_text_options (TEXT_OPTIONS *text_options);
 TEXT_OPTIONS *copy_converter_options_for_convert_text (CONVERTER *self);
 
-/* only used in external interface */
+/* only externally used in SWIG interface */
 TEXT_OPTIONS *copy_options_for_convert_text (OPTIONS *options,
                                              DOCUMENT *document);
 

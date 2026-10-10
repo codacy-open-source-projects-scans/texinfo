@@ -1,57 +1,61 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'commands_in_settitle_with_title'} = '*document_root C5
- *before_node_section C2
-  *@settitle C1 l1
-   *line_arg C15
-    {spaces_before_argument: }
-    *@sc C1 l1
-     *brace_container C6
-      {sc }
-      *@~ C1 l1
-       *following_arg C1
-        {n}
-      { }
-      *@aa C1 l1
-       *brace_container
-      { }
-      *@TeX C1 l1
-       *brace_container
-    { node }
-    *@" C1 l1
-     *following_arg C1
-      {i}
-    { }
-    *@" C1 l1
-     *brace_container C1
-      *@dotless C1 l1
-       *brace_container C1
-        {i}
-    { }
-    *@` C1 l1
-     *brace_container C1
-      *@= C1 l1
-       *following_arg C1
-        {E}
-    { }
-    *@l C1 l1
-     *brace_container
-    { }
-    *@, C1 l1
-     *brace_container C1
-      *@\' C1 l1
-       *following_arg C1
-        {C}
-    { }
-    *@exclamdown C1 l1
-     *brace_container
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C1
+  *preamble_before_content C2
+   *@settitle C1 l1
+    *line_arg C15
+     {spaces_before_argument: }
+     *@sc C1 l1
+      *brace_container C6
+       {sc }
+       *@~ C1 l1
+        *following_arg C1
+         {n}
+       { }
+       *@aa C1 l1
+        *brace_container
+       { }
+       *@TeX C1 l1
+        *brace_container
+     { node }
+     *@" C1 l1
+      *following_arg C1
+       {i}
+     { }
+     *@" C1 l1
+      *brace_container C1
+       *@dotless C1 l1
+        *brace_container C1
+         {i}
+     { }
+     *@` C1 l1
+      *brace_container C1
+       *@= C1 l1
+        *following_arg C1
+         {E}
+     { }
+     *@l C1 l1
+      *brace_container
+     { }
+     *@, C1 l1
+      *brace_container C1
+       *@\' C1 l1
+        *following_arg C1
+         {C}
+     { }
+     *@exclamdown C1 l1
+      *brace_container
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l3 {Top}
  |EXTRA
  |identifier:{Top}
@@ -219,6 +223,7 @@ $result_converted{'docbook'}->{'commands_in_settitle_with_title'} = '<chapter la
 
 
 $result_converted{'latex_text'}->{'commands_in_settitle_with_title'} = '
+\\begin{document}
 \\label{anchor:Top}%
 \\Texinfochapter{{Chap}}
 \\label{anchor:chapter}%

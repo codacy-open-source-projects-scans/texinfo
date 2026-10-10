@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'ref_tests'} = '*document_root C2
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C7 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -130,7 +135,6 @@ $result_texis{'ref_tests'} = '
 
 
 $result_texts{'ref_tests'} = '
-
 (m)in ref followed by comma, 
 (m)in ref not followed by comma after ref.
 (m)in ref followed by end command.
@@ -155,7 +159,7 @@ $result_sectioning_root{'ref_tests'} = '';
 $result_headings_list{'ref_tests'} = '';
 
 
-$result_converted{'info'}->{'ref_tests'} = 'This is , produced from .
+$result_converted{'info'}->{'ref_tests'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -177,7 +181,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'ref_tests'} = '* W l12|@ref node name should not contain `.\'
  warning: @ref node name should not contain `.\'

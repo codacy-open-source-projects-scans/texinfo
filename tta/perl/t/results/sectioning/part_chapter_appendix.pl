@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'part_chapter_appendix'} = '*document_root C4
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@part C2 l2 {Part 1}
  |EXTRA
  |global_command_number:{1}
@@ -21,6 +26,8 @@ $result_tree_text{'part_chapter_appendix'} = '*document_root C4
   {empty_line:\\n}
  *@chapter C2 l4 {chapter}
  |EXTRA
+ |identifier:{chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -32,6 +39,8 @@ $result_tree_text{'part_chapter_appendix'} = '*document_root C4
   {empty_line:\\n}
  *@appendix C1 l6 {Appendix}
  |EXTRA
+ |identifier:{Appendix}
+ |is_target:{1}
  |section_heading_number:{A}
  |section_level:{1}
  |section_number:{3}
@@ -52,8 +61,7 @@ $result_texis{'part_chapter_appendix'} = '
 ';
 
 
-$result_texts{'part_chapter_appendix'} = '
-Part 1
+$result_texts{'part_chapter_appendix'} = 'Part 1
 ******
 
 1 chapter
@@ -95,8 +103,8 @@ list:
 $result_headings_list{'part_chapter_appendix'} = '';
 
 
-$result_converted{'xml'}->{'part_chapter_appendix'} = '
-<part><sectiontitle> Part 1</sectiontitle>
+$result_converted{'xml'}->{'part_chapter_appendix'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><part><sectiontitle> Part 1</sectiontitle>
 
 <chapter><sectiontitle> chapter</sectiontitle>
 

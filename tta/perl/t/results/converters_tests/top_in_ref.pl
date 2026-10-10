@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'top_in_ref'} = '*document_root C3
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C2 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -983,7 +987,8 @@ $result_converted{'docbook'}->{'top_in_ref'} = '<anchor id="chap-refs-node"/>
 </para>';
 
 
-$result_converted{'latex_text'}->{'top_in_ref'} = '\\label{anchor:Top}%
+$result_converted{'latex_text'}->{'top_in_ref'} = '\\begin{document}
+\\label{anchor:Top}%
 \\label{anchor:chap-refs-node}%
 
 \\texttt{@ref\\{Top,cross ref name\\}} \\hyperref[anchor:Top]{[Top], page~\\pageref*{anchor:Top}}
@@ -1023,7 +1028,7 @@ $result_converted{'latex_text'}->{'top_in_ref'} = '\\label{anchor:Top}%
 ';
 
 
-$result_converted{'info'}->{'top_in_ref'} = 'This is , produced from .
+$result_converted{'info'}->{'top_in_ref'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap refs node,  Up: (dir)
@@ -1078,6 +1083,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

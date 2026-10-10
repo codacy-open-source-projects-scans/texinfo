@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'placed_things_before_element_no_use_node'} = '*document_root C2
- *before_node_section C17
+ *before_node_section C18
+  *preamble_before_content
   *@anchor C1 l1
   |EXTRA
   |identifier:{An-anchor}
@@ -129,6 +133,8 @@ $result_tree_text{'placed_things_before_element_no_use_node'} = '*document_root 
   {empty_line:\\n}
  *@section C5 l30 {section}
  |EXTRA
+ |identifier:{section}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{2}
  |section_number:{1}
@@ -253,7 +259,7 @@ $result_indices_sort_strings{'placed_things_before_element_no_use_node'} = 'cp:
 ';
 
 
-$result_converted{'info'}->{'placed_things_before_element_no_use_node'} = 'This is , produced from .
+$result_converted{'info'}->{'placed_things_before_element_no_use_node'} = Encode::encode('utf-8', 'This is , produced from .
 
 Ref to the anchor: *note An anchor::
 
@@ -285,9 +291,10 @@ Ref to anchor *note An anchor::
 
 
 Tag Table:
-Ref: An anchor0
-Ref: float anchor109
-Ref: Anchor in footnote400
+Ref: An anchor27
+Ref: float anchor136
+Ref: section262
+Ref: Anchor in footnote427
 
 End Tag Table
 
@@ -295,6 +302,10 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'placed_things_before_element_no_use_node'} = 'cp:
+ index entry
 ';
 
 $result_converted_errors{'info'}->{'placed_things_before_element_no_use_node'} = '* W |document without nodes
@@ -308,6 +319,9 @@ $result_converted_errors{'info'}->{'placed_things_before_element_no_use_node'} =
 
 * W l17|@float outside of any node
  warning: @float outside of any node
+
+* W l30|@section outside of any node
+ warning: @section outside of any node
 
 * W l11|@anchor outside of any node
  warning: @anchor outside of any node
@@ -388,6 +402,10 @@ td.menu-entry-destination {vertical-align: top}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'placed_things_before_element_no_use_node'} = 'cp:
+ index entry
 ';
 
 $result_converted_errors{'html'}->{'placed_things_before_element_no_use_node'} = '* W |must specify a title with a title command or @top

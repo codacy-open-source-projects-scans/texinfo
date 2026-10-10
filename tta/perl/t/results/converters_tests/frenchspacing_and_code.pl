@@ -1,22 +1,27 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'frenchspacing_and_code'} = '*document_root C7
- *before_node_section C3
-  {empty_line:\\n}
-  *@frenchspacing C1 l2
-  |EXTRA
-  |global_command_number:{1}
-  |misc_args:A{on}
-   *line_arg C3
-    {spaces_before_argument: }
-    {on}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C2
+   *@frenchspacing C1 l2
+   |EXTRA
+   |global_command_number:{1}
+   |misc_args:A{on}
+    *line_arg C3
+     {spaces_before_argument: }
+     {on}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l4 {Top}
  |EXTRA
  |identifier:{Top}
@@ -85,24 +90,6 @@ $result_tree_text{'frenchspacing_and_code'} = '*document_root C7
    *def_line C1 l18
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{name? n. d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{class: MyC. b}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{name? n. d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{class: MyC. b}
    |element_node:{chapter-frenchspacing}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deftypeop}
@@ -163,24 +150,6 @@ $result_tree_text{'frenchspacing_and_code'} = '*document_root C7
    *def_line C1 l22
    |EXTRA
    |def_command:{defop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{vname? n; d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{vclass: MyC. u}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{vname? n; d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{vclass: MyC. u}
    |element_node:{chapter-frenchspacing}
    |index_entry:I{fn,2}
    |original_def_cmdname:{defop}
@@ -289,24 +258,6 @@ $result_tree_text{'frenchspacing_and_code'} = '*document_root C7
    *def_line C1 l38
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{name? n. d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{class: MyC. b}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{name? n. d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{class: MyC. b}
    |element_node:{chap-no}
    |index_entry:I{fn,3}
    |original_def_cmdname:{deftypeop}
@@ -367,24 +318,6 @@ $result_tree_text{'frenchspacing_and_code'} = '*document_root C7
    *def_line C1 l42
    |EXTRA
    |def_command:{defop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{vname? n; d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{nvclass: MyC. u}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*brace_arg C1
-       |{vname? n; d}
-     |{ on }
-     |* C1
-      |*brace_arg C1
-       |{nvclass: MyC. u}
    |element_node:{chap-no}
    |index_entry:I{fn,4}
    |original_def_cmdname:{defop}
@@ -487,7 +420,6 @@ defop n
 
 
 $result_texts{'frenchspacing_and_code'} = '
-
 top
 ***
 
@@ -626,9 +558,15 @@ In text w: z?  n; p.  fn
      defop n
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'frenchspacing_and_code'} = 'fn:
+ name? n. d on class: MyC. b
+ name? n. d on class: MyC. b
+ vname? n; d on nvclass: MyC. u
+ vname? n; d on vclass: MyC. u
+';
+
 
 $result_converted{'html_text'}->{'frenchspacing_and_code'} = '
-
 <div class="top-level-extent" id="Top">
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
@@ -685,8 +623,8 @@ $result_converted{'html_text'}->{'frenchspacing_and_code'} = '
 ';
 
 
-$result_converted{'xml'}->{'frenchspacing_and_code'} = '
-<frenchspacing value="on" line=" on"></frenchspacing>
+$result_converted{'xml'}->{'frenchspacing_and_code'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><frenchspacing value="on" line=" on"></frenchspacing>
 
 <node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> chapter frenchspacing</nodenext></node>
 <top><sectiontitle> top</sectiontitle>
@@ -769,9 +707,9 @@ $result_converted{'docbook'}->{'frenchspacing_and_code'} = '<chapter label="1" i
 ';
 
 
-$result_converted{'latex_text'}->{'frenchspacing_and_code'} = '
-\\frenchspacing
+$result_converted{'latex_text'}->{'frenchspacing_and_code'} = '\\frenchspacing
 
+\\begin{document}
 \\label{anchor:Top}%
 \\Texinfochapter{{Chap frenchspacing}}
 \\label{anchor:chapter-frenchspacing}%
@@ -787,6 +725,7 @@ In text w: z? n; p. f
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{type:\\ t.\\ c name?\\ n.\\ d arg?\\ e:\\ f.\\  \\Texinfocommandstyletextvar{v: g. h}\\ \\texttt{code?\\ is:\\ k}}& [cat: r. a on \\texttt{class:\\ MyC.\\ b}]
@@ -799,6 +738,7 @@ deftypeop
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{vname?\\ n;\\ d \\EmbracOn{}\\textnormal{\\textsl{varg? ve: f. \\Texinfocommandstyletextvar{vv: g? b} \\texttt{vcode?\\ is:\\ a}}}\\EmbracOff{}}& [vcat: r. z on \\texttt{vclass:\\ MyC.\\ u}]
@@ -825,6 +765,7 @@ In text w: z? n; p. fn
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{type:\\ t.\\ c name?\\ n.\\ d narg?\\ e:\\ f.\\  \\Texinfocommandstyletextvar{v: g. h}\\ \\texttt{code?\\ is:\\ k}}& [cat: r. a on \\texttt{class:\\ MyC.\\ b}]
@@ -837,6 +778,7 @@ deftypeop n
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{vname?\\ n;\\ d \\EmbracOn{}\\textnormal{\\textsl{varg? ve: f. \\Texinfocommandstyletextvar{vv: g? b} \\texttt{vcode?\\ is:\\ a}}}\\EmbracOff{}}& [vcat: r. z on \\texttt{nvclass:\\ MyC.\\ u}]

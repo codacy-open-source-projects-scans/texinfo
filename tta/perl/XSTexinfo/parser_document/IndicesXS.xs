@@ -36,6 +36,10 @@
 #include "get_perl_info.h"
 /* get_sv_converter copy_sv_options_for_convert_text */
 #include "get_converter_perl_info.h"
+/* for wrap_converter_index_content_element */
+#include "convert_indices.h"
+/* for destroy_text_options, TEXT_OPTIONS */
+#include "convert_to_text.h"
 /* for newSVpv_utf8 */
 #include "build_perl_info.h"
 
@@ -90,9 +94,14 @@ setup_index_entry_keys_formatting (SV *customization_info_sv)
     OUTPUT:
          RETVAL
 
-# should only return undef if no document is found
+# should only return undef if no document is found.
+# Currently never called with converter_sv set; called directly from a
+# converter with prefer_reference_element_sv set, which means that
+# there is no need for translation and therefore no need for converter;
+# or from functions called by overriden converter index sorting
+# functions.
 SV *
-index_entry_element_sort_string (SV *customization_info_sv, SV *main_entry_sv, SV *element_sv, SV *options_sv, SV *prefer_reference_element_sv=0)
+index_entry_element_sort_string (SV *customization_info_sv, SV *main_entry_sv, SV *element_sv, SV *options_sv, SV *prefer_reference_element_sv=0, SV *converter_sv=0, SV *debug_level_sv=0)
     PREINIT:
         CONVERTER *self;
         DOCUMENT *document;
@@ -120,6 +129,7 @@ index_entry_element_sort_string (SV *customization_info_sv, SV *main_entry_sv, S
             int prefer_reference_element = 0;
             int in_code;
             int allocated_text_options = 0;
+            int debug_level = 0;
             const ELEMENT *element = find_element_from_sv (0, document,
                                                            element_sv, 0);
             INDEX_ENTRY *main_entry = find_index_entry_sv (main_entry_sv,
@@ -135,12 +145,26 @@ index_entry_element_sort_string (SV *customization_info_sv, SV *main_entry_sv, S
                   = copy_sv_options_for_convert_text (options_sv);
               }
 
-            if (prefer_reference_element_sv && SvOK (prefer_reference_element_sv))
+            if (prefer_reference_element_sv
+                && SvOK (prefer_reference_element_sv))
               prefer_reference_element = SvIV (prefer_reference_element_sv);
 
-            sort_string = index_entry_element_sort_string (main_entry,
-                          element, convert_index_text_options, in_code,
-                          prefer_reference_element);
+            if (converter_sv && SvOK (converter_sv) && self)
+              {
+                sort_string = index_entry_element_sort_string (
+                  main_entry, element, convert_index_text_options, in_code,
+                  prefer_reference_element, 0, 0, self,
+                  &wrap_converter_index_content_element);
+              }
+            else
+              {
+                if (debug_level_sv && SvOK (debug_level_sv))
+                  debug_level = SvIV (debug_level_sv);
+
+                sort_string = index_entry_element_sort_string (
+                  main_entry, element, convert_index_text_options, in_code,
+                  prefer_reference_element, document, debug_level, 0, 0);
+              }
             if (allocated_text_options)
               destroy_text_options (convert_index_text_options);
           }

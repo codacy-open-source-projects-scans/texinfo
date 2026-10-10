@@ -1,20 +1,26 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'top_part_chapter'} = 'U0 unit{S:top}
+use Encode;
+
+$result_tree_text{'top_part_chapter'} = 'U0 unit{C2}{S:@top top}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
 Forward: [U1]
 FastForward: [U1]
 Next: [U1]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@top C2 l1 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -23,7 +29,7 @@ Next: [U1]
     {top}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U1 unit{S:1 chapter}
+U1 unit{C2}{S:@chapter 1 chapter}
 unit_directions:D[prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -42,6 +48,8 @@ FastBack: [U0]
   {empty_line:\\n}
  *@chapter C1 l5 {chapter}
  |EXTRA
+ |identifier:{chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{3}
@@ -115,13 +123,13 @@ $result_converted{'xml'}->{'top_part_chapter'} = '<top><sectiontitle> top</secti
 ';
 
 
-$result_converted{'docbook'}->{'top_part_chapter'} = '<chapter label="">
+$result_converted{'docbook'}->{'top_part_chapter'} = '<chapter label="" id="Top">
 <title>top</title>
 
 </chapter>
 <part label="">
 <title>part</title>
-<chapter label="1">
+<chapter label="1" id="chapter">
 <title>chapter</title>
 
 </chapter>

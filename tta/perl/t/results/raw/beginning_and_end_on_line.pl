@@ -1,27 +1,32 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'beginning_and_end_on_line'} = '*document_root C1
- *before_node_section C6
-  {empty_line:\\n}
-  *@tex C2 l2
-   *arguments_line C1
-    *block_line_arg C3
-     {spaces_before_argument: }
-     {in tex}
-     {spaces_after_argument: }
-   *@end C1 l2
-   |EXTRA
-   |text_arg:{tex}
-    *line_arg C3
-     {spaces_before_argument: }
-     {tex}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C5
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C2
+   *@tex C2 l2
+    *arguments_line C1
+     *block_line_arg C3
+      {spaces_before_argument: }
+      {in tex}
+      {spaces_after_argument: }
+    *@end C1 l2
+    |EXTRA
+    |text_arg:{tex}
+     *line_arg C3
+      {spaces_before_argument: }
+      {tex}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *@verbatim C2 l4
    *arguments_line C1
     *block_line_arg C3
@@ -63,7 +68,6 @@ $result_texis{'beginning_and_end_on_line'} = '
 
 $result_texts{'beginning_and_end_on_line'} = '
 
-
 ';
 
 $result_errors{'beginning_and_end_on_line'} = '* W l2|@end should only appear at the beginning of a line
@@ -98,8 +102,8 @@ $result_headings_list{'beginning_and_end_on_line'} = '';
 $result_converted{'plaintext'}->{'beginning_and_end_on_line'} = '';
 
 
-$result_converted{'xml'}->{'beginning_and_end_on_line'} = '
-<tex endspaces=" "> 
+$result_converted{'xml'}->{'beginning_and_end_on_line'} = '<preamblebeforebeginning>
+</preamblebeforebeginning><tex endspaces=" "> 
 </tex>
 
 <verbatim xml:space="preserve" endspaces=" "> 

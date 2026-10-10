@@ -16,6 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include "element_types.h"
 #include "command_ids.h"
 #include "tree_types.h"
 
@@ -27,15 +28,15 @@ typedef struct command_struct {
     int args_number; /* Number of arguments for brace or line commands. */
 } COMMAND;
 
-extern const COMMAND builtin_command_data[];
+extern const COMMAND command_data[];
 
 #define builtin_command_flags(e) \
-   (!(e) ? 0 : (builtin_command_data[(e)->cmd].flags))
-#define builtin_command_name(cmd) (builtin_command_data[cmd].cmdname)
+   (!(e) ? 0 : (command_data[(e)->cmd].flags))
+#define builtin_command_name(cmd) (command_data[cmd].cmdname)
 /* no builtin_ prefix, as it is not used in parser, so no ambiguity */
 /* should not be called on a text element */
 #define command_other_flags(elt) \
-   (!(elt) ? 0 : (builtin_command_data[(elt)->e.c->cmd].other_flags))
+   (!(elt) ? 0 : (command_data[(elt)->e.c->cmd].other_flags))
 
 extern int ref_3_args_order[];
 extern int ref_5_args_order[];
@@ -46,7 +47,7 @@ enum command_id element_builtin_cmd (const ELEMENT *e);
 enum command_id element_builtin_data_cmd (const ELEMENT *e);
 
 /* Base command flags, .flags in COMMAND */
-/* sync with TXI_CM_FLAGS_LIST list in swig_command_data.h, listing
+/* sync with TXI_CM_FLAGS_LIST list in swig_element_types.h, listing
    there only the flags that are relevant in conversion codes */
 
 #define CF_line			        0x0001
@@ -58,7 +59,7 @@ enum command_id element_builtin_data_cmd (const ELEMENT *e);
 #define CF_sectioning_heading	        0x0008
 #define CF_brace		        0x0010
 #define CF_preamble		        0x0020
-#define CF_accent		        0x0040
+#define CF_def_class_method		0x0040
 /* CF_math is not used in C parser */
 #define CF_math			        0x0080
 /* commands with an unlimited number of arguments */
@@ -86,7 +87,7 @@ enum command_id element_builtin_data_cmd (const ELEMENT *e);
    text without @ref, @footnote, @titlefont, @anchor nor @verb. */
 #define CF_contain_basic_inline        	0x00200000
 #define CF_preformatted	        	0x00400000
-#define CF_preformatted_code		0x00800000
+#define CF_def_class_variable		0x00800000
 #define CF_no_paragraph			0x01000000
 /* a user-defined command that is referenced to by another command,
    which should keep its place in the user_defined_command_data table */
@@ -103,7 +104,7 @@ enum command_id element_builtin_data_cmd (const ELEMENT *e);
 
 /* Other command flags. .other_flags in COMMAND. Not used in parser, but
    in other codes, or only used in perl */
-/* sync with TXI_CM_OTHER_FLAGS_LIST list in swig_command_data.h */
+/* sync with TXI_CM_OTHER_FLAGS_LIST list in swig_element_types.h */
 #define CF_letter_no_arg		0x0001
 #define CF_inline_format		0x0002
 #define CF_inline_conditional		0x0004
@@ -118,6 +119,10 @@ enum command_id element_builtin_data_cmd (const ELEMENT *e);
 #define CF_non_formatted_brace		0x0800
 #define CF_appendix		0x1000
 #define CF_unnumbered		0x2000
+/* @-commands with document metadata information.  They are supposed to be
+   handled explicitly in output formats conversion */
+#define CF_metadata		0x4000
+#define CF_preformatted_code		0x8000
 /*
 #define CF_		0x00800000
 */

@@ -20,9 +20,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
+#include "tree.h"
 #include "document_types.h"
-#include "utils.h"
 #include "api_to_perl.h"
 #include "call_perl_function.h"
 
@@ -74,38 +75,19 @@ get_sv_hv (const void *sv)
 }
 
 /* call_perl_function.h */
-/* it is up to the caller to do something useful if NULL is returned */
-char *
-call_nodenamenormalization_unicode_to_transliterate (const char *text,
-                                         int in_test, int no_unidecode)
+void
+call_eval_use_module (const char *module_name)
 {
-  return 0;
 }
 
-char *
+/* it is up to the caller to do something useful if NULL text is returned */
+TEXT
 call_translations_translate_string (const char *string,
                                     const char *language_env,
                                     const char *translation_context)
 {
-  return 0;
-}
-
-/* happens if not linked against Perl and a collation locale was specified
-   but not found */
-void *
-call_setup_collator (int use_unicode_collation, const char *locale_lang)
-{
-  return 0;
-}
-
-/* since call_setup_collator returns 0, the following function will never
-   be called */
-BYTES_STRING *
-call_collator_getSortKey (const void *collator_sv, const char *string)
-{
-  BYTES_STRING *result;
-  result = (BYTES_STRING *) malloc (sizeof (BYTES_STRING));
-  memset (result, 0, sizeof (BYTES_STRING));
+  TEXT result;
+  text_init (&result);
   return result;
 }
 

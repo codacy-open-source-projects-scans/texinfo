@@ -50,7 +50,6 @@
 #endif
 
 #include "text.h"
-#include "use_interpreter_types.h"
 #include "option_types.h"
 #include "document_types.h"
 #include "converter_types.h"
@@ -58,16 +57,24 @@
 #include "base_utils.h"
 /* for xvasprintf */
 #include "text.h"
+/* set_use_perl_interpreter */
+#include "xs_utils.h"
+#include "options_defaults.h"
+/* general_output_strings_setup */
+#include "translations.h"
 /* parse_file_path whitespace_chars xasprintf digit_chars encode_with_iconv
-   wipe_values locate_file_in_dirs null_device_names */
+   wipe_values locate_file_in_dirs null_device_names
+   messages_and_encodings_setup */
 #include "utils.h"
 #include "errors.h"
 #include "customization_options.h"
 #include "txi_config.h"
 /* tree_print_details */
 #include "manipulate_tree.h"
-/* set_document_options */
+#include "parser_api.h"
+/* setup_texinfo_main set_document_options */
 #include "document.h"
+#include "transformations.h"
 #include "convert_to_texinfo.h"
 /* needed because commands are used to determine expanded regions names */
 #include "builtin_commands.h"
@@ -78,7 +85,20 @@
 #include "converter.h"
 /* for html_output_internal_links */
 #include "html_converter_api.h"
-#include "texinfo.h"
+/* call_close_perl_io */
+#include "api_to_perl.h"
+/* for call_document_remove_document_references */
+#include "call_document_perl_functions.h"
+/* for call_module_converter call_converter_output
+   release_converter_output_units_remove_perl_output_units
+   call_object_converter_perl_release call_sort_element_counts */
+#include "call_conversion_perl.h"
+/* for call_eval_use_module */
+#include "call_perl_function.h"
+/* for call_finish_perl */
+#include "call_embed_perl.h"
+/* for html_builtin_default_css_text */
+#include "html_prepare_converter.h"
 
 #define _(String) gettext (String)
 
@@ -92,6 +112,14 @@
 #else  /* not O_BINARY, i.e., Unix */
 # define PATH_SEP      ":"
 #endif /* not O_BINARY */
+
+/* for dealing with differences between execvp() (POSIX) and
+   _execvp() (Windows) */
+#ifdef _WIN32
+# define EXEC_CONST const
+#else
+# define EXEC_CONST
+#endif
 
 static const char *conf_file_name = "texi2any-config.pm";
 
@@ -126,17 +154,16 @@ typedef struct FORMAT_SPECIFICATION {
 
 static FORMAT_SPECIFICATION formats_table[] = {
   {"info", STTF_nodes_tree | STTF_floats
-           | STTF_setup_index_entries_sort_strings,
+           | STTF_auto_section_node,
    NULL, "Texinfo::Convert::Info", NULL},
   {"html", STTF_relate_index_entries_to_table_items
            | STTF_move_index_entries_after_items
            | STTF_no_warn_non_empty_parts
            | STTF_nodes_tree | STTF_floats | STTF_split
-           | STTF_setup_index_entries_sort_strings
-           | STTF_internal_links,
+           | STTF_internal_links
+           | STTF_auto_section_node,
    NULL, "Texinfo::Convert::HTML", NULL},
-  {"plaintext", STTF_nodes_tree | STTF_floats | STTF_split
-                | STTF_setup_index_entries_sort_strings,
+  {"plaintext", STTF_nodes_tree | STTF_floats | STTF_split,
    NULL, "Texinfo::Convert::Plaintext", NULL},
   {"latex", STTF_floats | STTF_move_index_entries_after_items
             | STTF_no_warn_non_empty_parts,
@@ -161,6 +188,25 @@ static FORMAT_SPECIFICATION formats_table[] = {
   {NULL, 0, NULL, NULL, NULL}
 };
 
+enum interpreter_use {
+   txi_interpreter_want_embedded = -1,
+   txi_interpreter_use_no_interpreter,
+   txi_interpreter_use_embedded,
+};
+
+typedef struct INTERPRETER_LOADING_INFO {
+    enum interpreter_use embedded_interpreter;
+    int *argc_ref;
+    char ***argv_ref;
+    char ***env_ref;
+    const char *version_checked;
+} INTERPRETER_LOADING_INFO;
+
+typedef struct TRANSFORMATION_NAME_FLAG {
+    const char *name;
+    unsigned long flag;
+} TRANSFORMATION_NAME_FLAG;
+
 static VALUE_LIST values;
 
 /* options common to parser and converter */
@@ -169,9 +215,6 @@ static OPTIONS_LIST cmdline_options;
 static OPTIONS_LIST *init_files_options;
 
 static char *program_file;
-
-static enum interpreter_use embedded_interpreter
-   = txi_interpreter_use_no_interpreter;
 
 /* texi2any */
 static void
@@ -188,7 +231,7 @@ add_config_paths (const char *env_string, const char *subdir,
   size_t i;
   /*
    read the env directories to avoid setting the overriding_dirs
-   as deprecated if they are explicitely specified in the environnement
+   as deprecated if they are explicitly specified in the environnement
    variable.
    */
   const char *env_value = getenv (env_string);
@@ -212,7 +255,7 @@ add_config_paths (const char *env_string, const char *subdir,
     {
       char *install_result_dir;
       xasprintf (&install_result_dir, "%s/%s", installation_dir, subdir);
-      add_string (install_result_dir, result_dirs);
+      add_string (result_dirs, install_result_dir);
       if (overriding_dirs)
         {
           DEPRECATED_DIR_INFO *deprecated_dir_info
@@ -229,7 +272,7 @@ add_config_paths (const char *env_string, const char *subdir,
                   add_new_deprecated_dir_info (deprecated_dirs,
                                    deprecated_dir_info->obsolete_dir,
                                    deprecated_dir_info->reference_dir);
-                  add_string (deprecated_result_dir, result_dirs);
+                  add_string (result_dirs, deprecated_result_dir);
                 }
               free (deprecated_result_dir);
             }
@@ -244,7 +287,7 @@ add_config_paths (const char *env_string, const char *subdir,
         {
           char *result_dir;
           xasprintf (&result_dir, "%s/%s", dir, subdir);
-          add_string (result_dir, result_dirs);
+          add_string (result_dirs, result_dir);
           free (result_dir);
         }
       free (dir);
@@ -258,7 +301,7 @@ add_config_paths (const char *env_string, const char *subdir,
 static DEPRECATED_DIR_INFO overriding_sysconfdir_info[1] = {
   {XDG_SYSCONFDIR, SYSCONFDIR} };
 static const DEPRECATED_DIRS_LIST overriding_sysconfdir_list = {
-  1, 1, overriding_sysconfdir_info };
+  overriding_sysconfdir_info, 1, 1 };
 
 static STRING_LIST *
 set_subdir_directories (const char *datadir, const char *subdir,
@@ -270,14 +313,14 @@ set_subdir_directories (const char *datadir, const char *subdir,
   char *xdg_config_home;
 
   xasprintf (&dir_string, ".%s", subdir);
-  add_string (dir_string, result);
+  add_string (result, dir_string);
   free (dir_string);
 
   xdg_config_home = getenv ("XDG_CONFIG_HOME");
   if (xdg_config_home && strlen (xdg_config_home))
     {
       xasprintf (&dir_string, "%s/%s", xdg_config_home, subdir);
-      add_string (dir_string, result);
+      add_string (result, dir_string);
       free (dir_string);
     }
   else
@@ -290,9 +333,9 @@ set_subdir_directories (const char *datadir, const char *subdir,
           xasprintf (&deprecated_config_home, "%s/.%s", home_dir, subdir);
           add_new_deprecated_dir_info (deprecated_dirs,
                                    deprecated_config_home, dir_string);
-          add_string (dir_string, result);
+          add_string (result, dir_string);
           free (dir_string);
-          add_string (deprecated_config_home, result);
+          add_string (result, deprecated_config_home);
           free (deprecated_config_home);
         }
     }
@@ -306,7 +349,7 @@ set_subdir_directories (const char *datadir, const char *subdir,
   free (config_dirs);
 
   xasprintf (&dir_string, "%s/%s", datadir, subdir);
-  add_string (dir_string, result);
+  add_string (result, dir_string);
   free (dir_string);
 
   return result;
@@ -446,7 +489,7 @@ unset_expansion (OPTIONS_LIST *options_list, STRING_LIST *ignored_formats,
   txi_config_remove_from_option_list (option, format_name);
 
   if (!ignored_idx)
-    add_string (format_name, ignored_formats);
+    add_string (ignored_formats, format_name);
 }
 
 /* Texinfo::Common::texinfo_output_formats */
@@ -459,8 +502,8 @@ is_texinfo_output_formats (const char *format)
   else
     {
       enum command_id cmd = lookup_builtin_command (format);
-      if (cmd && builtin_command_data[cmd].flags & CF_block
-           && builtin_command_data[cmd].data == BLOCK_format_raw)
+      if (cmd && command_data[cmd].flags & CF_block
+           && command_data[cmd].data == BLOCK_format_raw)
         return 1;
     }
   return 0;
@@ -482,7 +525,7 @@ format_expanded_formats (STRING_LIST *default_expanded_formats,
       *call_texi2dvi = 1;
       xasprintf (&format_option, "--%s",
                  format_specification->name);
-      add_string (format_option, texi2dvi_args);
+      add_string (texi2dvi_args, format_option);
       free (format_option);
 
       converter_format = "tex";
@@ -511,7 +554,7 @@ format_expanded_formats (STRING_LIST *default_expanded_formats,
         new_format_expanded_region = format_specification->name;
 
       if (is_texinfo_output_formats (new_format_expanded_region))
-        add_string (new_format_expanded_region, default_expanded_formats);
+        add_string (default_expanded_formats, new_format_expanded_region);
     }
   else
     converter_format = format_specification->name;
@@ -532,13 +575,13 @@ format_expanded_formats (STRING_LIST *default_expanded_formats,
 
   if (!strcmp (expanded_region, "plaintext"))
     {
-      add_string (expanded_region, default_expanded_formats);
-      add_string ("info", default_expanded_formats);
+      add_string (default_expanded_formats, expanded_region);
+      add_string (default_expanded_formats, "info");
     }
   else
     {
       if (is_texinfo_output_formats (expanded_region))
-        add_string (expanded_region, default_expanded_formats);
+        add_string (default_expanded_formats, expanded_region);
     }
 }
 
@@ -564,7 +607,7 @@ merge_opened_files (STRING_LIST *opened_files,
           if (find_string (opened_files, opened_file))
             txi_config_document_warn ("overwriting file: %s", opened_file);
           else
-            add_string (opened_file, opened_files);
+            add_string (opened_files, opened_file);
         }
     }
 
@@ -614,8 +657,9 @@ handle_parser_errors (DOCUMENT *document, const char *set_message_encoding,
                       STRING_LIST *opened_files)
 {
   size_t errors_nr
-        = txi_output_parser_error_messages (document, set_message_encoding,
-                                            no_warn, test_mode_set);
+       = output_error_messages (&document->parser_error_messages,
+                                set_message_encoding, no_warn,
+                                test_mode_set);
   return handle_errors (errors_nr, error_count, opened_files);
 }
 
@@ -664,11 +708,81 @@ warn_deprecated_dirs (DEPRECATED_DIRS_LIST *deprecated_dirs_used)
   deprecated_dirs_used->number = 0;
 }
 
+/*
+  Start an embedded Perl interpreter and initialize by passing the
+  load_txi_modules_basename script to be called from the embedded
+  interpreter.
+
+  Return 0 in case of success.
+ */
+/* TODO warn/exit if loaded twice?  The problem with being loaded
+   twice is that the init files code may have modified previous
+   interpreter data */
+static void
+load_interpreter (INTERPRETER_LOADING_INFO *loading_info)
+{
+  const char *load_txi_modules_basename = "load_txi_modules";
+  char *load_modules_path;
+  int status;
+
+  if (loading_info->embedded_interpreter != txi_interpreter_want_embedded)
+    return;
+
+  if (txi_paths_info.texinfo_uninstalled)
+    xasprintf (&load_modules_path, "%s/perl/%s.pl",
+               txi_paths_info.p.uninstalled.t2a_srcdir,
+               load_txi_modules_basename);
+  else
+    xasprintf (&load_modules_path, "%s/%s",
+               txi_paths_info.p.installed.converter_datadir,
+               load_txi_modules_basename);
+  status = call_init_perl (loading_info->argc_ref, loading_info->argv_ref,
+                           loading_info->env_ref, load_modules_path,
+                           loading_info->version_checked);
+
+  /* status < 0 means replacement call_init_perl that does nothing */
+  if (status > 0)
+    {
+      char *message;
+      /* unexpected failure, no point continuing, the output needs
+         the interpreter and libperl will segfault */
+      xasprintf (&message, "call_init_perl status: %d", status);
+      fatal (message);
+      free (message);
+    }
+  else if (status < 0)
+    {
+      loading_info->embedded_interpreter = txi_interpreter_use_no_interpreter;
+    }
+  else
+    {
+      loading_info->embedded_interpreter = txi_interpreter_use_embedded;
+      set_use_perl_interpreter (1);
+    }
+
+  free (load_modules_path);
+}
+
+static int
+load_init_file (const char *file,
+                INTERPRETER_LOADING_INFO *loading_info)
+{
+  int status = 0;
+
+  load_interpreter (loading_info);
+
+  if (loading_info->embedded_interpreter == txi_interpreter_use_embedded)
+    status = call_config_GNUT_load_init_file (file);
+
+  return status;
+}
+
 int loaded_init_files_nr = 0;
 
 static void
 locate_and_load_init_file (const char *filename, STRING_LIST *directories,
-                           DEPRECATED_DIRS_LIST *deprecated_dirs)
+                           DEPRECATED_DIRS_LIST *deprecated_dirs,
+                           INTERPRETER_LOADING_INFO *loading_info)
 {
   static DEPRECATED_DIRS_LIST deprecated_dirs_used;
 
@@ -677,14 +791,14 @@ locate_and_load_init_file (const char *filename, STRING_LIST *directories,
 
   if (file)
     {
-      int status = txi_load_init_file (file, embedded_interpreter);
+      int status = load_init_file (file, loading_info);
 
       if (status)
         loaded_init_files_nr++;
       else
         {
           char *decoded_filename = GNUT_decode_input ((char *) filename);
-          if (embedded_interpreter != txi_interpreter_use_embedded)
+          if (loading_info->embedded_interpreter != txi_interpreter_use_embedded)
             fprintf (stderr, "WARNING: no interpreter, cannot load: %s\n",
                      filename);
           else
@@ -708,20 +822,21 @@ locate_and_load_init_file (const char *filename, STRING_LIST *directories,
 }
 
 static void
-locate_and_load_extension_file (const char *filename, STRING_LIST *directories)
+locate_and_load_extension_file (const char *filename, STRING_LIST *directories,
+                                INTERPRETER_LOADING_INFO *loading_info)
 {
   char *file = locate_file_in_dirs (filename, directories, 0, 0, 0);
 
   if (file)
     {
-      int status = txi_load_init_file (file, embedded_interpreter);
+      int status = load_init_file (file, loading_info);
 
       if (status)
         loaded_init_files_nr++;
       else
         {
           char *decoded_filename = GNUT_decode_input ((char *) filename);
-          if (embedded_interpreter != txi_interpreter_use_embedded)
+          if (loading_info->embedded_interpreter != txi_interpreter_use_embedded)
             fprintf (stderr, "WARNING: no interpreter, cannot load: %s\n",
                      filename);
           else
@@ -759,14 +874,20 @@ write_to_file (char *output_text, FILE *file_fh,
         = get_encoding_conversion (out_encoding_option->o.string,
                                    &output_conversions);
       if (conversion)
-        result_text = encode_with_iconv (conversion->iconv,
-                                         output_text, 0, ieh_error, 0);
+        {
+          TEXT conv_result = encode_with_iconv (conversion->iconv,
+                                         output_text, strlen (output_text),
+                                         0, ieh_error, 0);
+          result_text = conv_result.text;
+          res_len = conv_result.end;
+        }
     }
 
   if (!result_text)
-    result_text = output_text;
-
-  res_len = strlen (result_text);
+    {
+      result_text = output_text;
+      res_len = strlen (result_text);
+    }
 
   write_len = fwrite (result_text, sizeof (char),
                       res_len, file_fh);
@@ -780,6 +901,28 @@ write_to_file (char *output_text, FILE *file_fh,
           "ERROR: write to %s failed (%zu/%zu)\n",
                 encoded_file_name, write_len, res_len);
     }
+}
+
+/* associate transformation name to the corresponding flag */
+static const TRANSFORMATION_NAME_FLAG txi_tree_transformation_table[] = {
+#define tt_type(name) {#name, STTF_ ## name},
+   TT_TYPES_LIST
+#undef tt_type
+  {NULL, 0}
+};
+
+/* similar to Texinfo::Common::valid_tree_transformation */
+/* Also returns the flag associated to the transformation */
+static unsigned long
+find_tree_transformation (const char *transformation_name)
+{
+  int i;
+  for (i = 0; txi_tree_transformation_table[i].name; i++)
+    {
+      if (!strcmp (transformation_name, txi_tree_transformation_table[i].name))
+        return txi_tree_transformation_table[i].flag;
+    }
+  return 0;
 }
 
 typedef struct FORMAT_NAME {
@@ -809,6 +952,19 @@ name_of_format (const char *format)
     }
 
   return format;
+}
+
+static void
+remove_converter_and_output_units (CONVERTER *converter,
+                                   const char *external_module)
+{
+  if (external_module)
+    {
+      release_converter_output_units_remove_perl_output_units (converter);
+      call_object_converter_perl_release (converter);
+    }
+  converter_remove_output_units (converter);
+  destroy_converter (converter);
 }
 
 const char *input_file_suffixes[] = {
@@ -967,13 +1123,57 @@ static const char *possible_split[] = {
   "chapter", "section", "node", NULL
 };
 
+static void
+err_add_option_value (OPTIONS_LIST *options_list, const char *option_name,
+                      int int_value, const char *char_value)
+{
+  if (!add_option_value (options_list, option_name,
+                         int_value, char_value))
+    fprintf (stderr, "BUG: error setting %s\n", option_name);
+}
+
+int
+close_file_stream (const char *program_file, const FILE_STREAM *file_stream)
+{
+  int error_nrs = 0;
+
+  if (file_stream->stream)
+    {
+      if (fclose (file_stream->stream))
+        {
+          fprintf (stderr, _("%s: error on closing %s: %s"),
+                   program_file, file_stream->file_path,
+                   strerror (errno));
+          fprintf (stderr, "%s", "\n");
+          error_nrs++;
+        }
+    }
+  /* having io field set can not happen when C output_files_open_out
+     is called, only when getting conversion results from Perl.
+   */
+  if (file_stream->io)
+    {
+      char *errno_message = call_close_perl_io (file_stream->io);
+      if (errno_message)
+        {
+          fprintf (stderr, _("%s: error on closing io %s: %s"),
+                   program_file, file_stream->file_path,
+                   errno_message);
+          fprintf (stderr, "%s", "\n");
+          free (errno_message);
+          error_nrs++;
+        }
+    }
+
+  return error_nrs;
+}
+
 /* we use env in case a Perl interpreter is embedded in order to blindly
    follow the documentation in perlembed, which is not very explicit */
 int
 main (int argc, char *argv[], char *env[])
 {
   int getopt_long_index;
-  const char *langinfo_locale_encoding;
   char *locale_encoding = 0;
   char *console_output_encoding = 0;
   const char *input_file_arg;
@@ -987,6 +1187,12 @@ main (int argc, char *argv[], char *env[])
   /* used except for the first file, to remove some options that are only
      relevant for the first file */
   OPTIONS_LIST non_first_file_cmdline_options;
+  const char *configured_version = PACKAGE_VERSION_CONFIG;
+  const char *configured_package = PACKAGE_CONFIG;
+  const char *configured_name = PACKAGE_NAME_CONFIG;
+  const char *configured_url = PACKAGE_URL_CONFIG;
+  const char *configured_name_version
+    = PACKAGE_NAME_CONFIG " " PACKAGE_VERSION_CONFIG;
   /* make sure that non_first_file_cmdline_options was initialized,
      even if a file was skipped */
   int non_first_file_cmdline_initialized = 0;
@@ -1003,17 +1209,18 @@ main (int argc, char *argv[], char *env[])
   char *t2a_srcdir = 0;
   char *t2a_builddir = 0;
   char *datadir = 0;
-  OPTION *html_math_option;
-  OPTION *highlight_syntax_option;
-  OPTION *test_option;
-  OPTION *no_warn_option;
-  OPTION *format_menu_option;
-  OPTION *debug_option;
-  OPTION *message_encoding_option;
-  OPTION *sort_element_count_option;
-  OPTION *tree_transformations_option;
-  OPTION *split_option;
-  OPTION *show_builtin_css_rules_option;
+  const OPTION *html_math_option;
+  const OPTION *highlight_syntax_option;
+  const OPTION *test_option;
+  const OPTION *no_warn_option;
+  const OPTION *format_menu_option;
+  const OPTION *debug_option;
+  const OPTION *message_encoding_option;
+  const OPTION *sort_element_count_option;
+  const OPTION *tree_transformations_option;
+  const OPTION *split_option;
+  const OPTION *show_builtin_css_rules_option;
+  const OPTION *auto_section_node_option;
   int no_warn = 0;
   int test_mode_set = 0;
   int debug = 0;
@@ -1030,7 +1237,7 @@ main (int argc, char *argv[], char *env[])
   STRING_LIST texi2dvi_args;
   char *extensions_dir;
   char *texinfo_output_format_env;
-  OPTION *output_format_option;
+  const OPTION *output_format_option;
   OPTION *expanded_formats_option;
   const char *output_format;
   const char *converted_format;
@@ -1045,10 +1252,8 @@ main (int argc, char *argv[], char *env[])
   CONVERTER_INITIALIZATION_INFO *converter_init_info;
   const char *external_module = 0;
   const char *elt_count_external_module = "Texinfo::Convert::TextContent";
-  int default_is_html = 1;
   char *init_file_format;
   const char *set_message_encoding = 0;
-  const char *version_for_embedded_interpreter_check;
   int call_texi2dvi = 0;
   int Xopt_arg_nr = 0;
   char *texi2dvi = 0;
@@ -1063,6 +1268,9 @@ main (int argc, char *argv[], char *env[])
   char *program_basename;
   size_t file_index;
   int remove_references = 0;
+  INTERPRETER_LOADING_INFO loading_info
+    = {txi_interpreter_want_embedded, 0, 0, 0, 0};
+  enum converter_format converter_format;
 
   memset (&main_program_unclosed_stdout, 0, sizeof (FILE_STREAM));
 
@@ -1101,14 +1309,9 @@ main (int argc, char *argv[], char *env[])
         }
     }
 
-#ifdef EMBED_PERL
-  embedded_interpreter = txi_interpreter_use_embedded;
-  default_is_html = 0;
-#endif
-
   perl_embed_env = getenv ("TEXINFO_C_EMBED_PERL");
   if (perl_embed_env && !strcmp (perl_embed_env, "0"))
-    embedded_interpreter = txi_interpreter_use_no_interpreter;
+    loading_info.embedded_interpreter = txi_interpreter_use_no_interpreter;
 
   /* this corresponds to the texi2any.pl BEGIN block and
      Texinfo::ModulePath::init call */
@@ -1177,26 +1380,29 @@ main (int argc, char *argv[], char *env[])
 
   memset (&internal_extension_dirs, 0, sizeof (STRING_LIST));
 
-  add_string (extensions_dir, &internal_extension_dirs);
+  add_string (&internal_extension_dirs, extensions_dir);
 
 
-  if (texinfo_uninstalled)
-    version_for_embedded_interpreter_check = PACKAGE_VERSION_CONFIG "+nc";
-  else
-    version_for_embedded_interpreter_check = PACKAGE_VERSION_CONFIG;
+  /* initialize texinfo libraries */
+  messages_and_encodings_setup (datadir);
+  setup_texinfo_main (texinfo_uninstalled, datadir,
+                      t2a_builddir, t2a_srcdir);
 
-  /* load interpreter if needed and setup paths and defauts if not already
-     done by the interpreter.
-     Done early because options defaults are used in help
-     and paths are needed to locate file used for interpreter embedding
-     and setup by the interpreter */
-  /* no converter_libdir argument because it is only needed when
-     (re)using a Perl interpreter, which is never the case here */
-  txi_setup_main_load_interpreter (embedded_interpreter,
-                        texinfo_uninstalled, datadir,
-                        converter_datadir, 0, t2a_builddir, t2a_srcdir, 0,
-                        &argc, &argv, &env,
-                        version_for_embedded_interpreter_check);
+  /* setup loading_info used for Perl interpreter embedding if needed */
+  if (loading_info.embedded_interpreter == txi_interpreter_want_embedded)
+    {
+      const char *version_for_embedded_interpreter_check;
+
+      if (texinfo_uninstalled)
+        version_for_embedded_interpreter_check = PACKAGE_VERSION_CONFIG "+nc";
+      else
+        version_for_embedded_interpreter_check = PACKAGE_VERSION_CONFIG;
+
+      loading_info.argc_ref = &argc;
+      loading_info.argv_ref = &argv;
+      loading_info.env_ref = &env;
+      loading_info.version_checked = version_for_embedded_interpreter_check;
+    }
 
   free (t2a_builddir);
   free (t2a_srcdir);
@@ -1207,6 +1413,7 @@ main (int argc, char *argv[], char *env[])
   /* needs to be called after setlocale */
   /* from Gnulib codeset.m4 */
 #ifdef HAVE_LANGINFO_CODESET
+  const char *langinfo_locale_encoding;
   langinfo_locale_encoding = nl_langinfo (CODESET);
   if (langinfo_locale_encoding)
     {
@@ -1232,10 +1439,33 @@ main (int argc, char *argv[], char *env[])
     }
 #endif
 
-  /* Set initial configuration */
   /* program_options corresponds to main_program_set_options in texi2any */
-  txi_set_base_default_options (&program_options, locale_encoding,
-                                console_output_encoding, program_file);
+  initialize_options_list (&program_options);
+
+  /* Set initial configuration */
+  /* Customization variables independent of conversion format are set similarly
+     in texi2any.pl */
+  err_add_option_value (&program_options, "PROGRAM", 0, program_file);
+#define set_configured_information(varname,varvalue) \
+    err_add_option_value (&program_options, #varname, 0, varvalue);
+  set_configured_information(PACKAGE_VERSION, configured_version)
+  set_configured_information(PACKAGE, configured_package)
+  set_configured_information(PACKAGE_NAME, configured_name)
+  set_configured_information(PACKAGE_AND_VERSION, configured_name_version)
+  set_configured_information(PACKAGE_URL, configured_url)
+#undef set_configured_information
+
+  err_add_option_value (&program_options, "COMMAND_LINE_ENCODING", 0,
+                        locale_encoding);
+  err_add_option_value (&program_options, "MESSAGE_ENCODING", 0,
+                        console_output_encoding);
+  err_add_option_value (&program_options, "LOCALE_ENCODING", 0,
+                        locale_encoding);
+
+  /* same as Texinfo::Common::default_main_program_customization_options */
+  /* in general transmitted to converters as default */
+  add_program_cmdline_options_defaults (&program_options);
+  add_program_customization_options_defaults (&program_options);
 
   free (locale_encoding);
   free (console_output_encoding);
@@ -1253,13 +1483,10 @@ main (int argc, char *argv[], char *env[])
                         PACKAGE_VERSION_CONFIG "+nc");
     }
 
-  /* set default output format.  Is info in texi2any.pl */
+  /* set default output format. */
   /* better than making it the default value independently of the
      implementation */
-  if (default_is_html)
-    add_option_value (&program_options, "TEXINFO_OUTPUT_FORMAT", 0, "html");
-  else
-    add_option_value (&program_options, "TEXINFO_OUTPUT_FORMAT", 0, "info");
+  add_option_value (&program_options, "TEXINFO_OUTPUT_FORMAT", 0, "info");
 
 #ifdef _WIN32
 /*
@@ -1288,7 +1515,7 @@ main (int argc, char *argv[], char *env[])
   free (datadir);
 
   memset (&converter_config_dirs, 0, sizeof (STRING_LIST));
-  add_string (curdir, &converter_config_dirs);
+  add_string (&converter_config_dirs, curdir);
   copy_strings (&converter_config_dirs, converter_config_dirs_array_ref);
 
   destroy_strings_list (converter_config_dirs_array_ref);
@@ -1303,7 +1530,7 @@ main (int argc, char *argv[], char *env[])
       char *texinfo_config_dir = texinfo_language_config_dirs->list[i];
 
       xasprintf (&init_dir, "%s/init", texinfo_config_dir);
-      add_string (init_dir, &converter_init_dirs);
+      add_string (&converter_init_dirs, init_dir);
 
       deprecated_dir_info = find_deprecated_dir_info (&deprecated_directories,
                                                       texinfo_config_dir);
@@ -1318,7 +1545,7 @@ main (int argc, char *argv[], char *env[])
         }
       free (init_dir);
     }
-  add_string (extensions_dir, &converter_init_dirs);
+  add_string (&converter_init_dirs, extensions_dir);
 
   memset (&prepend_dirs, 0, sizeof (STRING_LIST));
   memset (&conf_dirs, 0, sizeof (STRING_LIST));
@@ -1360,8 +1587,8 @@ main (int argc, char *argv[], char *env[])
     {
       for (i = converter_config_dirs.number; i > 0; i--)
         {
-          add_string (converter_config_dirs.list[i-1],
-                      &reversed_converter_config_dirs);
+          add_string (&reversed_converter_config_dirs,
+                      converter_config_dirs.list[i-1]);
         }
     }
 
@@ -1373,8 +1600,8 @@ main (int argc, char *argv[], char *env[])
 
   for (i = 0; i < config_init_files.number; i++)
     {
-      int status = txi_load_init_file (config_init_files.list[i],
-                                       embedded_interpreter);
+      int status = load_init_file (config_init_files.list[i],
+                                   &loading_info);
       if (status)
         loaded_init_files_nr++;
     }
@@ -1394,7 +1621,7 @@ main (int argc, char *argv[], char *env[])
 
       getopt_long_index = 0;
 
-      option_character = getopt_long (argc, argv, "VhvFc:D:e:f:I:P:o:E:U:",
+      option_character = getopt_long (argc, argv, "VhvFc:D:e:f:I:P:o:E:U:p:",
                                       long_options,
                                       &getopt_long_index);
 
@@ -1458,7 +1685,7 @@ main (int argc, char *argv[], char *env[])
           GNUT_set_from_cmdline (&cmdline_options,
                             cmdline_options.options->DEBUG.number,
                             optarg);
-          add_string ("--debug", &texi2dvi_args);
+          add_string (&texi2dvi_args, "--debug");
           break;
         case 'e':
           check_integer_option (option_character, getopt_long_index, optarg);
@@ -1553,7 +1780,7 @@ main (int argc, char *argv[], char *env[])
         case 'v':
           GNUT_set_from_cmdline (&cmdline_options,
                             cmdline_options.options->VERBOSE.number, "1");
-          add_string ("--verbose", &texi2dvi_args);
+          add_string (&texi2dvi_args, "--verbose");
           break;
         case NO_VERBOSE_OPT:
           GNUT_set_from_cmdline (&cmdline_options,
@@ -1572,7 +1799,7 @@ main (int argc, char *argv[], char *env[])
           {
             size_t option_nr
               = program_options.options->TEXINFO_OUTPUT_FORMAT.number;
-            OPTION *output_format_option = GNUT_get_conf (option_nr);
+            const OPTION *output_format_option = GNUT_get_conf (option_nr);
             if (output_format_option && output_format_option->o.string
                 && !strcmp (output_format_option->o.string, "info"))
               GNUT_set_customization_default (option_nr, "plaintext");
@@ -1589,8 +1816,8 @@ main (int argc, char *argv[], char *env[])
           {
             OPTION *option = &cmdline_options.options->INCLUDE_DIRECTORIES;
             push_include_directory (option->o.strlist, optarg);
-            add_string ("-I", &texi2dvi_args);
-            add_string (optarg, &texi2dvi_args);
+            add_string (&texi2dvi_args, "-I");
+            add_string (&texi2dvi_args, optarg);
           }
           break;
         case 'P':
@@ -1602,14 +1829,14 @@ main (int argc, char *argv[], char *env[])
         case CSS_INCLUDE_OPT:
           {
             OPTION *option = &cmdline_options.options->CSS_FILES;
-            add_string (optarg, option->o.strlist);
+            add_string (option->o.strlist, optarg);
           }
           break;
         case CSS_REF_OPT:
           {
             OPTION *option = &cmdline_options.options->CSS_REFS;
             char *value = GNUT_decode_input ((char *) optarg);
-            add_string (value, option->o.strlist);
+            add_string (option->o.strlist, value);
             free (value);
           }
           break;
@@ -1623,19 +1850,20 @@ main (int argc, char *argv[], char *env[])
               test_mode_set = 1;
 
             if (test_mode_set)
-              locate_and_load_init_file (optarg, &conf_dirs, 0);
+              locate_and_load_init_file (optarg, &conf_dirs, 0, &loading_info);
             else
               {
                 copy_strings (&init_file_dirs, &conf_dirs);
                 copy_strings (&init_file_dirs, &converter_init_dirs);
                 locate_and_load_init_file (optarg, &init_file_dirs,
-                                           &deprecated_directories);
+                                           &deprecated_directories,
+                                           &loading_info);
                 clear_strings_list (&init_file_dirs);
               }
           }
           break;
         case XOPT_OPT:
-          add_string (optarg, &texi2dvi_args);
+          add_string (&texi2dvi_args, optarg);
           Xopt_arg_nr++;
           break;
         case _SILENT_OPT:
@@ -1643,7 +1871,7 @@ main (int argc, char *argv[], char *env[])
             char *format_option;
             xasprintf (&format_option, "--%s",
                        long_options[getopt_long_index].name);
-            add_string (format_option, &texi2dvi_args);
+            add_string (&texi2dvi_args, format_option);
             free (format_option);
           }
           break;
@@ -1684,7 +1912,7 @@ main (int argc, char *argv[], char *env[])
 
                 xasprintf (&texi2dvi_option, "--command=@set %s %s",
                            flag, flag_value);
-                add_string (texi2dvi_option, &texi2dvi_args);
+                add_string (&texi2dvi_args, texi2dvi_option);
                 free (texi2dvi_option);
 
                 free (flag);
@@ -1700,7 +1928,7 @@ main (int argc, char *argv[], char *env[])
             free (value);
 
             xasprintf (&texi2dvi_option, "--command=@clear %s", optarg);
-            add_string (texi2dvi_option, &texi2dvi_args);
+            add_string (&texi2dvi_args, texi2dvi_option);
             free (texi2dvi_option);
           }
           break;
@@ -1763,9 +1991,17 @@ main (int argc, char *argv[], char *env[])
             if (!strcmp (value, "none") || !strcmp (value, "asis")
                 || is_ascii_digit (value))
               {
+                const char *integer_value;
+                if (value[0] == 'n') /* none */
+                  integer_value = "0";
+                else if (value[0] == 'a') /* asis */
+                  integer_value = "-2";
+                else
+                  integer_value = value;
+
                 GNUT_set_from_cmdline (&cmdline_options,
                           cmdline_options.options->paragraphindent.number,
-                                  value);
+                                  integer_value);
               }
             else
               {
@@ -1773,7 +2009,7 @@ main (int argc, char *argv[], char *env[])
                 char *encoded_message;
 
                 xasprintf (&formatted_message,
-    _("%s:  --paragraph-indent arg must be numeric/`none'/`asis', not `%s'."),
+    _("%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'."),
                   program_file, value);
                 encoded_message = GNUT_encode_message (formatted_message);
                 free (formatted_message);
@@ -1789,25 +2025,12 @@ main (int argc, char *argv[], char *env[])
             OPTION *option = &cmdline_options.options->OUTFILE;
             /* actually const but constrained by prototypes */
             char *decoded_string = GNUT_decode_input ((char *) optarg);
-            if (strcmp (optarg, "-"))
-              {
-                size_t opt_len = strlen (optarg);
-                struct stat finfo;
-
-                if (optarg[opt_len -1] == '/'
-                    || (stat (optarg, &finfo) == 0 && S_ISDIR (finfo.st_mode)))
-                  {
-                    GNUT_set_from_cmdline (&cmdline_options,
-                                      option->number, "undef");
-                    option = &cmdline_options.options->SUBDIR;
-                  }
-              }
             GNUT_set_from_cmdline (&cmdline_options,
                                    option->number, decoded_string);
             free (decoded_string);
 
-            add_string ("-o", &texi2dvi_args);
-            add_string (optarg, &texi2dvi_args);
+            add_string (&texi2dvi_args, "-o");
+            add_string (&texi2dvi_args, optarg);
           }
           break;
         case NO_SPLIT_OPT:
@@ -1885,9 +2108,6 @@ main (int argc, char *argv[], char *env[])
   if (print_help_p)
     {
       char *encoded_message;
-      char *endptr;
-      const char *option_value;
-      int paragraphindent_size;
       TEXT help_message;
       OPTION *error_limit_option
         = GNUT_get_conf (program_options.options->ERROR_LIMIT.number);
@@ -1896,13 +2116,8 @@ main (int argc, char *argv[], char *env[])
       text_printf (&help_message,
                    _("Usage: %s [OPTION]... TEXINFO-FILE..."), program_file);
       text_append_n (&help_message, "\n\n", 2);
-      /* no added translations, reuse translations with they already exist */
-      if (default_is_html)
-        text_append (&help_message,
-        "Translate Texinfo source documentation to various other formats.");
-      else
     /* lie on the name, but this is no such a big lie */
-        text_append (&help_message,
+      text_append (&help_message,
    _("Translate Texinfo source documentation to various other formats, by default\n"
   "Info files suitable for reading online with Emacs or standalone GNU Info.\n\n"
   "This program is commonly installed as both `makeinfo' and `texi2any';\n"
@@ -1951,10 +2166,7 @@ main (int argc, char *argv[], char *env[])
         _("      --version               display version information and exit"));
       text_append_n (&help_message, "\n\n", 2);
 
-      if (default_is_html)
-        text_append (&help_message, "Output format selection (default is to produce HTML):");
-      else
-        text_append (&help_message, _("Output format selection (default is to produce Info):"));
+      text_append (&help_message, _("Output format selection (default is to produce Info):"));
       text_append_n (&help_message, "\n", 1);
       text_append (&help_message,
         _("      --docbook               output Docbook XML"));
@@ -2001,13 +2213,10 @@ main (int argc, char *argv[], char *env[])
    "      --[no-]number-footnotes  number footnotes sequentially; default is on"));
       text_append_n (&help_message, "\n", 1);
       text_append (&help_message, _(
-   "  -o, --output=DEST           output to DEST.\n"
-   "                                With split output, create DEST as a directory\n"
-   "                                and put the output files there.\n"
-   "                                With non-split output, if DEST is already\n"
-   "                                a directory or ends with a /,\n"
-   "                                put the output file there.\n"
-   "                                Otherwise, DEST names the output file."));
+   "  -o, --output=DEST           use DEST as name of output file.\n"
+   "                                With split HTML or split plaintext output,\n"
+   "                                create DEST as a directory and put the output\n"
+   "                                files there."));
       text_append_n (&help_message, "\n", 1);
       text_append (&help_message, _(
    "      --disable-encoding      do not output accented and special characters\n"
@@ -2031,14 +2240,13 @@ main (int argc, char *argv[], char *env[])
    "                                which they are defined (this is the default)"));
       text_append_n (&help_message, "\n", 1);
 
-      option_value
-  = txi_base_sorted_options[program_options.options->paragraphindent.number -1]->o.string;
-      paragraphindent_size = strtol (option_value, &endptr, 10);
+      int option_value
+  = txi_base_sorted_options[program_options.options->paragraphindent.number -1]->o.integer;
       text_printf (&help_message, _(
    "      --paragraph-indent=VAL  indent Info paragraphs by VAL spaces (default %d).\n"
    "                                If VAL is `none', do not indent; if VAL is\n"
    "                                `asis', preserve existing indentation."),
-                   paragraphindent_size);
+                   option_value);
       text_append_n (&help_message, "\n", 1);
       text_printf (&help_message, _(
    "      --split-size=NUM        split Info files at size NUM (default %d)"),
@@ -2179,26 +2387,24 @@ main (int argc, char *argv[], char *env[])
       store_value (&values, "TEXI2HTML", "1");
     }
 
-  if (embedded_interpreter != txi_interpreter_use_embedded)
-    /* it is the best we have without an embedded interpreter */
-    add_option_value (&program_options, "XS_STRXFRM_COLLATION_LOCALE", 0,
-                      "en_US");
-
   html_math_option = GNUT_get_conf (program_options.options->HTML_MATH.number);
   if (html_math_option && html_math_option->o.string
       && !strcmp (html_math_option->o.string, "l2h"))
-    locate_and_load_extension_file ("latex2html.pm", &internal_extension_dirs);
+    locate_and_load_extension_file ("latex2html.pm", &internal_extension_dirs,
+                                    &loading_info);
 
   if (html_math_option && html_math_option->o.string
       && !strcmp (html_math_option->o.string, "t4h"))
-    locate_and_load_extension_file ("tex4ht.pm", &internal_extension_dirs);
+    locate_and_load_extension_file ("tex4ht.pm", &internal_extension_dirs,
+                                    &loading_info);
 
   highlight_syntax_option
     = GNUT_get_conf (program_options.options->HIGHLIGHT_SYNTAX.number);
   if (highlight_syntax_option && highlight_syntax_option->o.string
       && strlen (highlight_syntax_option->o.string))
     locate_and_load_extension_file ("highlight_syntax.pm",
-                                    &internal_extension_dirs);
+                                    &internal_extension_dirs,
+                                    &loading_info);
 
   /* re-set in case it was set in init files */
   test_option = GNUT_get_conf (program_options.options->TEST.number);
@@ -2253,12 +2459,33 @@ main (int argc, char *argv[], char *env[])
       char *in_source_util_dir;
       xasprintf (&in_source_util_dir, "%s/../util",
                  txi_paths_info.p.uninstalled.t2a_srcdir);
-      add_string (in_source_util_dir, texinfo_language_config_dirs);
+      add_string (texinfo_language_config_dirs, in_source_util_dir);
       free (in_source_util_dir);
     }
 
   /* Setup output string translations (including Locales path). */
-  txi_general_output_strings_setup ();
+  general_output_strings_setup ();
+
+  int need_interpreter = 0
+  /* load a Perl interpreter for the options or configurations triggering
+     calling Perl functions from C */
+ #ifdef USE_LIBINTL_PERL_IN_XS
+     || 1
+ #endif
+  /* Perl translation function is called from C if nls is not enabled in C,
+     load embedded Perl such that the call succeeds */
+ #ifndef ENABLE_NLS
+      || 1
+ #endif
+    ;
+  if (need_interpreter)
+    {
+      load_interpreter (&loading_info);
+
+      if (loading_info.embedded_interpreter != txi_interpreter_use_embedded)
+        fprintf (stderr, "WARNING: no Perl interpreter "
+                         "for collation/translation\n");
+    }
 
   /* determine the format_specification now that the output format is known */
   for (i = 0; formats_table[i].name; i++)
@@ -2283,7 +2510,7 @@ main (int argc, char *argv[], char *env[])
           if (strlen (transformation))
             {
               unsigned long transfo_flag
-                = txi_find_tree_transformation (transformation);
+                = find_tree_transformation (transformation);
               if (transfo_flag)
                 transformation_flags |= transfo_flag;
               else
@@ -2298,7 +2525,8 @@ main (int argc, char *argv[], char *env[])
   /* for a format setup with an init file */
   if (format_specification->init_file)
     locate_and_load_extension_file (format_specification->init_file,
-                                    &internal_extension_dirs);
+                                    &internal_extension_dirs,
+                                    &loading_info);
 
   if (format_specification->converted_format)
     {
@@ -2392,14 +2620,47 @@ main (int argc, char *argv[], char *env[])
   if (show_builtin_css_rules_option
       && show_builtin_css_rules_option->o.integer > 0)
     {
+      /* used to show the built-in CSS rules */
       char *default_css_text;
-      default_css_text = txi_builtin_default_css_text ();
+      setup_converter_format (COF_html);
+      default_css_text = html_builtin_default_css_text ();
       printf ("%s", default_css_text);
       free (default_css_text);
       exit (EXIT_SUCCESS);
     }
 
-  /* NOTE there is an effect only if Perl converter is used */
+  if (optind < argc)
+    {
+      int j;
+      for (j = optind; j < argc; j++)
+        add_string (&input_files, argv[j]);
+    }
+  else if (!isatty (fileno (stdin)) && !call_texi2dvi)
+    {
+      add_string (&input_files, "-");
+    }
+  else
+    {
+      char *formatted_message;
+      char *encoded_message;
+
+      xasprintf (&formatted_message, _("%s: missing file argument."),
+                 program_file);
+      encoded_message = GNUT_encode_message (formatted_message);
+      free (formatted_message);
+      fprintf (stderr, "%s\n", encoded_message);
+      free (encoded_message);
+
+      xasprintf (&formatted_message,
+                 _("Try `%s --help' for more information."),
+                 program_file);
+      encoded_message = GNUT_encode_message (formatted_message);
+      free (formatted_message);
+      fprintf (stderr, "%s\n", encoded_message);
+      free (encoded_message);
+      exit (EXIT_FAILURE);
+    }
+
   txi_xs_external_conversion = getenv ("TEXINFO_XS_EXTERNAL_CONVERSION");
   if (txi_xs_external_conversion && strlen (txi_xs_external_conversion)
       && strcmp (txi_xs_external_conversion, "0"))
@@ -2414,6 +2675,11 @@ main (int argc, char *argv[], char *env[])
     GNUT_set_from_cmdline (&cmdline_options,
         program_options.options->XS_EXTERNAL_FORMATTING.number, "1");
 
+  converter_format = find_format_name_converter_format (converted_format);
+
+  /* corresponds to eval "require $module"; in texi2any.pl */
+  setup_converter_format (converter_format);
+
   if (converted_format_specification->module)
     {
       if (!strcmp (converted_format, "html"))
@@ -2426,7 +2692,7 @@ main (int argc, char *argv[], char *env[])
                  program_options.options->XS_EXTERNAL_CONVERSION.number);
 
           /* setup of need_latex to be kept in sync with setup of
-             CONVERT_TO_LATEX_IN_MATH in html_initialize_output_state
+             CONVERT_TO_LATEX_IN_MATH in html_conversion_initialization
              based on HTML_MATH */
           int need_latex = 0;
           OPTION *convert_to_latex_in_math_option
@@ -2441,6 +2707,9 @@ main (int argc, char *argv[], char *env[])
               if (option_html_math && option_html_math->o.string)
                 need_latex = 1;
             }
+          else if (convert_to_latex_in_math_option
+                   && convert_to_latex_in_math_option->o.integer > 0)
+            need_latex = 1;
 
           /* to be kept in sync with build_html_perl_info.c
               html_pass_conversion_initialization */
@@ -2451,12 +2720,27 @@ main (int argc, char *argv[], char *env[])
                   && xs_external_conversion_option->o.integer > 0))
             external_module = converted_format_specification->module;
         }
+      else if (!strcmp (converted_format, "plaintext")
+               || !strcmp (converted_format, "info"))
+        {
+          if (!strcmp (converted_format, "info"))
+            {
+              /* requires conversion to LaTeX, which means Perl for now */
+              OPTION *info_math_images
+                = GNUT_get_conf (
+                 program_options.options->INFO_MATH_IMAGES.number);
+              if (info_math_images && info_math_images->o.integer > 0)
+                external_module = converted_format_specification->module;
+            }
+        }
       else
         external_module = converted_format_specification->module;
 
       if (external_module)
         {
-          if (embedded_interpreter != txi_interpreter_use_embedded)
+          load_interpreter (&loading_info);
+
+          if (loading_info.embedded_interpreter != txi_interpreter_use_embedded)
             {
               fprintf (stderr, "ERROR: no interpreter for %s\n",
                        external_module);
@@ -2467,8 +2751,9 @@ main (int argc, char *argv[], char *env[])
         }
     }
 
-  /* corresponds to eval "require $module"; in texi2any.pl */
-  txi_converter_output_format_setup (converted_format, external_module);
+  /* load external module if external_module is set */
+  if (external_module)
+    call_eval_use_module (external_module);
 
   /*
   For now, FORMAT_MENU is the only variable that can be set from converter
@@ -2479,9 +2764,33 @@ main (int argc, char *argv[], char *env[])
    in practice TEXI2HTML set, for conversion to HTML to select
    possibly different customization variable values.
    */
-  format_defaults = txi_converter_format_defaults (converted_format,
-                                                   external_module,
-                                                   &cmdline_options);
+  format_defaults = NULL;
+  if (external_module)
+    {
+      format_defaults = call_module_converter_defaults (external_module,
+                                                        &cmdline_options);
+    }
+
+  /* Get information on an output format
+     defaults, taking into account cmdline_options.  It is not needed
+     for converter initialization, as similar code is already called.
+     Similar to call to Texinfo::Convert::XXXX->converter_defaults($options)
+   */
+  if (!format_defaults)
+    {
+      enum converter_format converter_format;
+      CONVERTER_INITIALIZATION_INFO *conf;
+
+      converter_format
+        = find_format_name_converter_format (converted_format);
+      conf = new_converter_initialization_info ();
+
+      copy_options_list (&conf->conf, &cmdline_options);
+
+      format_defaults = converter_defaults (converter_format, conf);
+
+      destroy_converter_initialization_info (conf);
+    }
 
   format_menu_option_nr = program_options.options->FORMAT_MENU.number;
 
@@ -2532,6 +2841,9 @@ main (int argc, char *argv[], char *env[])
   sort_element_count_option
     = GNUT_get_conf (program_options.options->SORT_ELEMENT_COUNT.number);
 
+  auto_section_node_option
+    = GNUT_get_conf (program_options.options->AUTO_SECTION_NODE.number);
+
   initialize_options_list (&parser_options);
   /* Copy relevant customization variables into the parser options. */
   for (i = 0; i < TXI_OPTIONS_NR; i++)
@@ -2557,38 +2869,6 @@ main (int argc, char *argv[], char *env[])
   if (message_encoding_option && message_encoding_option->o.string)
     set_message_encoding = message_encoding_option->o.string;
 
-  if (optind < argc)
-    {
-      int j;
-      for (j = optind; j < argc; j++)
-        add_string (argv[j], &input_files);
-    }
-  else if (!isatty (fileno (stdin)) && !call_texi2dvi)
-    {
-      add_string ("-", &input_files);
-    }
-  else
-    {
-      char *formatted_message;
-      char *encoded_message;
-
-      xasprintf (&formatted_message, _("%s: missing file argument."),
-                 program_file);
-      encoded_message = GNUT_encode_message (formatted_message);
-      free (formatted_message);
-      fprintf (stderr, "%s\n", encoded_message);
-      free (encoded_message);
-
-      xasprintf (&formatted_message,
-                 _("Try `%s --help' for more information."),
-                 program_file);
-      encoded_message = GNUT_encode_message (formatted_message);
-      free (formatted_message);
-      fprintf (stderr, "%s\n", encoded_message);
-      free (encoded_message);
-      exit (EXIT_FAILURE);
-    }
-
   if (test_option)
     {
       if (test_option->o.integer > 1)
@@ -2597,6 +2877,8 @@ main (int argc, char *argv[], char *env[])
       if (test_mode_set)
         {
     /* in a test, /dev/null is used.  Replace by the platform null device.
+       Note that some shells, such as the MSYS2 shell may already have
+       substituted to a platform specific null device on Windows.
      */
           OPTION *outfile_option
             = GNUT_get_conf (program_options.options->OUTFILE.number);
@@ -2617,11 +2899,11 @@ main (int argc, char *argv[], char *env[])
                     }
                 }
               if (!outfile_in_null_device_files)
-               {
-                 GNUT_set_from_cmdline (&cmdline_options,
+                {
+                  GNUT_set_from_cmdline (&cmdline_options,
                            cmdline_options.options->OUTFILE.number,
                            null_device_names[0]);
-               }
+                }
             }
         }
     }
@@ -2635,8 +2917,8 @@ main (int argc, char *argv[], char *env[])
   for (file_index = 0; file_index < input_files.number; file_index++)
     {
       DOCUMENT *document;
-      CONVERTER *converter;
-      char *result;
+      CONVERTER *converter = 0;
+      TEXT result;
       char *input_file_name_and_directory[2];
       char *input_file_name;
       char *input_directory;
@@ -2663,6 +2945,7 @@ main (int argc, char *argv[], char *env[])
       size_t file_path_len;
       size_t j;
       OPTIONS_LIST *file_cmdline_options;
+      int auto_section_node = -1;
 
       input_file_arg = input_files.list[file_index];
 
@@ -2723,13 +3006,13 @@ main (int argc, char *argv[], char *env[])
       if (prepend_dirs.number > 0)
         copy_strings (&prepended_include_directories, &prepend_dirs);
 
-      add_string (curdir, &prepended_include_directories);
+      add_string (&prepended_include_directories, curdir);
 
       if (input_directory)
         canon_input_dir = file_separator_canonpath (input_directory);
 
       if (canon_input_dir && strcmp (curdir, canon_input_dir))
-        add_string (input_directory, &prepended_include_directories);
+        add_string (&prepended_include_directories, input_directory);
 
       /* tune for the input file include directory and prepend to
          INCLUDE_DIRECTORIES by merging prepended directories and command
@@ -2740,10 +3023,10 @@ main (int argc, char *argv[], char *env[])
 
       /* Texinfo file parsing */
       /* initialize parser */
-      txi_parser (input_file_path, &values, &parser_options);
+      parser (input_file_path, &values, &parser_options);
 
       /* Texinfo document tree parsing */
-      document = txi_parse_texi_file (input_file_path, &status);
+      document = parse_file (input_file_path, &status);
 
       set_document_options (document, &program_options, &cmdline_options,
                             init_files_options);
@@ -2774,7 +3057,7 @@ main (int argc, char *argv[], char *env[])
                   && doc_encoding_for_input_file_name_option->o.integer == 0)),
                     locale_encoding, &document->global_info, 0);
           char *debug_tree = tree_print_details (document->tree,
-                               input_file_names_encoding, test_mode_set);
+                               input_file_names_encoding, test_mode_set, 0);
           const char *output_encoding = 0;
           OPTION *out_encoding_option
             = GNUT_get_conf (
@@ -2949,16 +3232,27 @@ main (int argc, char *argv[], char *env[])
         }
 
       /* structure and transformations */
+
+      if ((auto_section_node_option && auto_section_node_option->o.integer > 0)
+          || ((!auto_section_node_option
+               || auto_section_node_option->o.integer < 0)
+              && converted_format_specification->flags & STTF_auto_section_node)
+          || transformation_flags & STTF_insert_nodes_for_sectioning_commands)
+        auto_section_node = 1;
+
       /* do_menu corresponds to FORMAT_MENU undef or set to menu */
-      txi_complete_document (document, converted_format_specification->flags
-                                       | transformation_flags, do_menu);
+      complete_transform_document (document,
+                                   converted_format_specification->flags
+                                    | transformation_flags,
+                                   do_menu, auto_section_node, 0);
 
       merge_error_messages_lists (&document->parser_error_messages,
                                   &document->error_messages);
 
       errors_nr
-        = txi_output_parser_error_messages (document, set_message_encoding,
-                                            no_warn, test_mode_set);
+         = output_error_messages (&document->parser_error_messages,
+                                  set_message_encoding, no_warn,
+                                  test_mode_set);
 
       errors_count = handle_errors (errors_nr, errors_count, &opened_files);
 
@@ -2974,7 +3268,7 @@ main (int argc, char *argv[], char *env[])
                   && doc_encoding_for_input_file_name_option->o.integer == 0)),
                     locale_encoding, &document->global_info, 0);
           char *debug_tree = tree_print_details (document->tree,
-                               input_file_names_encoding, test_mode_set);
+                               input_file_names_encoding, test_mode_set, 0);
           const char *output_encoding = 0;
           OPTION *out_encoding_option
             = GNUT_get_conf (
@@ -3054,13 +3348,27 @@ main (int argc, char *argv[], char *env[])
       else
         file_cmdline_options = &cmdline_options;
 
-      /* conversion initialization */
+      /* In texi2any.pl, equivalent is
+          exists($formats_table{$converted_format}->{'converter'})
+         to determine that the format is a format with a potential
+         output: either there is a table of C functions for conversion,
+         of there is a Perl converter module */
+      if (converter_format != COF_none || external_module)
+        {}
+      else
+       /* with COF_none and no external_module, default converter functions
+          that do nothing are used, it is better to have a clear error.
+          It cannot happen if the formats table is consistent with the formats
+          implemented in C and Perl */
+        {
+          fprintf (stderr, "BUG: no converter for %s\n", output_format);
+          exit (EXIT_FAILURE);
+        }
+
+          /* conversion initialization */
       copy_options_list (&convert_options, &program_options);
       copy_options_list (&convert_options, init_files_options);
       copy_options_list (&convert_options, file_cmdline_options);
-
-      if (file_index != 0)
-        clear_options_list (&non_first_file_cmdline_options);
 
       /* prepend to INCLUDE_DIRECTORIES by resetting include directories to
          merged prepended directories and command line include directories */
@@ -3079,32 +3387,85 @@ main (int argc, char *argv[], char *env[])
         = converter_texinfo_language_directories_option->o.strlist;
       clear_strings_list (converter_texinfo_language_config_dirs);
 
-      add_string (curdir, converter_texinfo_language_config_dirs);
+      add_string (converter_texinfo_language_config_dirs, curdir);
       if (canon_input_dir && strcmp (curdir, canon_input_dir))
-        {
-          add_string (input_directory,
-                      converter_texinfo_language_config_dirs);
-        }
+        add_string (converter_texinfo_language_config_dirs, input_directory);
 
       copy_strings (converter_texinfo_language_config_dirs,
                     texinfo_language_config_dirs);
 
-      txi_converter_initialization_setup (converter_init_info,
-                                          &deprecated_directories,
-                                          &convert_options);
+      /* setup converter_init_info initialization data. */
+      copy_deprecated_dirs (
+               &converter_init_info->deprecated_config_directories,
+                            &deprecated_directories);
 
-      converter = txi_converter_setup (external_module,
-                                       converted_format,
-                                       converter_init_info);
+      copy_options_list (&converter_init_info->conf, &convert_options);
+
+      /* converter setup */
+      if (external_module)
+        {
+          converter = call_module_converter (external_module, converter_init_info);
+          if (!converter)
+            {
+              char *message;
+              xasprintf (&message, "no interpreter or NULL return for module: %s",
+                         external_module);
+              fatal (message);
+              free (message);
+            }
+        }
+
+      if (!converter)
+        {
+          enum converter_format converter_format;
+          converter_format = find_format_name_converter_format (converted_format);
+          converter = converter_converter (converter_format, converter_init_info);
+        }
 
       /* conversion */
-      /* If Perl output conversion is called, a minimal Perl document is
-         built before calling the conversion */
+      if (external_module)
+        {
+          size_t i;
+          /* a minimal Perl document is built before the conversion */
+          OUTPUT_TEXT_FILES_INFO *output_text_files_info
+                    = call_converter_output (converter, document);
+          OUTPUT_FILES_INFORMATION *output_files_information
+                    = output_text_files_info->output_files_information;
+          FILE_STREAM_LIST *unclosed_files
+             = &output_files_information->unclosed_files;
+
+          if (output_text_files_info->text)
+            {
+              text_init (&result);
+              text_append_n (&result, output_text_files_info->text,
+                             output_text_files_info->len);
+              free (output_text_files_info->text);
+            }
+
+          if (output_files_information)
+            {
+              copy_strings (&converter->output_files_information.opened_files,
+                            &output_files_information->opened_files);
+              /* copy unclosed files */
+              for (i = 0; i < unclosed_files->number; i++)
+                {
+                  register_unclosed_file (
+                       &converter->output_files_information,
+                       unclosed_files->list[i].file_path,
+                       unclosed_files->list[i].stream,
+                       unclosed_files->list[i].io);
+                }
+              free_output_files_information (output_files_information);
+              free (output_files_information);
+            }
+          free (output_text_files_info);
+        }
+      else
       /* return value can be NULL in case of errors or an empty string, but
          not anything else as parse_file is used with a file */
-      result = txi_converter_output (converter, document, external_module);
+        result = converter_output (converter, document);
 
-      free (result);
+      free (result.text);
       clear_converter_initialization_info (converter_init_info);
 
       errors_count
@@ -3113,9 +3474,8 @@ main (int argc, char *argv[], char *env[])
                               errors_count);
 
       errors_nr
-        = txi_output_converter_error_messages (converter,
-                                       set_message_encoding, no_warn,
-                                       test_mode_set);
+        = output_error_messages (&converter->error_messages,
+                                 set_message_encoding, no_warn, test_mode_set);
 
       errors_count = handle_errors (errors_nr, errors_count, &opened_files);
 
@@ -3152,8 +3512,8 @@ main (int argc, char *argv[], char *env[])
                 }
               else
                 {
-                  int close_error = txi_close_file_stream (program_file,
-                                                           file_stream);
+                  int close_error = close_file_stream (program_file,
+                                                       file_stream);
 
                   if (close_error)
                     errors_count = handle_errors (close_error,
@@ -3252,10 +3612,7 @@ main (int argc, char *argv[], char *env[])
       if ((test_option && test_option->o.integer > 0)
           || file_index < input_files.number -1)
         {
-          txi_converter_remove_output_units (converter, external_module);
-
-          /* destroy converter */
-          txi_destroy_converter (converter, external_module);
+          remove_converter_and_output_units (converter, external_module);
         }
 
       if (file_index == 0)
@@ -3267,20 +3624,11 @@ main (int argc, char *argv[], char *env[])
                 = sort_element_count_option->o.string;
             }
 
-          /* The main work is done by txi_sort_element_counts, which in
-             turn calls Perl code */
-          if (sort_element_count_file_name
-              && embedded_interpreter != txi_interpreter_use_embedded)
-            {
-              fprintf (stderr,
-                       "ERROR: no interpreter for SORT_ELEMENT_COUNT\n");
-              exit (EXIT_FAILURE);
-            }
-
           if (sort_element_count_file_name)
             {
-              char *sort_element_count_text;
+              char *sort_element_count_text = 0;
               CONVERTER_TEXT_INFO *sort_element_count_info;
+              CONVERTER_INITIALIZATION_INFO *sort_elt_converter_init_info;
               OPTION *use_nodes_option
                = GNUT_get_conf (program_options.options->USE_NODES.number);
               int no_use_nodes = (use_nodes_option
@@ -3308,6 +3656,16 @@ main (int argc, char *argv[], char *env[])
               int error_element_count_file = 0;
               char *output_file_name_encoding = 0;
 
+              /* The main work is done by Perl code */
+              load_interpreter (&loading_info);
+
+              if (loading_info.embedded_interpreter != txi_interpreter_use_embedded)
+                {
+                  fprintf (stderr,
+                           "ERROR: no interpreter for SORT_ELEMENT_COUNT\n");
+                  exit (EXIT_FAILURE);
+                }
+
               /* set such that the code releasing the document is called from
                  Perl */
               if (!external_module)
@@ -3329,11 +3687,44 @@ main (int argc, char *argv[], char *env[])
               copy_strings (converter_include_dirs, &prepended_include_directories);
               copy_strings (converter_include_dirs, cmdline_include_dirs);
 
-              sort_element_count_info
-               = txi_sort_element_counts (elt_count_external_module,
-                     &convert_options, document,
-                     use_sections, (sort_element_count_words_option
+              sort_elt_converter_init_info
+                = new_converter_initialization_info ();
+              sort_element_count_info = (CONVERTER_TEXT_INFO *)
+                malloc (sizeof (CONVERTER_TEXT_INFO));
+
+              copy_options_list (&sort_elt_converter_init_info->conf,
+                                 &convert_options);
+
+                /* corresponds to, in texi2any.pl:
+                   - load elements count module
+                   - initialize converter
+                   - call the converter specific method
+                 */
+              call_eval_use_module (elt_count_external_module);
+              sort_element_count_info->converter
+                 = call_module_converter (elt_count_external_module,
+                                          sort_elt_converter_init_info);
+
+              /* The Perl interpreter should have been loaded, so it
+                 should be another error */
+              if (!sort_element_count_info->converter)
+                {
+                  char *message;
+                  xasprintf (&message,
+        "no interpreter or NULL return for sort element count module: %s",
+                         elt_count_external_module);
+                  fatal (message);
+                  free (message);
+                }
+
+              sort_element_count_info->text
+                = call_sort_element_counts (sort_element_count_info->converter,
+                                            document, use_sections,
+                        (sort_element_count_words_option
                          && sort_element_count_words_option->o.integer > 0));
+
+              destroy_converter_initialization_info (
+                                                sort_elt_converter_init_info);
 
               /* output resulting text in the sort_element_count_file_name */
               sort_element_count_text = sort_element_count_info->text;
@@ -3396,13 +3787,14 @@ main (int argc, char *argv[], char *env[])
               free (encoded_sort_element_count_file_name);
               free (sort_element_count_text);
 
-              txi_converter_remove_output_units (
-                                   sort_element_count_info->converter,
-                                   elt_count_external_module);
-              /* destroy converter and sort_element_count_info */
-              txi_destroy_converter (sort_element_count_info->converter,
-                                     elt_count_external_module);
-              free (sort_element_count_info);
+              if (sort_element_count_info)
+                {
+                  remove_converter_and_output_units (
+                                     sort_element_count_info->converter,
+                                          elt_count_external_module);
+
+                  free (sort_element_count_info);
+                }
 
               error_element_count_file
                 = merge_opened_files (&opened_files,
@@ -3422,13 +3814,35 @@ main (int argc, char *argv[], char *env[])
     next_input_file:
       if ((test_option && test_option->o.integer > 0)
           || file_index < input_files.number -1)
-        /* destroy document */
-        txi_destroy_document (document, external_module, remove_references);
+        {
+          /* destroy document */
+           ERROR_MESSAGE_LIST *error_messages = 0;
+           int check_counts = (document->options->TEST.o.integer > 1);
+           if (check_counts && external_module)
+             {
+      /* Call Perl function to remove Perl references when Perl code is used */
+               call_document_remove_document_references (document,
+                                                  remove_references);
+               error_messages = set_check_element_interpreter_refcount ();
+             }
+
+           destroy_document (document);
+           if (check_counts && external_module)
+             {
+              /* the messages are discarded.  The same information has already
+                 been printed on STDERR */
+               clear_error_message_list (error_messages);
+               unset_check_element_interpreter_refcount ();
+             }
+         }
 
       free (input_directory);
       free (canon_input_dir);
       free (input_file_name);
       free (input_file_path);
+
+      if (file_index != 0)
+        clear_options_list (&non_first_file_cmdline_options);
 
       clear_strings_list (&prepended_include_directories);
       clear_options_list (&convert_options);
@@ -3436,7 +3850,7 @@ main (int argc, char *argv[], char *env[])
 
   if (main_program_unclosed_stdout.file_path)
     {
-      int close_error = txi_close_file_stream (program_file,
+      int close_error = close_file_stream (program_file,
                                          &main_program_unclosed_stdout);
       if (close_error)
         errors_count = handle_errors (close_error, errors_count, &opened_files);
@@ -3477,7 +3891,7 @@ main (int argc, char *argv[], char *env[])
           /* prepend texi2dvi to texi2dvi_args */
           copy_strings (&tmp_strings, &texi2dvi_args);
           clear_strings_list (&texi2dvi_args);
-          add_string (texi2dvi, &texi2dvi_args);
+          add_string (&texi2dvi_args, texi2dvi);
           merge_strings (&texi2dvi_args, &tmp_strings);
           tmp_strings.number = 0;
           free_strings_list (&tmp_strings);
@@ -3513,13 +3927,14 @@ main (int argc, char *argv[], char *env[])
   free_strings_list (&internal_extension_dirs);
   free (extensions_dir);
 
-  txi_stop_interpreter (embedded_interpreter);
+  if (loading_info.embedded_interpreter == txi_interpreter_use_embedded)
+    call_finish_perl ();
 
   free_strings_list (&opened_files);
 
   if (call_texi2dvi && texi2dvi)
     {
-      char **argv;
+      EXEC_CONST char **argv;
       size_t i;
 
       if (debug)
@@ -3528,7 +3943,9 @@ main (int argc, char *argv[], char *env[])
           fprintf (stderr, "EXEC %s\n", texi2dvi_call);
           free (texi2dvi_call);
         }
-      argv = (char **) malloc ((texi2dvi_args.number +1) * sizeof (char *));
+      argv
+        = (EXEC_CONST char **)
+          malloc ((texi2dvi_args.number + 1) * sizeof (EXEC_CONST char *));
       for (i = 0; i < texi2dvi_args.number; i++)
         argv[i] = strdup (texi2dvi_args.list[i]);
       argv[texi2dvi_args.number] = NULL;

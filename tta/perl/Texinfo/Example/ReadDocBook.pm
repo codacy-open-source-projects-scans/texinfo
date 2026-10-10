@@ -39,9 +39,6 @@ use Carp qw(cluck confess);
 #use Devel::Refcount qw(refcount);
 #use Devel::Peek qw(SvREFCNT);
 
-# for XS_structuring_enabled
-use Texinfo::XSLoader;
-
 use Texinfo::Commands;
 
 use Texinfo::TreeElement;
@@ -49,6 +46,7 @@ use Texinfo::TreeElement;
 use Texinfo::Reader;
 
 use Texinfo::Common;
+use Texinfo::Indices;
 
 # for debugging
 use Texinfo::Convert::Texinfo;
@@ -359,9 +357,7 @@ sub conversion_initialization($;$)
   my $self = shift;
   my $document = shift;
 
-  if ($document) {
-    $self->set_document($document);
-  }
+  $self->set_document($document);
 
   $self->{'document_context'} = [];
   _new_document_context($self);
@@ -822,7 +818,7 @@ sub _begin_def_line($$)
   if ($index_entry) {
     $result .= $index_entry_text;
     $result .= $self->convert_tree(
-      Texinfo::Common::index_content_element($element));
+                        $self->converter_index_content_element($element));
     $result .= _end_index_entry($self, $element);
   }
   _new_document_context($self);
@@ -952,7 +948,8 @@ sub _convert($$)
           }
         } elsif ($cmdname eq 'today') {
           $result_text = $self->convert_tree($self->expand_today());
-        } elsif ($Texinfo::Commands::accent_commands{$cmdname}) {
+        } elsif ($Texinfo::Commands::brace_commands{$cmdname}
+               and $Texinfo::Commands::brace_commands{$cmdname} eq 'accent') {
           $result_text = $self->xml_accents($element,
                  $self->{'document_context'}->[-1]->{'upper_case'}->[-1]);
         }
@@ -1001,7 +998,7 @@ sub _convert($$)
             if ($index_entry) {
               $result_text .= $index_entry_text;
               $result_text .= $self->convert_tree(
-                    Texinfo::Common::index_content_element($element));
+                $self->converter_index_content_element($element));
               $result_text .= _end_index_entry($self, $element);
             }
             if (exists($element->{'contents'}->[0]->{'contents'})) {
@@ -1573,8 +1570,10 @@ sub _convert($$)
               foreach my $extension (@docbook_image_extensions) {
                 my ($file_name, $file_name_encoding)
                    = $self->encoded_input_file_name("$basefile.$extension");
-                if (Texinfo::Common::locate_include_file($file_name,
-                                      $self->get_conf('INCLUDE_DIRECTORIES'))) {
+                my ($file, $use_inc_dir)
+                  = Texinfo::Common::locate_include_file($file_name,
+                                      $self->get_conf('INCLUDE_DIRECTORIES'));
+                if (defined($file)) {
                   push @files, ["$basefile.$extension", uc($extension)];
                 }
               }
@@ -2263,7 +2262,8 @@ sub _convert($$)
         } elsif ($cmdname eq 'w') {
         # special case to ensure that @w leads to something even if empty
           $$output_ref .= $w_command_mark;
-        } elsif ($Texinfo::Commands::accent_commands{$cmdname}) {
+        } elsif (exists($Texinfo::Commands::brace_commands{$cmdname})
+               and $Texinfo::Commands::brace_commands{$cmdname} eq 'accent') {
           $result .= $self->xml_accents($element,
                  $self->{'document_context'}->[-1]->{'upper_case'}->[-1]);
         } elsif (!exists($docbook_no_warn_empty_commands{$cmdname})

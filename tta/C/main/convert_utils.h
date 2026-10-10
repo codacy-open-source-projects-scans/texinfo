@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#include "text.h"
+#include "element_types.h"
 #include "command_ids.h"
 #include "options_data.h"
 #include "tree_types.h"
@@ -45,16 +47,13 @@ ELEMENT_LIST *comma_index_subentries_tree (const ELEMENT *current,
                                            char *separator);
 void free_comma_index_subentries_tree (ELEMENT_LIST *element);
 
-ELEMENT *expand_today (int test, LANG_TRANSLATION *lang_translation,
-              int debug, CONVERTER *converter,
-   ELEMENT * (*cdt_tree_fn) (const char *string, CONVERTER *self,
-                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                             const char *translation_context)
-             );
+ELEMENT *expand_today (int test, const LANG_TRANSLATION *lang_translation,
+                       int debug, CONVERTER_CDT_TREE *converter_cdt_tree);
 
-char *add_heading_number (const ELEMENT *current, char *text,
-                          int numbered,
-                          LANG_TRANSLATION *lang_translation);
+TEXT add_heading_number (const ELEMENT *current, TEXT text,
+                         int numbered,
+                         const LANG_TRANSLATION *lang_translation,
+                         int debug_level);
 
 ELEMENT *expand_verbatiminclude (const ELEMENT *current,
                         const STRING_LIST *include_directories,
@@ -70,14 +69,9 @@ ELEMENT *converter_expand_verbatiminclude (const ELEMENT *current,
 
 PARSED_DEF *definition_arguments_content (const ELEMENT *element);
 void destroy_parsed_def (PARSED_DEF *parsed_def);
-ELEMENT *definition_category_tree (const ELEMENT *current,
-                          LANG_TRANSLATION *lang_translation,
-                          const char *command_line_encoding,
-                          int debug, CONVERTER *converter,
-   ELEMENT * (*cdt_tree_fn) (const char *string, CONVERTER *self,
-                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                             const char *translation_context)
-                          );
+ELEMENT *definition_category_tree (const ELEMENT *element,
+                          const LANG_TRANSLATION *lang_translation,
+                          int debug, CONVERTER_CDT_TREE *converter_cdt_tree);
 
 const ELEMENT *itemize_line_prepended_element (const ELEMENT *block_line_arg);
 const ELEMENT *item_itemize_prepended (const ELEMENT *element);
@@ -91,18 +85,10 @@ void find_element_authors (const ELEMENT *element,
 COMMENT_OR_END_LINE *comment_or_end_line (const ELEMENT *element);
 ARGUMENT_COMMENT_END_LINE *argument_comment_end_line (const ELEMENT *element);
 
-ELEMENT *cdt_tree (const char * string, CONVERTER *self,
-                   struct NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                   const char *translation_context);
-
 ELEMENT *translated_command_tree (TRANSLATED_COMMAND_LIST *translated_commands,
                          enum command_id cmd,
-                         LANG_TRANSLATION *lang_translation,
-                         int debug, CONVERTER *converter,
-   ELEMENT * (*cdt_tree_fn) (const char *string, CONVERTER *self,
-                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                             const char *translation_context)
-                        );
+                         const LANG_TRANSLATION *lang_translation,
+                         int debug, CONVERTER_CDT_TREE *converter_cdt_tree);
 
 char *encoded_input_file_name (const char *input_file_name_encoding,
                          int doc_encoding_for_input_file_name,
@@ -134,5 +120,8 @@ void output_files_register_closed (OUTPUT_FILES_INFORMATION *self,
                                    const char *file_path);
 void register_unclosed_file (OUTPUT_FILES_INFORMATION *self,
                              const char *file_path, FILE *stream, void *io);
+void output_files_rename_opened (OUTPUT_FILES_INFORMATION *self,
+                                 const char *file_path,
+                                 const char *new_file_path);
 
 #endif

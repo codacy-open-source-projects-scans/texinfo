@@ -12,26 +12,12 @@
 # Perl headers.
 # NOTE a disadvantage of passing defines through flags and not through a file
 # is that a change in value does not trigger remaking the output file.
-AM_CPPFLAGS = -DDATADIR=\"$(datadir)\" -DLIBDIR=\"$(libdir)\" \
-       -DCONVERTER_CONFIG=\"$(CONVERTER)\" \
-       -DPACKAGE_VERSION_CONFIG=\"$(PACKAGE_VERSION)\"
-
-# Never embed a perl interpreter as there is already one running (tested to
-# mess up the Perl stack).  According to perlembed documentation, it could be
-# possible to have two perl interpreters running, but the example only shows
-# interpreters that the C code embedding Perl has control over.
-#
-# Instead, use the existing Perl interpreter.
-
-AM_CPPFLAGS += -DUSE_PERL_INTERPRETER
+AM_CPPFLAGS = -DDATADIR=\"$(datadir)\"
 
 txi_libs_srcdir = $(srcdir)/../../C
 
-$(top_builddir)/../tta/C/libtexinfo.la:
-	cd $(top_builddir)/C/ && $(MAKE) $(AM_MAKEFLAGS) libtexinfo.la
-
-$(top_builddir)/../tta/C/libtexinfo-main.la:
-	cd $(top_builddir)/C/ && $(MAKE) $(AM_MAKEFLAGS) libtexinfo-main.la
+$(top_builddir)/../tta/C/libtexinfo-main-static.la:
+	cd $(top_builddir)/C/ && $(MAKE) $(AM_MAKEFLAGS) libtexinfo-main-static.la
 
 if SWIG_INTERFACES
 SWIG_include_directories = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/api_for_swig
@@ -39,7 +25,6 @@ SWIG_include_directories = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/api_fo
 BUILT_SOURCES = perl_texinfo_wrap.c Texinfo.pm
 
 SWIG_header_dependencies = \
-                 $(txi_libs_srcdir)/main/use_interpreter_types.h \
                  $(txi_libs_srcdir)/main/source_mark_types.h \
                  $(txi_libs_srcdir)/api_for_swig/swig_element_types.h \
                  $(txi_libs_srcdir)/api_for_swig/swig_element_data.h \
@@ -52,7 +37,7 @@ perl_texinfo_wrap.c Texinfo.pm: $(srcdir)/../texinfo.i $(SWIG_header_dependencie
 
 endif
 
-all-local: .libs/auto/Texinfo
+#all-local: .libs/auto/Texinfo
 
 # SWIG generated Texinfo.pm XS loading code calls Dynaloader bootstrap,
 # which searches first in @INC directories auto/Texinfo/ subdirectories.
@@ -64,9 +49,15 @@ all-local: .libs/auto/Texinfo
 # do a link from auto/Texinfo to .libs, such that the first extension
 # loaded is in .libs/auto/Texinfo in .libs in build directory.
 
-.libs/auto/Texinfo:
-	$(MKDIR_P) .libs/auto
-	$(LN_S) .. .libs/auto/Texinfo
+# This does not work when LN_S is cp
+#.libs/auto/Texinfo:
+#	$(MKDIR_P) .libs/auto
+#	$(LN_S) .. .libs/auto/Texinfo
+
+all-local: Texinfo.la
+	rm -rf .libs/auto
+	cp -pR .libs libs_Texinfo_copy.$$$$ && $(MKDIR_P) .libs/auto && \
+		 mv libs_Texinfo_copy.$$$$ .libs/auto/Texinfo
 
 # We do not add an explicit clean action as .libs is already removed with
 # clean.
@@ -79,7 +70,7 @@ all-local: .libs/auto/Texinfo
 # The .pm that load the XS modules seems to always be installed in
 # installsitearch or installvendorarch.
 # configure sets archlibdir to installsitearch or installvendorarch depending
-# on configure flags, also taking prefix into account as should be.
+# on configure variables, also taking prefix into account as should be.
 nodist_perlarch_DATA = Texinfo.pm
 
 module = Texinfo
@@ -90,11 +81,11 @@ nodist_Texinfo_la_SOURCES = perl_texinfo_wrap.c
 
 # XS_VERSION could be used in version check in the bootstrap function created
 # by xsubpp in C code generated from .xs, and called in XSLoader.pm
-Texinfo_la_CPPFLAGS = $(AM_CPPFLAGS) -DVERSION=\"$(VERSION)\" -DXS_VERSION=\"$(XS_VERSION)\" -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/parsetexi -I$(txi_libs_srcdir)/convert -I$(txi_libs_srcdir)/api_for_swig $(perl_conf_CPPFLAGS)
+Texinfo_la_CPPFLAGS = $(AM_CPPFLAGS) -DVERSION=\"$(VERSION)\" -DXS_VERSION=\"$(XS_VERSION)\" -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/parsetexi -I$(txi_libs_srcdir)/structuring_transfo -I$(txi_libs_srcdir)/convert -I$(txi_libs_srcdir)/api_for_swig $(perl_conf_CPPFLAGS)
 Texinfo_la_CFLAGS = $(perl_conf_LIB_CFLAGS)
 # Flags specially recognized by libtool.  For dlopened modules, here XS.
 Texinfo_la_LDFLAGS = -avoid-version -module $(perl_conf_LIB_LDFLAGS)
-Texinfo_la_LIBADD = $(top_builddir)/C/libtexinfo.la $(top_builddir)/C/libtexinfo-main.la $(platform_PERL_LIBADD)
+Texinfo_la_LIBADD = $(top_builddir)/C/libtexinfo-main-static.la $(platform_PERL_LIBADD)
 # Same as ctexi2any, not sure whether it is needed or not
 Texinfo_la_LIBADD += $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 

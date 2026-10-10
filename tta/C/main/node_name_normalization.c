@@ -19,7 +19,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <ctype.h>
+#include <unitypes.h>
 #include "unistr.h"
 
 /* also for xvasprintf */
@@ -31,16 +33,13 @@
 /* isascii_alnum bug */
 #include "base_utils.h"
 #include "tree.h"
-#include "extra.h"
 #include "builtin_commands.h"
 /* for xasprintf whitespace_chars find_innermost_accent_contents */
 #include "utils.h"
 #include "debug.h"
-#include "call_perl_function.h"
 #include "unicode.h"
 /* nobrace_symbol_text */
 #include "convert_to_text.h"
-#include "convert_utils.h"
 #include "node_name_normalization.h"
 
 static const char *command_normalization_text[BUILTIN_CMD_NUMBER];
@@ -123,7 +122,8 @@ convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
     {
       if (command_normalization_text[cmd])
         ADD(command_normalization_text[cmd]);
-      else if (builtin_command_data[cmd].flags & CF_accent)
+      if (command_data[cmd].flags & CF_brace
+          && command_data[cmd].data == BRACE_accent)
         {
           if (e->e.c->contents.number > 0)
             {
@@ -154,7 +154,7 @@ convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
             }
           return;
         }
-      else if (builtin_command_data[cmd].flags & CF_ref)
+      else if (command_data[cmd].flags & CF_ref)
         {
           int order_index = 0;
           int *arguments_order = ref_5_args_order;
@@ -380,20 +380,19 @@ convert_contents_to_identifier (const ELEMENT *e)
   return result;
 }
 
+/* Transliteration/protection with GNU iconv leads to a result different
+   from Perl for some characters.  It seems that the iconv result depends
+   on the locale, and there are quite a bit of ? output, probably when
+   there is no obvious transliteration.  In those cases, the Unidecode
+   transliterations are not necessarily very good, either.  There is
+   no reason to think that all the iconv implementations transliterate
+   the same way, nor the same as Perl, therefore differences are expected.
+ */
 static char *
-unicode_to_transliterate (char *text, int external,
-                          int in_test, int no_unidecode)
+unicode_to_transliterate (char *text)
 {
   char *result;
   int status;
-
-  if (external)
-    {
-      result = call_nodenamenormalization_unicode_to_transliterate (text,
-                                                   in_test, no_unidecode);
-      if (result)
-        return result;
-    }
 
   /* We silence the transliteration errors that may happen (for example on
      solaris 11).  The calling code should never depend on a specific
@@ -406,13 +405,11 @@ unicode_to_transliterate (char *text, int external,
 }
 
 char *
-normalize_transliterate_texinfo (const ELEMENT *e, int external_translit,
-                                 int in_test, int no_unidecode)
+normalize_transliterate_texinfo (const ELEMENT *e)
 {
   char *converted_name = convert_to_normalized (e);
   char *normalized_name = normalize_NFC (converted_name);
-  char *transliterated = unicode_to_transliterate (normalized_name,
-                          external_translit, in_test, no_unidecode);
+  char *transliterated = unicode_to_transliterate (normalized_name);
   char *result = unicode_to_protected (transliterated);
 
   free (converted_name);
@@ -422,15 +419,13 @@ normalize_transliterate_texinfo (const ELEMENT *e, int external_translit,
 }
 
 char *
-normalize_transliterate_texinfo_contents (const ELEMENT *e,
-                    int external_translit, int in_test, int no_unidecode)
+normalize_transliterate_texinfo_contents (const ELEMENT *e)
 {
   ELEMENT *tmp = new_element (ET_NONE);
   char *result;
 
   tmp->e.c->contents = e->e.c->contents;
-  result = normalize_transliterate_texinfo (tmp, external_translit,
-                                            in_test, no_unidecode);
+  result = normalize_transliterate_texinfo (tmp);
   tmp->e.c->contents.list = 0;
   destroy_element (tmp);
 

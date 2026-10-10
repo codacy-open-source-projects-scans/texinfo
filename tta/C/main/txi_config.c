@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdarg.h>
-#include <locale.h>
 #ifdef ENABLE_NLS
 #include <libintl.h>
 #endif
@@ -35,8 +34,10 @@
    is not set */
 #include "gettext.h"
 
+#include "options_data.h"
 #include "option_types.h"
-#include "tree.h"
+#include "text.h"
+#include "tree_types.h"
 /* fatal */
 #include "base_utils.h"
 /* xasprintf decode_string encode_string */
@@ -176,9 +177,12 @@ set_option_value (OPTIONS_LIST *options_list, size_t number,
       char *endptr;
       long long_value = strtol (value, &endptr, 10);
       int int_value = (int) long_value;
-      if (endptr != value && int_value >= 0)
+      if (endptr != value)
         {
-          option_set_conf (option, int_value, 0);
+          if (int_value >= 0
+              || (int_value == -2
+                  && option->number == txi_base_options.paragraphindent.number))
+            option_set_conf (option, int_value, 0);
         }
       else
         {
@@ -334,7 +338,7 @@ txi_config_add_to_option_list (OPTION *option, const char *value,
     /* accept duplicates in that case, as prepending should in general
        be used to override by being first */
       static STRING_LIST tmp_strlist;
-      add_string (value, &tmp_strlist);
+      add_string (&tmp_strlist, value);
       copy_strings (&tmp_strlist, str_list);
       clear_strings_list (str_list);
       merge_strings (str_list, &tmp_strlist);
@@ -345,7 +349,7 @@ txi_config_add_to_option_list (OPTION *option, const char *value,
       idx_option = find_string (str_list, value);
 
       if (!idx_option)
-        add_string (value, str_list);
+        add_string (str_list, value);
     }
   return 1;
 }

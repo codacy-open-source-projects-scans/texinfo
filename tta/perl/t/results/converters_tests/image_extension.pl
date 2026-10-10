@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'image_extension'} = '*document_root C1
- *before_node_section C2
+ *before_node_section C3
+  *preamble_before_content
   *@image C5 l1
   |EXTRA
   |input_encoding_name:{utf-8}
@@ -70,7 +74,8 @@ $result_converted_errors{'docbook'}->{'image_extension'} = '* W l1|@image file `
 ';
 
 
-$result_converted{'latex_text'}->{'image_extension'} = '\\includegraphics{f---ile}
+$result_converted{'latex_text'}->{'image_extension'} = '\\begin{document}
+\\includegraphics{f---ile}
 ';
 
 $result_converted_errors{'latex_text'}->{'image_extension'} = '* W l1|@image file `f---ile\' (for LaTeX) not found
@@ -79,7 +84,7 @@ $result_converted_errors{'latex_text'}->{'image_extension'} = '* W l1|@image fil
 ';
 
 
-$result_converted{'info'}->{'image_extension'} = 'This is , produced from .
+$result_converted{'info'}->{'image_extension'} = Encode::encode('utf-8', 'This is , produced from .
 
 [f---ile]
 
@@ -91,7 +96,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'image_extension'} = '* W |document without nodes
  warning: document without nodes

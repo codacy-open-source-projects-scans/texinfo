@@ -1,43 +1,47 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'nested_macro_call'} = '*document_root C1
- *before_node_section C5
-  *@macro C3 l1
-  |EXTRA
-  |formal_args:A{}
-  |macro_name:{machin}
-   *arguments_line C1
-    {macro_line: machin{}\\n}
-   {raw:(machin)\\n}
-   *@end C1 l3
+ *before_node_section C2
+  *preamble_before_content C4
+   *@macro C3 l1
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  *@macro C4 l5
-  |EXTRA
-  |formal_args:A{}
-  |macro_name:{truc}
-   *arguments_line C1
-    {macro_line: truc{}\\n}
-   {raw:@machin{}\\n}
-   {raw:\\n}
-   *@end C1 l8
+   |formal_args:A{}
+   |macro_name:{machin}
+    *arguments_line C1
+     {macro_line: machin{}\\n}
+    {raw:(machin)\\n}
+    *@end C1 l3
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
+   *@macro C4 l5
    |EXTRA
-   |text_arg:{macro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {macro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
+   |formal_args:A{}
+   |macro_name:{truc}
+    *arguments_line C1
+     {macro_line: truc{}\\n}
+    {raw:@machin{}\\n}
+    {raw:\\n}
+    *@end C1 l8
+    |EXTRA
+    |text_arg:{macro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {macro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C2
    {Before (machin)\\n}
    >SOURCEMARKS

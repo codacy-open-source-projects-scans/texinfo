@@ -26,13 +26,16 @@
 
 package Texinfo::Reader;
 
+use 5.006;
 use strict;
 use warnings;
 
-use Carp qw(cluck confess);
-
 # check that autovivification do not happen incorrectly.
 #no autovivification qw(fetch delete exists store strict);
+
+use Carp qw(cluck confess);
+
+our $VERSION = '7.3dev';
 
 use constant {
   # for elements with contents, a start token is emitted when encountering
@@ -198,6 +201,7 @@ sub reader_collect_commands_list($$) {
 
 1;
 __END__
+
 =head1 NAME
 
 Texinfo::Reader - Texinfo tree reader
@@ -208,7 +212,7 @@ Texinfo::Reader - Texinfo tree reader
   use Texinfo::Reader;
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_file("somefile.texi");
+  my $document = $parser->parse_file("somefile.texi");
 
   my $start_element = $document->tree();
 

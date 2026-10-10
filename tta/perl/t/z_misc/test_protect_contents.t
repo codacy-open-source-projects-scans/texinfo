@@ -14,15 +14,11 @@ use Texinfo::Transformations;
 
 ok(1, 'modules loading');
 
-sub run_test($$$$)
-{
-  my $do = shift;
-  my $in = shift;
-  my $out = shift;
-  my $name = shift;
+sub run_test($$$$) {
+  my ($do, $in, $out, $name) = @_;
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_piece($in);
+  my $document = $parser->parse_piece($in);
   my $texi_result;
 
   if ($do->{'protect_first_parenthesis'}) {

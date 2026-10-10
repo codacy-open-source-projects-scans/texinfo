@@ -1,13 +1,18 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'xref_test'} = '*document_root C2
- *before_node_section C1
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content
  *@node C3 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -89,7 +94,6 @@ $result_texis{'xref_test'} = '
 
 
 $result_texts{'xref_test'} = '
-
 (m)in xref. (m)bad xref after xref.
 (m)bad nested xref.
 (m)in ref ending with a dot. ! after xref and dot inside.
@@ -108,7 +112,7 @@ $result_sectioning_root{'xref_test'} = '';
 $result_headings_list{'xref_test'} = '';
 
 
-$result_converted{'info'}->{'xref_test'} = 'This is , produced from .
+$result_converted{'info'}->{'xref_test'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -127,7 +131,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'xref_test'} = '* W l6|@xref node name should not contain `.\'
  warning: @xref node name should not contain `.\'

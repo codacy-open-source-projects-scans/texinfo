@@ -17,9 +17,10 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <iconv.h>
+#include <stdint.h>
 #include "unistr.h"
 
+#include "element_types.h"
 #include "command_ids.h"
 #include "tree_types.h"
 #include "text.h"
@@ -36,7 +37,6 @@
 #include "unicode.h"
 #include "debug_parser.h"
 #include "commands.h"
-#include "source_marks.h"
 /* for isolate_last_space global_documentlanguage and
    global_documentscript */
 #include "parser.h"
@@ -54,7 +54,7 @@ gather_def_item (ELEMENT *current, enum command_id next_command)
      This may happen for a construct like:
      @deffnx a b @section
      but otherwise the end of line will lead to the command closing. */
-  if (command_data(current->e.c->cmd).flags & CF_line)
+  if (parsed_command_data(current->e.c->cmd).flags & CF_line)
     return;
 
   contents_count = current->e.c->contents.number;
@@ -67,7 +67,7 @@ gather_def_item (ELEMENT *current, enum command_id next_command)
      an ET_def_line */
   for (pos = contents_count; pos > 0; pos--)
     {
-      ELEMENT *last_child = contents_child_by_index (current, pos -1);
+      ELEMENT *last_child = current->e.c->contents.list[pos -1];
       if (last_child->flags & EF_def_line
           || last_child->type == ET_arguments_line)
         break;
@@ -96,7 +96,7 @@ gather_def_item (ELEMENT *current, enum command_id next_command)
       insert_slice_into_contents (def_item, 0, current, pos, contents_count);
       for (j = contents_count; j > pos; j--)
         {
-          ELEMENT *e = contents_child_by_index (current, j-1);
+          ELEMENT *e = current->e.c->contents.list[j-1];
           /* no normal text element, but at least empty lines text elements */
           if (!(type_data[e->type].flags & TF_text))
             e->e.c->parent = def_item;
@@ -374,7 +374,7 @@ parse_def (enum command_id command, ELEMENT *current)
   split_def_args (current, contents_idx);
 
   /* Check for "def alias" - for example @defun for @deffn. */
-  if (command_data(command).flags & CF_def_alias)
+  if (parsed_command_data(command).flags & CF_def_alias)
     {
       ELEMENT *spaces_before;
       char *category;
@@ -498,7 +498,7 @@ parse_def (enum command_id command, ELEMENT *current)
   for (i = contents_idx; i < current->e.c->contents.number; i++)
     {
       enum element_type def_arg_type = ET_def_arg;
-      e = contents_child_by_index (current, i);
+      e = current->e.c->contents.list[i];
       if (e->type == ET_spaces)
         {
           continue;

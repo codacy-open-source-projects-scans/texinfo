@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'custom_headings'} = '*document_root C8
  *before_node_section C2
@@ -104,6 +107,8 @@ $result_tree_text{'custom_headings'} = '*document_root C8
   {empty_line:\\n}
  *@section C2 l19 {sec1}
  |EXTRA
+ |identifier:{sec1}
+ |is_target:{1}
  |section_heading_number:{1.1}
  |section_level:{2}
  |section_number:{3}
@@ -115,6 +120,8 @@ $result_tree_text{'custom_headings'} = '*document_root C8
   {empty_line:\\n}
  *@chapter C12 l21 {chap 2}
  |EXTRA
+ |identifier:{chap-2}
+ |is_target:{1}
  |section_heading_number:{2}
  |section_level:{1}
  |section_number:{4}
@@ -148,6 +155,8 @@ $result_tree_text{'custom_headings'} = '*document_root C8
   {empty_line:\\n}
  *@chapter C6 l33 {chap 3}
  |EXTRA
+ |identifier:{chap-3}
+ |is_target:{1}
  |section_heading_number:{3}
  |section_level:{1}
  |section_number:{5}
@@ -349,8 +358,10 @@ after ch--ap first page
 after ch--ap second page
 
 \\section{{sec1}}
+\\label{anchor:sec1}%
 
 \\Texinfochapter{{chap 2}}
+\\label{anchor:chap-2}%
 
 \\renewpagestyle{custom}{%
 \\sethead[toto][titi][]%
@@ -371,6 +382,7 @@ after everyheading before chap 3 first page
 after everyheading before chap 3 second page
 
 \\Texinfochapter{{chap 3}}
+\\label{anchor:chap-3}%
 
 \\newpage{}%
 \\phantom{blabla}%

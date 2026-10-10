@@ -5,7 +5,13 @@ use Encode;
 use lib '.';
 use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
+use Texinfo::Configure;
+
+use Texinfo::XSLoader;
+
 require 't/test_utils.pl';
+
+my $XS_convert = Texinfo::XSLoader::XS_modules_enabled();
 
 # do not use @node Top as it is ignored in LaTeX output
 my $accents_text = '@node first
@@ -118,12 +124,11 @@ my $at_commands_in_refs_text = '@node Top
 * @- @{ @}::
 * @  @	 @! @* @. @: .@: @? @@::
 * @atchar{} @lbracechar{} @rbracechar{} @backslashchar{} @hashchar{}::
-* @LaTeX{} @TeX{} @bullet{} @comma{} @copyright{} @dots{} @enddots{}::
-* @equiv{} @error{} @euro{} @exclamdown{} @expansion{} @minus{}::
-* @geq{} @leq{} @arrow{}::
-* @ordf{} @ordm{} @point{} @pounds{} @print{} @questiondown{} @registeredsymbol{}::
-* @result{} @textdegree{} a@tie{}b @today{} @aa{}::
-* @AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @TH{} @th{}::
+* @LaTeX{} @TeX{} @comma{} @dots{} @enddots{}::
+* @error{} @euro{} @exclamdown{}::
+* @ordf{} @ordm{} @questiondown{}::
+* a@tie{}b @today{} @aa{}::
+* @AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @th{}::
 * @"{a} @~{e} @^{@dotless{i}} @^{a} @`{a} @\'e @,{c} @={e} @ringaccent{e} @H{e} @ogonek{e}::
 * @dotaccent{e} @u{e} @ubaraccent{e} @udotaccent{e} @v{e} @dotless{j} @tieaccent{ee}::
 * @dotless{i} @`{@=E} @,{@\'C}::
@@ -153,23 +158,20 @@ my $at_commands_in_refs_text = '@node Top
 @node @atchar{} @lbracechar{} @rbracechar{} @backslashchar{} @hashchar{}
 @chapter @atchar{} @lbracechar{} @rbracechar{} @backslashchar{} @hashchar{}
 
-@node @LaTeX{} @TeX{} @bullet{} @comma{} @copyright{} @dots{} @enddots{}
-@chapter @LaTeX{} @TeX{} @bullet{} @comma{} @copyright{} @dots{} @enddots{}
+@node @LaTeX{} @TeX{} @comma{} @dots{} @enddots{}
+@chapter @LaTeX{} @TeX{} @comma{} @dots{} @enddots{}
 
-@node @equiv{} @error{} @euro{} @exclamdown{} @expansion{} @minus{}
-@chapter @equiv{} @error{} @euro{} @exclamdown{} @expansion{} @minus{}
+@node @error{} @euro{} @exclamdown{}
+@chapter @error{} @euro{} @exclamdown{}
 
-@node @geq{} @leq{} @arrow{}
-@chapter @geq{} @leq{} @arrow{}
+@node @ordf{} @ordm{} @questiondown{}
+@chapter @ordf{} @ordm{} @questiondown{}
 
-@node @ordf{} @ordm{} @point{} @pounds{} @print{} @questiondown{} @registeredsymbol{}
-@chapter @ordf{} @ordm{} @point{} @pounds{} @print{} @questiondown{} @registeredsymbol{}
+@node a@tie{}b @today{} @aa{}
+@chapter a@tie{}b @today{} @aa{}
 
-@node @result{} @textdegree{} a@tie{}b @today{} @aa{}
-@chapter @result{} @textdegree{} a@tie{}b @today{} @aa{}
-
-@node @AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @TH{} @th{} 
-@chapter @AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @TH{} @th{} 
+@node @AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @th{}
+@chapter @AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @th{}
 
 @node @"{a} @~{e} @^{@dotless{i}} @^{a} @`{a} @\'e @,{c} @={e} @ringaccent{e} @H{e} @ogonek{e}
 @chapter  @"{a} @~{e} @^{@dotless{i}} @^{a} @`{a} @\'e @,{c} @={e} @ringaccent{e} @H{e} @ogonek{e}
@@ -237,17 +239,15 @@ my $at_commands_in_refs_text = '@node Top
 
 @ref{@atchar{} @lbracechar{} @rbracechar{} @backslashchar{} @hashchar{}}
 
-@ref{@LaTeX{} @TeX{} @bullet{} @comma{} @copyright{} @dots{} @enddots{}}
+@ref{@LaTeX{} @TeX{} @comma{} @dots{} @enddots{}}
 
-@ref{@equiv{} @error{} @euro{} @exclamdown{} @expansion{} @minus{}}
+@ref{@error{} @euro{} @exclamdown{}}
 
-@ref{@geq{} @leq{} @arrow{}}
+@ref{@ordf{} @ordm{} @questiondown{}}
 
-@ref{@ordf{} @ordm{} @point{} @pounds{} @print{} @questiondown{} @registeredsymbol{}}
+@ref{a@tie{}b @today{} @aa{}}
 
-@ref{@result{} @textdegree{} a@tie{}b @today{} @aa{}}
-
-@ref{@AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @TH{} @th{}}
+@ref{@AA{} @ae{} @oe{} @AE{} @OE{} @o{} @O{} @ss{} @l{} @L{} @DH{} @dh{} @th{}}
 
 @ref{@"{a} @~{e} @^{@dotless{i}} @^{a} @`{a} @\'e @,{c} @={e} @ringaccent{e} @H{e} @ogonek{e}}
 
@@ -289,7 +289,38 @@ my $at_commands_in_refs_text = '@node Top
 
 @ref{@url{http://somewhere_aaa} @url{url, text} @uref{/man.cgi/1/ls,,ls}}
 
-@bye
+';
+
+# with @-commands with different transliteration in C and Perl
+my $at_commands_in_refs_text_no_translit = $at_commands_in_refs_text .
+'@ref{@bullet{} @copyright{} @equiv{}}
+
+@ref{@geq{} @leq{} @arrow{} @expansion{} @minus{}}
+
+@ref{@point{} @pounds{} @print{} @registeredsymbol{} @result{}}
+
+@ref{@textdegree{} @TH{}}
+
+
+@menu
+* @bullet{} @copyright{} @equiv{}::
+* @geq{} @leq{} @arrow{} @expansion{} @minus{}::
+* @point{} @pounds{} @print{} @registeredsymbol{} @result{}::
+* @textdegree{} @TH{}::
+@end menu
+
+@node @bullet{} @copyright{} @equiv{}
+@section @bullet{} @copyright{} @equiv{}
+
+@node @geq{} @leq{} @arrow{} @expansion{} @minus{}
+@section @geq{} @leq{} @arrow{} @expansion{} @minus{}
+
+@node @point{} @pounds{} @print{} @registeredsymbol{} @result{}
+@section @point{} @pounds{} @print{} @registeredsymbol{} @result{}
+
+@node @textdegree{} @TH{}
+@section @textdegree{} @TH{}
+
 ';
 
 my @test_cases = (
@@ -356,7 +387,7 @@ $accents_text, {}, {'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}
 "],
 # numerous LaTeX formatting errors
 ['at_commands_in_refs',
-$at_commands_in_refs_text,
+$at_commands_in_refs_text_no_translit,
  {},
  {'TEST' => 1}], # TEST => 1 triggers @today constant expansion for diffs
 );
@@ -367,54 +398,24 @@ $latin1_accents_text, {}, {'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}
 ],
 );
 
+# the tests are ordered such as to have skipped tests at the end
+# and in skip conditions homogeneous blocks, to get readable
+# comparisons of debugging output.
 my @file_tests = (
-['char_utf8_latin1_in_refs',
-undef, {'test_file' => 'char_utf8_latin1_in_refs.texi'},
-# to test transliteration too
-{'TRANSLITERATE_FILE_NAMES' => 1},
-],
-['char_latin1_latin1_in_refs',
-undef, {'test_file' => 'char_latin1_latin1_in_refs.texi'},
-# to test transliteration too
-{'TRANSLITERATE_FILE_NAMES' => 1},
-],
-# This is interesting to test OUTPUT_ENCODING_NAME, but also
-# to have a test with latin1 for formats that specify an output
-# encoding, such as LaTeX
-['char_latin1_latin1_in_refs_output_encoding_latin1',
-undef, {'test_file' => 'char_latin1_latin1_in_refs.texi'},
-# to test transliteration too
-{'TRANSLITERATE_FILE_NAMES' => 1,
- 'OUTPUT_ENCODING_NAME' => 'ISO-8859-1'},
-],
-['char_us_ascii_latin1_in_refs',
-undef, {'test_file' => 'char_us_ascii_latin1_in_refs.texi'},
-# to test transliteration too
-{'TRANSLITERATE_FILE_NAMES' => 1},
-],
 ['char_us_ascii_latin1_in_refs_no_translit_files',
 undef, {'test_file' => 'char_us_ascii_latin1_in_refs.texi'},
 # to test without transliteration too
 {'TRANSLITERATE_FILE_NAMES' => 0},
 ],
+# On NetBSD it seems that there is no transliteration at all
 ['char_latin2_latin2_in_refs',
-undef, {'test_file' => 'char_latin2_latin2_in_refs.texi'},
+undef, {'test_file' => 'char_latin2_latin2_in_refs.texi',
+        'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
 # to test transliteration too
-{'TRANSLITERATE_FILE_NAMES' => 1},
-],
-['japanese_shift_jis',
-# test fails on solaris11 with recent Perl, with encoding errors.  Could
-# be because of solaris iconv.  Use conversion from EUC-CN as an evidence
-# for problematic iconv even though it is not the actual issue.
-undef, {'test_file' => 'japanese_shift_jis.texi',
-        'skip' => $Texinfo::ModulePath::conversion_from_euc_cn ne 'yes'
-         ? 'No conversion from EUC-CN assuming errors with shift_jis' : undef,},
 {'TRANSLITERATE_FILE_NAMES' => 1},
 ],
 ['sample_utf8',
 undef, {'test_file' => 'sample_utf8.texi'},
-# to test transliteration too
-{'TRANSLITERATE_FILE_NAMES' => 1},
 ],
 ['manual_simple_utf8_with_error',
 undef, {'test_file' => 'manual_simple_utf8_with_error.texi'}
@@ -424,8 +425,49 @@ undef, {'test_file' => 'manual_simple_latin1_with_error.texi'}
 ],
 ['multiple_include_encodings',
 undef, {'test_file' => 'multiple_include_encodings.texi',
-        'skip' => $Texinfo::ModulePath::conversion_from_euc_cn ne 'yes'
+        'skip' => $Texinfo::Configure::conversion_from_euc_cn ne 'yes'
                    ? 'No conversion from EUC-CN' : undef, }
+],
+['japanese_shift_jis',
+# test fails on solaris11 with recent Perl, with encoding errors.  Could
+# be because of solaris iconv.  Use conversion from EUC-CN as an evidence
+# for problematic iconv even though it is not the actual issue.
+# No test of transliteration, even though it could have been nice
+# because of differences between C and Perl transliterations.
+undef, {'test_file' => 'japanese_shift_jis.texi',
+        'skip' => $Texinfo::Configure::conversion_from_euc_cn ne 'yes'
+         ? 'No conversion from EUC-CN assuming errors with shift_jis' : undef,},
+#{'TRANSLITERATE_FILE_NAMES' => 1},
+],
+# No test of transliteration, even though it could have been nice
+# because of differences between C and Perl transliterations.
+['char_utf8_latin1_in_refs',
+undef, {'test_file' => 'char_utf8_latin1_in_refs.texi',
+  'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
+# to test transliteration too
+{'TRANSLITERATE_FILE_NAMES' => 1},
+],
+['char_latin1_latin1_in_refs',
+undef, {'test_file' => 'char_latin1_latin1_in_refs.texi',
+  'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
+# to test transliteration too
+{'TRANSLITERATE_FILE_NAMES' => 1},
+],
+# This is interesting to test OUTPUT_ENCODING_NAME, but also
+# to have a test with latin1 for formats that specify an output
+# encoding, such as LaTeX
+['char_latin1_latin1_in_refs_output_encoding_latin1',
+undef, {'test_file' => 'char_latin1_latin1_in_refs.texi',
+  'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
+# to test transliteration too
+{'TRANSLITERATE_FILE_NAMES' => 1,
+ 'OUTPUT_ENCODING_NAME' => 'ISO-8859-1'},
+],
+['char_us_ascii_latin1_in_refs',
+undef, {'test_file' => 'char_us_ascii_latin1_in_refs.texi',
+  'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
+# to test transliteration too
+{'TRANSLITERATE_FILE_NAMES' => 1},
 ],
 ['at_commands_in_refs_utf8',
 '@setfilename at_commands_in_refs_utf8.info
@@ -433,7 +475,7 @@ undef, {'test_file' => 'multiple_include_encodings.texi',
 
 '.
 $at_commands_in_refs_text,
-{'full_document' => 1},
+{'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
  # TEST => 1 triggers @today constant expansion for diffs
 {'TEST' => 1,
  # interesting to test transliteration too
@@ -444,7 +486,7 @@ $at_commands_in_refs_text,
 
 '.
 $at_commands_in_refs_text,
-{'full_document' => 1},
+{'skip' => $XS_convert ? 'Non reproducible transliteration' : undef,},
  # TEST => 1 triggers @today constant expansion for diffs
 {'TEST' => 1,
  # interesting to test transliteration too
@@ -493,8 +535,6 @@ foreach my $test (@test_full_doc) {
   push @{$test->[2]->{'test_formats'}}, 'latex_text';
   push @{$test->[2]->{'test_formats'}}, 'info'
     if ($info_tests{$test->[0]});
-
-  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 
 foreach my $test (@html_text_cases) {

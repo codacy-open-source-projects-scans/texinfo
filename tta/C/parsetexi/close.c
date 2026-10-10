@@ -17,17 +17,19 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "command_ids.h"
 #include "element_types.h"
 #include "source_mark_types.h"
 #include "tree_types.h"
+#include "document_types.h"
 #include "types_data.h"
 #include "text.h"
+#include "list_macros.h"
 /* for fatal */
 #include "base_utils.h"
 #include "tree.h"
-#include "extra.h"
 #include "builtin_commands.h"
 /* non_leading_trailing_indices count_multibyte */
 #include "utils.h"
@@ -53,7 +55,7 @@ close_brace_command (ELEMENT *current,
 
   counter_pop (&count_remaining_args);
 
-  if (command_data(current->e.c->cmd).data == BRACE_context)
+  if (parsed_command_data(current->e.c->cmd).data == BRACE_context)
     {
       if (pop_context () != ct_base)
         fatal ("base context brace command context expected");
@@ -75,7 +77,7 @@ close_brace_command (ELEMENT *current,
     }
 
   if (command_flags(current) & CF_contain_basic_inline)
-    (void) pop_command (&nesting_context.basic_inline_stack);
+    (void) pop_(command) (&nesting_context.basic_inline_stack);
 
   if (current->e.c->cmd != CM_verb)
     goto yes;
@@ -120,19 +122,19 @@ close_all_style_commands (ELEMENT *current,
 {
   while (current->e.c->parent
          && (command_flags(current->e.c->parent) & CF_brace)
-         && !(command_data(current->e.c->parent->e.c->cmd).data
+         && !(parsed_command_data(current->e.c->parent->e.c->cmd).data
                                                   == BRACE_context))
     {
-      debug ("CLOSING(all_style_commands) @%s",
+      debug ("C|CLOSING(all_style_commands) @%s",
              command_name(current->e.c->parent->e.c->cmd));
 
       if (current->type == ET_brace_container
           || current->type == ET_brace_arg)
         {
-          if (command_data(current->e.c->parent->e.c->cmd).data
+          if (parsed_command_data(current->e.c->parent->e.c->cmd).data
                                                   == BRACE_arguments)
             isolate_leading_trailing (current, 0);
-          else if (command_data(current->e.c->parent->e.c->cmd).data
+          else if (parsed_command_data(current->e.c->parent->e.c->cmd).data
                                                   == BRACE_inline)
             isolate_leading_trailing (current, 1);
         }
@@ -192,7 +194,7 @@ remove_empty_content (ELEMENT *current)
               transfer_source_marks (child_element, destination,
                                      additional_length);
 
-              debug_nonl ("REMOVE empty child ");
+              debug_nonl ("C|REMOVE empty child ");
               debug_parser_print_element (child_element, 0);
               debug_nonl (" from ");
               debug_parser_print_element (current, 0); debug ("");
@@ -229,7 +231,7 @@ close_container (ELEMENT *current)
 
   if (current->source_mark_list)
     source_marks_nr = current->source_mark_list->number;
-  debug_nonl ("CONTAINER EMPTY ");
+  debug_nonl ("C|CONTAINER EMPTY ");
   debug_parser_print_element (current, 1);
   debug_nonl (" (%d source marks)", source_marks_nr); debug ("");
 
@@ -240,7 +242,7 @@ close_container (ELEMENT *current)
   element_to_remove = current;
   current = current->e.c->parent;
 
-  debug_nonl ("REMOVE empty type ");
+  debug_nonl ("C|REMOVE empty type ");
   debug_parser_print_element (element_to_remove, 1); debug ("");
 
   destroy_element (pop_element_from_contents (current));
@@ -275,7 +277,7 @@ close_command_cleanup (ELEMENT *current)
               if (counter_index < 0)
                 fprintf (stderr, "BUG: could not remove row counter\n");
               /* Check if we need to open a new container. */
-              if (contents_child_by_index (row, 0)->e.c->cmd == CM_headitem)
+              if (row->e.c->contents.list[0]->e.c->cmd == CM_headitem)
                 {
                   if (in_head_or_rows <= 0)
                     {
@@ -284,7 +286,7 @@ close_command_cleanup (ELEMENT *current)
                       in_head_or_rows = 1;
                     }
                 }
-              else if (contents_child_by_index (row, 0)->e.c->cmd == CM_item)
+              else if (row->e.c->contents.list[0]->e.c->cmd == CM_item)
                 {
                   if (in_head_or_rows == 1 || in_head_or_rows == -1)
                     {
@@ -312,7 +314,7 @@ close_command_cleanup (ELEMENT *current)
 
   /* Put everything after the last @def*x command in a def_item type
      container. */
-  if (command_data(current->e.c->cmd).flags & CF_def
+  if (parsed_command_data(current->e.c->cmd).flags & CF_def
       || current->e.c->cmd == CM_defblock)
     {
       gather_def_item (current, 0);
@@ -329,7 +331,7 @@ close_command_cleanup (ELEMENT *current)
 
   /* Block commands that contain @item's - e.g. @multitable, @table,
      @itemize. */
-  if (command_data(current->e.c->cmd).flags & CF_blockitem
+  if (parsed_command_data(current->e.c->cmd).flags & CF_blockitem
       /* > 1 for the arguments_line */
       && current->e.c->contents.number > 1
       && current->e.c->contents.list[1]->type == ET_before_item)
@@ -384,13 +386,13 @@ close_command_cleanup (ELEMENT *current)
 void
 pop_block_command_contexts (enum command_id cmd)
 {
-  if (command_data(cmd).flags & CF_preformatted
-       || command_data(cmd).data == BLOCK_menu)
+  if (parsed_command_data(cmd).flags & CF_preformatted
+       || parsed_command_data(cmd).data == BLOCK_menu)
     {
       if (pop_context () != ct_preformatted)
         fatal ("preformatted context expected");
     }
-  else if (command_data(cmd).data == BLOCK_format_raw)
+  else if (parsed_command_data(cmd).data == BLOCK_format_raw)
     {
       if (pop_context () != ct_rawpreformatted)
         fatal ("rawpreformatted context expected");
@@ -400,9 +402,9 @@ pop_block_command_contexts (enum command_id cmd)
       if (pop_context () != ct_math)
         fatal ("math context expected");
     }
-  else if (command_data(cmd).data == BLOCK_region)
+  else if (parsed_command_data(cmd).data == BLOCK_region)
     {
-      (void) pop_command (&nesting_context.regions_stack);
+      (void) pop_(command) (&nesting_context.regions_stack);
     }
 }
 
@@ -427,7 +429,7 @@ close_current (ELEMENT *current,
   if (current->e.c->cmd)
     {
       enum command_id cmd = current->e.c->cmd;
-      debug ("CLOSING(close_current) @%s", command_name(cmd));
+      debug ("C|CLOSING(close_current) @%s", command_name(cmd));
       if (command_flags(current) & CF_brace)
         {
           current = close_brace_command (current, closed_block_cmd,
@@ -457,7 +459,7 @@ close_current (ELEMENT *current,
           pop_block_command_contexts (cmd);
           current = current->e.c->parent;
           /* In ignored conditional. */
-          if (command_data(cmd).data == BLOCK_conditional)
+          if (parsed_command_data(cmd).data == BLOCK_conditional)
             close_ignored_block_conditional (current);
         }
       else
@@ -471,7 +473,7 @@ close_current (ELEMENT *current,
     {
       ELEMENT *close_brace;
 
-      debug ("CLOSING type %s", type_data[current->type].name);
+      debug ("C|CLOSING type %s", type_data[current->type].name);
 
       switch (current->type)
         {
@@ -557,7 +559,8 @@ close_commands (ELEMENT *current, enum command_id closed_block_cmd,
       *closed_element = current;
       current = current->e.c->parent;
 
-      if (command_data((*closed_element)->e.c->cmd).data == BLOCK_conditional)
+      if (parsed_command_data((*closed_element)->e.c->cmd).data
+                                                         == BLOCK_conditional)
         /* In ignored conditional. */
         close_ignored_block_conditional (current);
     }
@@ -570,7 +573,7 @@ close_commands (ELEMENT *current, enum command_id closed_block_cmd,
              || (current->type == ET_root_line)
              || (current->type == ET_document_root)))
         {
-          debug_nonl ("close_commands unexpectedly stopped ");
+          debug_nonl ("C|close_commands unexpectedly stopped ");
           debug_parser_print_element (current, 1); debug ("");
         }
     }

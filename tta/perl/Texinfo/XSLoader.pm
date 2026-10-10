@@ -26,7 +26,9 @@ use DynaLoader;
 our $VERSION = '7.3dev';
 
 # disable_XS is set in CheckXS TestXS.pm to override the
-# Texinfo::ModulePath::enable_xs based on the previous configure+make
+# Texinfo::Configure::enable_xs value based on the previous configure+make.
+# This is a special case, in general this variable should not be
+# read nor set elsewhere than in this here module.
 our $disable_XS;
 
 # it is better to use $core_modules_built in other modules.
@@ -40,19 +42,15 @@ BEGIN {
     $Texinfo::ModulePath::texinfo_uninstalled = 1;
     $Texinfo::ModulePath::t2a_builddir = '';
   } else {
-    if ($Texinfo::ModulePath::enable_xs eq 'no') {
+    require Texinfo::Configure;
+    if ($Texinfo::Configure::enable_xs eq 'no') {
       $disable_XS = 1;
     }
-    if ($Texinfo::ModulePath::use_shared_txi_libraries eq 'no') {
+    if ($Texinfo::Configure::use_shared_txi_libraries eq 'no') {
       $disable_C_libraries = 1;
     }
   }
 }
-
-# Not used below as more precise conditions are used, it should be used in
-# other modules to indicate that the modules depending on XS Parser are
-# built.
-our $core_modules_built = (not $disable_C_libraries and not $disable_XS);
 
 # used for comparison with XS_VERSION passed through configure and make.
 # The github CI adds the date after a hyphen, turn the hyphen to a dot.
@@ -61,15 +59,20 @@ $xs_version =~ s/-/./g;
 $xs_version =~ s/dev$//; # XS bootstrap functions choke on non-numeric version
 #my $xs_version = version->declare($VERSION)->numify;
 
-# Set from code to notify that XS needs to be used, for instance when Perl is
-# embedded in C.  When Perl is embedded in C, many computations are done in C and
-# are not directly passed to Perl.  These C data should be accessed/modified
+
+# Set through set_XS_mandatory from code to notify that XS needs to be used and
+# that it is called ultimately from native code, for instance when Perl is
+# embedded in C.  When Perl is embedded in C, many computations are done in C
+# and are not directly passed to Perl.  These C data should be accessed/modified
 # through XS interfaces.  The situation is similar to setting only handlers
 # when calling XS methods from Perl, such that the data is not built to Perl,
 # the changes are done in C only, at least until Perl structures are explicitly
 # required through an XS interface.
 our $mandatory_xs;
 
+# previously called from C/main/call_perl_function.c but the function that
+# calls set_XS_mandatory is not currently called.
+# called from perl/load_txi_modules(.pl), itself loaded when Perl is embedded.
 # Should be called before any module with XS is loaded.
 sub set_XS_mandatory {
   $mandatory_xs = 1;
@@ -81,27 +84,21 @@ sub set_XS_mandatory {
   }
 }
 
-sub XS_parser_enabled {
+
+# Not used in this module as more precise conditions are used, it should be used in
+# other modules to indicate that the modules depending on XS Parser are
+# built.
+our $core_modules_built = (not $disable_C_libraries and not $disable_XS);
+
+# to be used in other modules to indicate that XS is enabled.  XS may be
+# enabled while modules are not built, so to check that XS is enabled
+# and built both XS_modules_enabled and $core_modules_built should be checked.
+sub XS_modules_enabled {
   return ($mandatory_xs or
           ((not defined($ENV{TEXINFO_XS})
-                or $ENV{TEXINFO_XS} ne 'omit')
-           and (not defined($ENV{TEXINFO_XS_PARSER})
-                or $ENV{TEXINFO_XS_PARSER} ne '0')));
+                or $ENV{TEXINFO_XS} ne 'omit')));
 }
 
-sub XS_structuring_enabled {
-  return ($mandatory_xs or
-          (XS_parser_enabled()
-           and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                or $ENV{TEXINFO_XS_STRUCTURE} ne '0')));
-}
-
-sub XS_convert_enabled {
-  return ($mandatory_xs or
-          (XS_structuring_enabled()
-            and (not defined $ENV{TEXINFO_XS_CONVERT}
-                 or $ENV{TEXINFO_XS_CONVERT} ne '0')));
-}
 
 my $TEXINFO_XS;
 
@@ -230,8 +227,8 @@ sub init {
 
   # Possible values for TEXINFO_XS environment variable:
   #
-  # TEXINFO_XS=default      # try xs, if enabled by TEXINFO_XS_*
-  #                         # and build options
+  # TEXINFO_XS=default      # load xs if enabled by build options
+  #                         # and fail if loading does not succeed
   # TEXINFO_XS=omit         # don't try loading xs at all
   # TEXINFO_XS=debug        # same as default, voluminuous debugging
   #
@@ -257,9 +254,9 @@ sub init {
       # Disabled at run time
       # Don't try to use the XS module
       or ($TEXINFO_XS eq 'omit') 
-      # An undefined module name should only happen based on the TEXINFO_XS_*
-      # environment variables values.  Which module names are undef should be
-      # consistent.  Only possible for modules depending on parser.
+      # An undefined XS module name should only happen for Texinfo::Translations
+      # in case translations should be handled in Perl only.
+      # All the modules in that case should have a Perl only fallback.
       or (!defined($module_name))) {
 
     # No fallback module
@@ -286,10 +283,8 @@ sub init {
   } # end no attempt to load XS module
 
   # If $mandatory_xs, we should always reach here as TEXINFO_XS cannot be
-  # 'omit', module name is defined since $mandatory_xs is checked in all
-  # the XS_*_enabled functions and mandatory_xs should only be set in
-  # situations where XS modules build requirements are met (embedded
-  # Perl, Perl SWIG interface).
+  # 'omit' and mandatory_xs should only be set in situations where XS
+  # modules build requirements are met (embedded Perl).
 
   # Consider that we are in the build directory if texinfo_uninstalled
   # is set, or if Texinfo::ModulePath has not been called, as is the
@@ -397,7 +392,8 @@ sub init {
       and !&{"${module}::init"} ($Texinfo::ModulePath::texinfo_uninstalled,
                                  $Texinfo::ModulePath::datadir,
                                  $Texinfo::ModulePath::t2a_builddir,
-                                 $Texinfo::ModulePath::t2a_srcdir)) {
+                                 $Texinfo::ModulePath::t2a_srcdir,
+                                 $mandatory_xs)) {
     _message("$module_name: error initializing");
     goto FAILURE;
   }
@@ -426,8 +422,8 @@ sub init {
 my $XS_disable_for_override_error_output;
 
 # Override subroutine $TARGET with $SOURCE.
-# Only for MiscXS (does not depend on libraries nor TEXINFO_XS_* environment
-# variables) and ConfigXS (only loaded with mandatory XS).
+# Only for MiscXS (does not depend on parser native code libraries)
+# and ConfigXS (only loaded in situations where mandatory XS is also set).
 sub override($$) {
   my ($target, $source) = @_;
 
@@ -458,4 +454,3 @@ sub override($$) {
 
 
 1;
-__END__

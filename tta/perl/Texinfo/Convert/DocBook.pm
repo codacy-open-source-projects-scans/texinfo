@@ -21,6 +21,7 @@ package Texinfo::Convert::DocBook;
 
 use 5.006;
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -33,6 +34,7 @@ use Texinfo::Commands;
 use Texinfo::TreeElement;
 
 use Texinfo::Common;
+use Texinfo::Indices;
 
 # for debugging
 use Texinfo::Convert::Texinfo;
@@ -322,9 +324,7 @@ sub converter_initialize($) {
 sub conversion_initialization($;$) {
   my ($self, $document) = @_;
 
-  if (defined($document)) {
-    $self->set_document($document);
-  }
+  $self->set_document($document);
 
   $self->{'document_context'} = [];
   _new_document_context($self);
@@ -546,17 +546,38 @@ sub conversion_output_begin($;$$) {
       }
     }
   }
-  #$self->set_global_document_commands('before', ['documentlanguage',
-  #                                               'documentscript']);
+
   if ($default_bcp47_locale ne $bcp47_locale) {
-    $self->converter_set_documentlanguage($self->get_conf('documentlanguage'));
-    $self->converter_set_documentscript($self->get_conf('documentscript'));
-    $self->converter_set_documentlanguagevariant([]);
+    $self->reset_lang_translation_from_customization(
+                           $self->get_conf('documentlanguage'),
+                           $self->get_conf('documentscript'));
   }
 
   my $document_info = '';
   $document_info .= $title_info . $authors_info;
   $document_info .= $legalnotice if (defined($legalnotice));
+
+  # documentinfo metadata
+  if (defined($global_commands)
+      and exists($global_commands->{'documentinfo'})) {
+    my $documentinfo = $global_commands->{'documentinfo'};
+    if (exists($documentinfo->{'contents'})) {
+      my $metadata_in_documentinfo = '';
+      foreach my $element (@{$documentinfo->{'contents'}}) {
+        if ((exists($element->{'type'})
+             and $element->{'type'} eq 'arguments_line'
+            or (exists($element->{'cmdname'})
+                and exists(
+        $Texinfo::Commands::metadata_commands{$element->{'cmdname'}})))) {
+          next;
+        }
+        $metadata_in_documentinfo .= $self->convert_tree($element);
+      }
+      if ($metadata_in_documentinfo =~ /\S/) {
+        $document_info .= $metadata_in_documentinfo;
+      }
+    }
+  }
 
   # we duplicate title info, as it is explicitly said in the DocBook manual
   # that it can be duplicated if exactly the same
@@ -675,7 +696,7 @@ sub _index_entry($$) {
       if ($index_info->{'in_code'});
     $result .= "<primary>";
     my $index_element = Texinfo::Common::non_leading_trailing_tree(
-                         Texinfo::Common::index_content_element($element));
+                     $self->converter_index_content_element($element));
     $result .= $self->_convert($index_element);
     $result .= "</primary>";
 
@@ -937,7 +958,8 @@ sub _convert($$;$) {
       }
     } elsif ($cmdname eq 'today') {
       return _convert($self, $self->expand_today());
-    } elsif (exists($Texinfo::Commands::accent_commands{$cmdname})) {
+    } elsif (exists($brace_commands{$cmdname})
+             and $brace_commands{$cmdname} eq 'accent') {
       return $self->xml_accents($element,
                $self->{'document_context'}->[-1]->{'upper_case'}->[-1]);
     } elsif ($cmdname eq 'item' or $cmdname eq 'itemx'
@@ -1136,15 +1158,24 @@ sub _convert($$;$) {
               $section_attribute .= " label=\"$label\"";
             }
             my $section_relations;
+            my $id;
             if (exists($self->{'document'})) {
               my $sections_list = $self->{'document'}->sections_list();
               $section_relations
             = $sections_list->[$opened_element->{'extra'}->{'section_number'} -1];
               if (exists($section_relations->{'associated_node'})) {
-                # FIXME DocBook 5 id -> xml:id
-                $section_attribute
-    .= " id=\"$section_relations->{'associated_node'}->{'element'}->{'extra'}->{'identifier'}\"";
+                $id = $section_relations->{'associated_node'}
+                        ->{'element'}->{'extra'}->{'identifier'};
               }
+            }
+            # section without associated node, and with unique label
+            if (!defined($id) and exists($opened_element->{'extra'})
+                and defined($opened_element->{'extra'}->{'identifier'})) {
+              $id = $opened_element->{'extra'}->{'identifier'};
+            }
+            if (defined($id)) {
+              # FIXME DocBook 5 id -> xml:id
+              $section_attribute .= " id=\"$id\"";
             }
             my $language = '';
             my $bcp47_locale = $self->current_bcp47_locale();
@@ -1536,8 +1567,10 @@ sub _convert($$;$) {
           foreach my $extension (@docbook_image_extensions) {
             my ($file_name, $file_name_encoding)
                = $self->encoded_input_file_name("$basefile.$extension");
-            if (Texinfo::Common::locate_include_file($file_name,
-                                  $self->get_conf('INCLUDE_DIRECTORIES'))) {
+            my ($file, $use_inc_dir)
+              = Texinfo::Common::locate_include_file($file_name,
+                                  $self->get_conf('INCLUDE_DIRECTORIES'));
+            if (defined($file)) {
               push @files, ["$basefile.$extension", uc($extension)];
             }
           }

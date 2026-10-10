@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'documentscript_variant_reset_in_preamble'} = '*document_root C5
  *before_node_section C1
@@ -86,24 +89,6 @@ $result_tree_text{'documentscript_variant_reset_in_preamble'} = '*document_root 
    *def_line C1 l13
    |EXTRA
    |def_command:{defivar}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{by}
-     |{ од }
-     |* C1
-      |*def_line_arg C1
-       |{used}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{by}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{used}
    |documentlanguage:{sr}
    |element_node:{chap}
    |index_entry:I{vr,1}
@@ -257,8 +242,12 @@ $result_converted{'plaintext'}->{'documentscript_variant_reset_in_preamble'} = '
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'documentscript_variant_reset_in_preamble'} = 'vr:
+ by од used
+';
 
-$result_converted{'info'}->{'documentscript_variant_reset_in_preamble'} = 'This is , produced from .
+
+$result_converted{'info'}->{'documentscript_variant_reset_in_preamble'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -292,6 +281,10 @@ Local Variables:
 coding: utf-8
 Info-documentlanguage: sr
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'documentscript_variant_reset_in_preamble'} = 'vr:
+ by од used
 ';
 
 
@@ -350,6 +343,10 @@ strong.def-name {font-family: monospace; font-weight: bold}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'documentscript_variant_reset_in_preamble'} = 'vr:
+ by од used
 ';
 
 

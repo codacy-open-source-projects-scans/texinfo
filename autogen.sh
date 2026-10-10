@@ -11,6 +11,11 @@ fi
 echo "Preparing Texinfo development infrastructure:"
 
 # Generates tta/perl/Makefile.tres (included by tta/perl/Makefile.am).
+cmd="./tta/maintain/regenerate_tap_tests_lists.pl"
+echo "  $cmd"
+$chicken eval $cmd || exit 1
+
+# Generates tta/perl/t/test_*s_generated_list.txt (used in tta/perl/Makefile.am).
 cmd="./tta/maintain/regenerate_file_lists.pl"
 echo "  $cmd"
 $chicken eval $cmd || exit 1
@@ -21,7 +26,7 @@ echo "  $cmd"
 $chicken eval $cmd || exit 1
 
 # Generates tta/tests/Makefile.onetst (included by tta/tests/Makefile.am).
-cmd="(cd tta/tests && ../maintain/regenerate_cmd_tests.sh Makefile.onetst . -base 'formatting encoded nested_formats customization coverage layout' -tex_html 'tex_html' -other 'other info_tex')"
+cmd="(cd tta/tests && rm -f test_scripts/*.sh* && ../maintain/regenerate_cmd_tests.sh Makefile.onetst -base 'formatting encoded nested_formats customization coverage layout' -tex_html 'tex_html' -other 'other info_tex')"
 echo "  $cmd"
 $chicken eval $cmd || exit 1
 

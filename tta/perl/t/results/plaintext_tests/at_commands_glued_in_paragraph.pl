@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'at_commands_glued_in_paragraph'} = '*document_root C1
- *before_node_section C3
+ *before_node_section C4
+  *preamble_before_content
   *paragraph C35
    {at}
    *@@
@@ -179,6 +183,10 @@ star.  noindentafter noindent sp
 
    (1) in footnote
 
+';
+
+$result_converted_sort_strings{'plaintext'}->{'at_commands_glued_in_paragraph'} = 'cp:
+ index
 ';
 
 1;

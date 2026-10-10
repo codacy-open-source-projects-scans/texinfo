@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'things_before_setfilename_no_element'} = '*document_root C1
  *before_node_section C6
@@ -315,6 +318,10 @@ $result_converted{'plaintext'}->{'things_before_setfilename_no_element'} = 'Ref 
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'things_before_setfilename_no_element'} = 'cp:
+ index entry
+';
+
 
 $result_converted{'html'}->{'things_before_setfilename_no_element'} = '<!DOCTYPE html>
 <html>
@@ -346,6 +353,10 @@ $result_converted{'html'}->{'things_before_setfilename_no_element'} = '<!DOCTYPE
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'things_before_setfilename_no_element'} = 'cp:
+ index entry
 ';
 
 $result_converted_errors{'html'}->{'things_before_setfilename_no_element'} = '* W things_before_setfilename_no_element.texi|must specify a title with a title command or @top
@@ -429,7 +440,7 @@ Ref to footnote anchor
 ';
 
 
-$result_converted{'info'}->{'things_before_setfilename_no_element'} = 'This is things_before_setfilename_no_element.info, produced from
+$result_converted{'info'}->{'things_before_setfilename_no_element'} = Encode::encode('utf-8', 'This is things_before_setfilename_no_element.info, produced from
 things_before_setfilename_no_element.texi.
 
 Ref to anchor *note An anchor::
@@ -445,6 +456,10 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'things_before_setfilename_no_element'} = 'cp:
+ index entry
 ';
 
 $result_converted_errors{'info'}->{'things_before_setfilename_no_element'} = '* W things_before_setfilename_no_element.texi|document without nodes

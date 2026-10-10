@@ -23,7 +23,39 @@
 #include "window.h"
 #include "signals.h"
 
-void initialize_info_signal_handler (void);
+#include <sys/types.h>
+#include <signal.h>
+
+/* For sysV68 --phdm@info.ucl.ac.be.  */
+#if !defined (SIGCHLD) && defined (SIGCLD)
+#define SIGCHLD SIGCLD
+#endif
+
+#if defined (HAVE_SIGPROCMASK)
+
+#define BLOCK_SIGNAL(sig) \
+  do { \
+    sigset_t nvar, ovar; \
+    sigemptyset (&nvar); \
+    sigemptyset (&ovar); \
+    sigaddset (&nvar, sig); \
+    sigprocmask (SIG_BLOCK, &nvar, &ovar); \
+  } while (0)
+
+#define UNBLOCK_SIGNAL(sig) \
+  do { \
+    sigset_t nvar, ovar; \
+    sigemptyset (&ovar); \
+    sigemptyset (&nvar); \
+    sigaddset (&nvar, sig); \
+    sigprocmask (SIG_UNBLOCK, &nvar, &ovar); \
+  } while (0)
+
+#else /* !HAVE_SIGPROCMASK */
+#  define BLOCK_SIGNAL(sig)
+#  define UNBLOCK_SIGNAL(sig)
+#endif /* !HAVE_SIGPROCMASK */
+
 
 /* **************************************************************** */
 /*                                                                  */
@@ -75,11 +107,9 @@ restore_termsig (int sig, const signal_info *saved)
   sigaction (sig, saved, NULL);
 }
 #else /* !HAVE_SIGACTION */
-typedef void (*signal_info) ();
+typedef void (*signal_info) (int);
 #define set_termsig(sig, old) (void)(*(old) = signal (sig, info_signal_proc))
 #define restore_termsig(sig, saved) (void)signal (sig, *(saved))
-#define info_signal_handler info_signal_proc
-static int term_conf_busy = 0;
 #endif /* !HAVE_SIGACTION */
 
 static signal_info old_TSTP, old_TTOU, old_TTIN;
@@ -89,15 +119,11 @@ static signal_info old_QUIT;
 void
 initialize_info_signal_handler (void)
 {
-#ifdef SA_NOCLDSTOP
-  /* (Based on info from Paul Eggert found in coreutils.)  Don't use
-     HAVE_SIGACTION to decide whether to use the sa_handler, sa_flags,
-     sa_mask members, as some systems (Solaris 7+) don't define them.  Use
-     SA_NOCLDSTOP instead; it's been part of POSIX.1 since day 1 (in 1988).  */
+#ifdef HAVE_SIGACTION
   info_signal_handler.sa_handler = info_signal_proc;
   info_signal_handler.sa_flags = 0;
   mask_termsig (&info_signal_handler.sa_mask);
-#endif /* SA_NOCLDSTOP */
+#endif /* HAVE_SIGACTION */
 
 #if defined (SIGTSTP)
   set_termsig (SIGTSTP, &old_TSTP);
@@ -140,6 +166,8 @@ redisplay_after_signal (void)
   fflush (stdout);
 }
 
+volatile sig_atomic_t reset_info_window_sizes_required = 0;
+
 void
 reset_info_window_sizes (void)
 {
@@ -149,27 +177,21 @@ reset_info_window_sizes (void)
   redisplay_after_signal ();
 }
 
-/* Number of times we were told to ignore SIGWINCH. */
-static int sigwinch_block_count = 0;
-
 void
-signal_block_winch (void)
+maybe_update_after_signal (void)
 {
-#if defined (SIGWINCH)
-  if (sigwinch_block_count == 0)
-    BLOCK_SIGNAL (SIGWINCH);
-  sigwinch_block_count++;
-#endif
-}
+  if (reset_info_window_sizes_required)
+    {
+      /* prevent infinite recursion */
+      static volatile sig_atomic_t in_function = 0;
+      if (in_function)
+        return;
+      in_function = 1;
 
-void
-signal_unblock_winch (void)
-{
-#if defined (SIGWINCH)
-  sigwinch_block_count--;
-  if (sigwinch_block_count == 0)
-    UNBLOCK_SIGNAL (SIGWINCH);
-#endif
+      reset_info_window_sizes ();
+      in_function = 0;
+      reset_info_window_sizes_required = 0;
+    }
 }
 
 static void
@@ -177,20 +199,6 @@ info_signal_proc (int sig)
 {
   signal_info *old_signal_handler = NULL;
 
-#if !defined (HAVE_SIGACTION)
-  /* best effort: first increment this counter and later block signals */
-  if (term_conf_busy)
-    return;
-  term_conf_busy++;
-#if defined (HAVE_SIGPROCMASK)
-    {
-      sigset_t nvar, ovar;
-      sigemptyset (&nvar);
-      mask_termsig (&nvar);
-      sigprocmask (SIG_BLOCK, &nvar, &ovar);
-    }
-#endif /* HAVE_SIGPROCMASK */
-#endif /* !HAVE_SIGACTION */
   switch (sig)
     {
 #if defined (SIGTSTP)
@@ -235,17 +243,17 @@ info_signal_proc (int sig)
         terminal_clear_to_eol ();
         fflush (stdout);
         terminal_unprep_terminal ();
-	restore_termsig (sig, old_signal_handler);
-	UNBLOCK_SIGNAL (sig);
-	kill (getpid (), sig);
+        restore_termsig (sig, old_signal_handler);
+        UNBLOCK_SIGNAL (sig);
+        kill (getpid (), sig);
 
         /* The program is returning now.  Restore our signal handler,
            turn on terminal handling, redraw the screen, and place the
            cursor where it belongs. */
         terminal_prep_terminal ();
-	set_termsig (sig, old_signal_handler);
-	/* window size might be changed while sleeping */
-	reset_info_window_sizes ();
+        set_termsig (sig, old_signal_handler);
+        /* window size might be changed while sleeping */
+        reset_info_window_sizes_required = 1;
       }
       break;
 
@@ -256,58 +264,8 @@ info_signal_proc (int sig)
 #ifdef SIGUSR1
     case SIGUSR1:
 #endif
-      {
-	/* Turn off terminal IO, tell our parent that the window has changed,
-	   then reinitialize the terminal and rebuild our windows. */
-#ifdef SIGWINCH
-	if (sig == SIGWINCH)
-	  old_signal_handler = &old_WINCH;
-#endif
-#ifdef SIGUSR1
-	if (sig == SIGUSR1)
-	  old_signal_handler = &old_USR1;
-#endif
-
-        /* This seems risky: what if we receive a (real) signal before
-           the next line is reached? */
-#if 0
-	restore_termsig (sig, old_signal_handler);
-	kill (getpid (), sig);
-#endif
-
-	/* After our old signal handler returns... */
-	set_termsig (sig, old_signal_handler); /* needless? */
-
-        if (sigwinch_block_count != 0)
-          abort ();
-
-        /* Avoid any of the code unblocking the signal too early.  This
-           should set the variable to 1 because we shouldn't be here if
-           sigwinch_block_count > 0. */
-        sigwinch_block_count++;
-
-	reset_info_window_sizes ();
-
-        sigwinch_block_count--;
-        /* Don't unblock the signal until after we've finished. */
-	UNBLOCK_SIGNAL (sig);
-      }
-      break;
+       reset_info_window_sizes_required = 1;
+       break;
 #endif /* SIGWINCH || SIGUSR1 */
     }
-#if !defined (HAVE_SIGACTION)
-  /* at this time it is safer to perform unblock after decrement */
-  term_conf_busy--;
-#if defined (HAVE_SIGPROCMASK)
-    {
-      sigset_t nvar, ovar;
-      sigemptyset (&nvar);
-      mask_termsig (&nvar);
-      sigprocmask (SIG_UNBLOCK, &nvar, &ovar);
-    }
-#endif /* HAVE_SIGPROCMASK */
-#endif /* !HAVE_SIGACTION */
 }
-
-
-/* vim: set sw=2 cino={1s>2sn-s^-se-s: */

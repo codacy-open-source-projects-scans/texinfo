@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'empty_string_index_entry'} = '*document_root C3
  *before_node_section C1
@@ -69,11 +72,6 @@ $result_tree_text{'empty_string_index_entry'} = '*document_root C3
    *def_line C1 l10
    |EXTRA
    |def_command:{defun}
-   |def_index_element:
-    |* C1
-     |*brace_arg C1
-      |*@w C1
-       |*brace_container
    |element_node:{chap}
    |index_entry:I{fn,3}
    |original_def_cmdname:{defun}
@@ -99,11 +97,6 @@ $result_tree_text{'empty_string_index_entry'} = '*document_root C3
    *@defunx C1 l11
    |EXTRA
    |def_command:{defun}
-   |def_index_element:
-    |* C1
-     |*brace_arg C1
-      |*@w C1
-       |*brace_container
    |element_node:{chap}
    |index_entry:I{fn,4}
    |original_def_cmdname:{defunx}
@@ -202,10 +195,8 @@ $result_sectioning_root{'empty_string_index_entry'} = '';
 
 $result_headings_list{'empty_string_index_entry'} = '';
 
-$result_indices_sort_strings{'empty_string_index_entry'} = '';
 
-
-$result_converted{'info'}->{'empty_string_index_entry'} = 'This is , produced from .
+$result_converted{'info'}->{'empty_string_index_entry'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chap,  Up: (dir)
@@ -229,6 +220,20 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_errors{'info'}->{'empty_string_index_entry'} = '* W l4|empty index key in @findex
+ warning: empty index key in @findex
+
+* W l7|empty index key in @item
+ warning: empty index key in @item
+
+* W l10|empty index key in @defun
+ warning: empty index key in @defun
+
+* W l11|empty index key in @defunx
+ warning: empty index key in @defunx
+
 ';
 
 
@@ -236,6 +241,20 @@ $result_converted{'plaintext'}->{'empty_string_index_entry'} = '‘’
 
  -- Function: 
  -- Function: 
+
+';
+
+$result_converted_errors{'plaintext'}->{'empty_string_index_entry'} = '* W l4|empty index key in @findex
+ warning: empty index key in @findex
+
+* W l7|empty index key in @item
+ warning: empty index key in @item
+
+* W l10|empty index key in @defun
+ warning: empty index key in @defun
+
+* W l11|empty index key in @defunx
+ warning: empty index key in @defunx
 
 ';
 
@@ -258,6 +277,20 @@ $result_converted{'html_text'}->{'empty_string_index_entry'} = '<a class="node-i
 <dt class="deffn defun-alias-deffn def-line" id="index--2"><span class="category-def">Function: </span><span><strong class="def-name"><!-- /@w --></strong><a class="copiable-link" href="#index--2"> &para;</a></span></dt>
 <dt class="deffnx defunx-alias-deffnx def-cmd-deffn def-line" id="index--3"><span class="category-def">Function: </span><span><strong class="def-name"><!-- /@w --></strong><a class="copiable-link" href="#index--3"> &para;</a></span></dt>
 </dl>
+
+';
+
+$result_converted_errors{'html_text'}->{'empty_string_index_entry'} = '* W l4|empty index key in @findex
+ warning: empty index key in @findex
+
+* W l7|empty index key in @item
+ warning: empty index key in @item
+
+* W l10|empty index key in @defun
+ warning: empty index key in @defun
+
+* W l11|empty index key in @defunx
+ warning: empty index key in @defunx
 
 ';
 
@@ -284,6 +317,13 @@ $result_converted{'latex'}->{'empty_string_index_entry'} = '\\documentclass{book
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -383,6 +423,7 @@ $result_converted{'latex'}->{'empty_string_index_entry'} = '\\documentclass{book
 \\end{description}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{\\hbox{} \\EmbracOn{}\\textnormal{\\textsl{ }}\\EmbracOff{}}& [Function]
@@ -390,6 +431,7 @@ $result_converted{'latex'}->{'empty_string_index_entry'} = '\\documentclass{book
 
 \\index[fn]{@\\texttt{\\hbox{}}}%
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{\\hbox{} \\EmbracOn{}\\textnormal{\\textsl{ }}\\EmbracOff{}}& [Function]

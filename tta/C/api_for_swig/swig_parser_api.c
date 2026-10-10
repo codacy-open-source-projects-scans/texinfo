@@ -21,9 +21,8 @@
 
 #include "document_types.h"
 #include "parser_conf.h"
-#include "utils.h"
-#include "api.h"
-#include "conf.h"
+#include "parser_api.h"
+#include "set_parser_conf.h"
 #include "swig_parser_api.h"
 
 PARSER *
@@ -45,7 +44,7 @@ txi_ext_destroy_parser (PARSER *parser)
 }
 
 
-/* in api.h */
+/* in parser_api.h */
 
 DOCUMENT *
 txi_ext_parse_file (PARSER *parser, const char *input_file_path, 
@@ -105,7 +104,7 @@ txi_ext_parser_conf_add_value (PARSER *parser, const char *name,
 
 
 
-/* in conf.h */
+/* in set_parser_conf.h */
 
 void
 txi_ext_parser_conf_set_show_menu (PARSER *parser, int i)

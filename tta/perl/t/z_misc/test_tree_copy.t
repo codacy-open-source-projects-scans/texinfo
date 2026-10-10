@@ -7,9 +7,8 @@ use Test::More;
 
 BEGIN { plan tests => 7; }
 
-use Data::Dumper;
+#use Data::Dumper;
 use File::Spec;
-#use Text::Diff;
 
 use Texinfo::TreeElement;
 
@@ -141,7 +140,7 @@ T
 ';
 
 my $test_parser = Texinfo::Parser::parser();
-my $document = Texinfo::Parser::parse_texi_piece($test_parser, $text);
+my $document = Texinfo::Parser::parse_text($test_parser, $text);
 my $tree = $document->tree();
 my $copy = Texinfo::ManipulateTree::copy_tree_root($tree);
 
@@ -179,7 +178,7 @@ foreach my $file_include (['Texinfo', $manual_file, $manual_include_dir],
   print STDERR "$label\n" if ($debug);
   my $test_parser
    = Texinfo::Parser::parser({'INCLUDE_DIRECTORIES' => [$test_include_dir]});
-  my $document = $test_parser->Texinfo::Parser::parse_texi_file($test_file);
+  my $document = $test_parser->Texinfo::Parser::parse_file($test_file);
   my $texinfo_test_tree = $document->tree();
   my ($test_parser_errors, $test_parser_error_count) = $document->parser_errors();
   foreach my $error_message (@$test_parser_errors) {
@@ -198,12 +197,5 @@ foreach my $file_include (['Texinfo', $manual_file, $manual_include_dir],
   is($test_texi, $texi_test_copy, 'manual tree and copy to texi match');
   #print STDERR $test_texi_copy;
 }
-
-#{
-#  local $Data::Dumper::Purity = 1;
-#  local $Data::Dumper::Indent = 1;
-#  print STDERR Data::Dumper->Dump([$copy]);
-#}
-
 
 1;

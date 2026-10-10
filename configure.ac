@@ -15,7 +15,7 @@ AC_INIT([GNU Texinfo], [7.3dev], [bug-texinfo@gnu.org])
 dnl Must come before AM_INIT_AUTOMAKE.
 AC_CONFIG_AUX_DIR([build-aux])
 dnl tar-ustar because we have long filenames for some test files.
-AM_INIT_AUTOMAKE([1.16.1 dist-xz
+AM_INIT_AUTOMAKE([1.16.1
                  info-in-builddir parallel-tests tar-ustar])
 AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4 m4])
 
@@ -52,25 +52,14 @@ AC_ARG_VAR([PERL_EXT_LDFLAGS], [Linker flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_CC], [Compiler for a Perl extension])
 
 AC_MSG_CHECKING([Perl version and modules])
-if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Getopt::Long qw(GetOptions); use Storable; use File::Spec; use File::Basename; use Unicode::Normalize" >/dev/null 2>&AS_MESSAGE_LOG_FD; then
+if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Getopt::Long qw(GetOptions); use Storable; use File::Spec; use File::Basename; use Scalar::Util; use Unicode::Normalize; use Unicode::Collate;" >/dev/null 2>&AS_MESSAGE_LOG_FD; then
   perl_version_requirement='yes'
 else
   perl_version_requirement='no'
 fi
 AC_MSG_RESULT($perl_version_requirement)
 if test z"$perl_version_requirement" = 'zno' ; then
-  AC_MSG_ERROR([perl >= 5.8.1 with Encode, Unicode::Normalize and other core modules required by Texinfo.])
-fi
-
-AC_MSG_CHECKING([Unicode::Collate])
-if $PERL -e "use 5.008_001; use Unicode::Collate;" >/dev/null 2>&1; then
-  unicode_collate='yes'
-else
-  unicode_collate='no'
-fi
-AC_MSG_RESULT($unicode_collate)
-if test z"$unicode_collate" = 'zno' ; then
-  AC_MSG_WARN([Unicode::Collate not present; indices may be sorted incorrectly])
+  AC_MSG_ERROR([perl >= 5.8.1 with Unicode::Normalize, Unicode::Collate and other core modules required by Texinfo.])
 fi
 
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
@@ -86,9 +75,6 @@ AC_CACHE_CHECK([for awk], [ac_cv_path_TI_AWK],
            && ac_cv_path_TI_AWK=$ac_path_TI_AWK ac_path_TI_AWK_found=:]],
       [AC_MSG_ERROR([awk not found])])])
 AC_SUBST([TI_AWK], [$ac_cv_path_TI_AWK])
-
-# for generating texindex.awk
-AM_MISSING_PROG(GAWK, gawk)
 
 # For other uses of awk (info hooks)
 AC_PROG_AWK
@@ -387,7 +373,7 @@ AC_SUBST([HOST_IS_WINDOWS_VARIABLE])
 
 # For SWIG
 AC_ARG_WITH([swig],
-   AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: no)]))
+   AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: detected)]))
 
 # The config files to generate.
 AC_CONFIG_FILES([\
@@ -420,7 +406,3 @@ if test $have_termlib = no; then
   AC_MSG_WARN([The programs from `info' directory will not be built.])
 fi
 
-if test $unicode_collate = no; then
-  AC_MSG_WARN([Perl module Unicode::Collate was not found.])
-  AC_MSG_WARN([texi2any may sort document indices incorrectly.])
-fi

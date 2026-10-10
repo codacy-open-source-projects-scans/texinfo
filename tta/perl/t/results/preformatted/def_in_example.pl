@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'def_in_example'} = '*document_root C1
- *before_node_section C1
+ *before_node_section C2
+  *preamble_before_content
   *@example C3 l1
    *arguments_line C1
     *block_line_arg C1
@@ -15,10 +19,6 @@ $result_tree_text{'def_in_example'} = '*document_root C1
     *def_line C1 l2
     |EXTRA
     |def_command:{defun}
-    |def_index_element:
-     |* C1
-      |*def_line_arg C1
-       |{name}
     |index_entry:I{fn,1}
     |original_def_cmdname:{defun}
      *block_line_arg C7
@@ -91,6 +91,10 @@ $result_converted{'plaintext'}->{'def_in_example'} = '      -- Function: name ar
           in defun
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'def_in_example'} = 'fn:
+ name
+';
+
 
 $result_converted{'html'}->{'def_in_example'} = '<!DOCTYPE html>
 <html>
@@ -130,6 +134,10 @@ strong.def-name {font-family: monospace; font-weight: bold}
 </html>
 ';
 
+$result_converted_sort_strings{'html'}->{'def_in_example'} = 'fn:
+ name
+';
+
 $result_converted_errors{'html'}->{'def_in_example'} = '* W |must specify a title with a title command or @top
  warning: must specify a title with a title command or @top
 
@@ -149,8 +157,10 @@ $result_converted{'xml'}->{'def_in_example'} = '<example endspaces=" ">
 ';
 
 
-$result_converted{'latex_text'}->{'def_in_example'} = '\\begin{Texinfoindented}
+$result_converted{'latex_text'}->{'def_in_example'} = '\\begin{document}
+\\begin{Texinfoindented}
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{name \\EmbracOn{}\\textnormal{\\textsl{arg}}\\EmbracOff{}}& [Function]

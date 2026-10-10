@@ -18,12 +18,16 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <stddef.h>
+/* for iconv_t */
+#include <iconv.h>
 
+#include "command_ids.h"
 #include "tree_types.h"
 #include "option_types.h"
 #include "global_commands_types.h"
 /* RUD_DIRECTIONS_TYPES_LIST RUD_FILE_DIRECTIONS_TYPES */
 #include "html_conversion_data.h"
+#include "list_macros.h"
 /*
 #include "options_types.h"
 #include "convert_to_text.h"
@@ -100,11 +104,7 @@ typedef struct PREAMBLE_LANG_CMD {
     } plc;
 } PREAMBLE_LANG_CMD;
 
-typedef struct PREAMBLE_LANG_CMD_LIST {
-  size_t space;
-  size_t number;
-  PREAMBLE_LANG_CMD *list;
-} PREAMBLE_LANG_CMD_LIST;
+def_list_type(PREAMBLE_LANG_CMD_LIST, PREAMBLE_LANG_CMD);
 
 typedef struct GLOBAL_INFO {
     char *input_file_name;
@@ -150,6 +150,11 @@ typedef struct DOCUMENT_INFO {
     const ELEMENT *copying;
     const ELEMENT *publication;
 } DOCUMENT_INFO;
+
+typedef struct ENCODING_CONVERSION {
+    char *encoding_name;
+    iconv_t iconv;
+} ENCODING_CONVERSION;
 
 /* not used in document, but used for indices for sort keys that can
    contain NUL */
@@ -205,7 +210,10 @@ typedef struct INDEX_SORTED_BY_LETTER {
 enum collation_type_name {
    ctn_unicode, /* the default */
    ctn_no_unicode,
+ /* removed until there is a native C possibility for collation
+    linguistic tailoring
    ctn_language_collation,
+  */
    ctn_locale_collation, /* experimental, to test strxfrm */
 };
 
@@ -374,11 +382,7 @@ typedef struct {
     char *value;
 } VALUE;
 
-typedef struct {
-    size_t number;
-    size_t space;
-    VALUE *list;
-} VALUE_LIST;
+def_list_type(VALUE_LIST, VALUE);
 
 /* enums needed in document and converters codes, but not in this file */
 enum command_location {
@@ -388,14 +392,7 @@ enum command_location {
    CL_preamble_or_first,
 };
 
-/* in output units and converter */
-typedef struct ELEMENT_STACK {
-    const ELEMENT **stack;
-    size_t top;
-    size_t space;
-} ELEMENT_STACK;
-
-/* in SWIG interface, but we do not wnat to have the type defined in the
+/* in SWIG interface, but we do not want to have the type defined in the
    header file used in the definition of the interface */
 typedef struct PARSER {
     size_t parser_conf_descriptor;

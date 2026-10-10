@@ -1,29 +1,33 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
- *before_node_section C4
-  *@setfilename C1 l1
-  |EXTRA
-  |text_arg:{test_deftypefnnewline.info}
-   *line_arg C3
-    {spaces_before_argument: }
-    {test_deftypefnnewline.info}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
-  *@deftypefnnewline C1 l3
-  |EXTRA
-  |global_command_number:{1}
-  |misc_args:A{on}
-   *line_arg C3
-    {spaces_before_argument: }
-    {on}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C1
+  *preamble_before_content C4
+   *@setfilename C1 l1
+   |EXTRA
+   |text_arg:{test_deftypefnnewline.info}
+    *line_arg C3
+     {spaces_before_argument: }
+     {test_deftypefnnewline.info}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
+   *@deftypefnnewline C1 l3
+   |EXTRA
+   |global_command_number:{1}
+   |misc_args:A{on}
+    *line_arg C3
+     {spaces_before_argument: }
+     {on}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l5 {Top}
  |EXTRA
  |identifier:{Top}
@@ -69,10 +73,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l11
    |EXTRA
    |def_command:{deftypefun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{name}
    |element_node:{chapter}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deftypefun}
@@ -111,10 +111,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l15
    |EXTRA
    |def_command:{deftypefn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypefn_name}
    |element_node:{chapter}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deftypefn}
@@ -147,24 +143,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l19
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chapter}
    |index_entry:I{fn,3}
    |original_def_cmdname:{deftypeop}
@@ -205,24 +183,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l23
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chapter}
    |index_entry:I{fn,4}
    |original_def_cmdname:{deftypeop}
@@ -259,24 +219,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l27
    |EXTRA
    |def_command:{deftypecv}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chapter}
    |index_entry:I{vr,1}
    |original_def_cmdname:{deftypecv}
@@ -313,24 +255,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l31
    |EXTRA
    |def_command:{deftypecv}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass}
    |element_node:{chapter}
    |index_entry:I{vr,2}
    |original_def_cmdname:{deftypecv}
@@ -371,10 +295,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l35
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{arg}
    |element_node:{chapter}
    |index_entry:I{fn,5}
    |original_def_cmdname:{deffn}
@@ -412,10 +332,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l41
    |EXTRA
    |def_command:{deftypefun}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{name2}
    |element_node:{chapter}
    |index_entry:I{fn,6}
    |original_def_cmdname:{deftypefun}
@@ -454,10 +370,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l45
    |EXTRA
    |def_command:{deftypefn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{d--eftypefn_name2}
    |element_node:{chapter}
    |index_entry:I{fn,7}
    |original_def_cmdname:{deftypefn}
@@ -490,24 +402,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l49
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name2}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name2}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
    |element_node:{chapter}
    |index_entry:I{fn,8}
    |original_def_cmdname:{deftypeop}
@@ -548,24 +442,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l53
    |EXTRA
    |def_command:{deftypeop}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name2}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypeop_name2}
-     |{ on }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
    |element_node:{chapter}
    |index_entry:I{fn,9}
    |original_def_cmdname:{deftypeop}
@@ -602,24 +478,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l57
    |EXTRA
    |def_command:{deftypecv}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name2}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name2}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
    |element_node:{chapter}
    |index_entry:I{vr,3}
    |original_def_cmdname:{deftypecv}
@@ -656,24 +514,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l61
    |EXTRA
    |def_command:{deftypecv}
-   |def_index_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name2}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
-   |def_index_ref_element:
-    |* C3
-     |* C1
-      |*def_line_arg C1
-       |{d--eftypecv_name2}
-     |{ of }
-     |* C1
-      |*def_line_arg C1
-       |{c--lass2}
    |element_node:{chapter}
    |index_entry:I{vr,4}
    |original_def_cmdname:{deftypecv}
@@ -714,10 +554,6 @@ $result_tree_text{'test_deftypefnnewline'} = '*document_root C5
    *def_line C1 l65
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{arg2}
    |element_node:{chapter}
    |index_entry:I{fn,10}
    |original_def_cmdname:{deffn}
@@ -981,6 +817,24 @@ $result_converted{'plaintext'}->{'test_deftypefnnewline'} = 'top
      fff2
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'test_deftypefnnewline'} = 'fn:
+ arg
+ arg2
+ d--eftypefn_name
+ d--eftypefn_name2
+ d--eftypeop_name on c--lass
+ d--eftypeop_name on c--lass
+ d--eftypeop_name2 on c--lass2
+ d--eftypeop_name2 on c--lass2
+ name
+ name2
+vr:
+ d--eftypecv_name of c--lass
+ d--eftypecv_name of c--lass
+ d--eftypecv_name2 of c--lass2
+ d--eftypecv_name2 of c--lass2
+';
+
 
 $result_converted{'html_text'}->{'test_deftypefnnewline'} = '
 
@@ -1192,11 +1046,13 @@ $result_converted{'docbook'}->{'test_deftypefnnewline'} = '<chapter label="1" id
 
 $result_converted{'latex_text'}->{'test_deftypefnnewline'} = '
 
+\\begin{document}
 \\label{anchor:Top}%
 \\Texinfochapter{{chap}}
 \\label{anchor:chapter}%
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{data-type}& [Function]\\\\
@@ -1209,6 +1065,7 @@ aaa
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype}& [c--ategory]\\\\
@@ -1221,6 +1078,7 @@ d--eftypefn no arg
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype}& [c--ategory on \\texttt{c{-}{-}lass}]\\\\
@@ -1233,6 +1091,7 @@ d--eftypeop
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype}& [c--ategory on \\texttt{c{-}{-}lass}]\\\\
@@ -1245,6 +1104,7 @@ d--eftypeop no arg
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype d{-}{-}eftypecv\\_name}& [c--ategory of \\texttt{c{-}{-}lass}]
@@ -1257,6 +1117,7 @@ d--eftypecv
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype d{-}{-}eftypecv\\_name a{-}{-}rguments...}& [c--ategory of \\texttt{c{-}{-}lass}]
@@ -1269,6 +1130,7 @@ d--eftypecv with arguments
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{arg}& [fun]
@@ -1282,6 +1144,7 @@ fff
 
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{data-type2 name2 arguments2...}& [Function]
@@ -1294,6 +1157,7 @@ aaa2
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype2 d{-}{-}eftypefn\\_name2}& [c--ategory2]
@@ -1306,6 +1170,7 @@ d--eftypefn no arg2
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype2 d{-}{-}eftypeop\\_name2 a{-}{-}rguments2...}& [c--ategory2 on \\texttt{c{-}{-}lass2}]
@@ -1318,6 +1183,7 @@ d--eftypeop2
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype2 d{-}{-}eftypeop\\_name2}& [c--ategory2 on \\texttt{c{-}{-}lass2}]
@@ -1330,6 +1196,7 @@ d--eftypeop no arg2
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype2 d{-}{-}eftypecv\\_name2}& [c--ategory2 of \\texttt{c{-}{-}lass2}]
@@ -1342,6 +1209,7 @@ d--eftypecv2
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{t{-}{-}ype2 d{-}{-}eftypecv\\_name2 a{-}{-}rguments2...}& [c--ategory2 of \\texttt{c{-}{-}lass2}]
@@ -1354,6 +1222,7 @@ d--eftypecv with arguments2
 \\end{Texinfoindented}
 
 
+\\smallbreak
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
 \\texttt{arg2}& [fun2]

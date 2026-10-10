@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'fonttextsize'} = '*document_root C10
  *before_node_section C1
@@ -59,6 +62,8 @@ $result_tree_text{'fonttextsize'} = '*document_root C10
   {empty_line:\\n}
  *@section C2 l9 {section}
  |EXTRA
+ |identifier:{section}
+ |is_target:{1}
  |section_heading_number:{1.1}
  |section_level:{2}
  |section_number:{3}
@@ -70,6 +75,8 @@ $result_tree_text{'fonttextsize'} = '*document_root C10
   {empty_line:\\n}
  *@subsection C4 l11 {Subsection 10pts}
  |EXTRA
+ |identifier:{Subsection-10pts}
+ |is_target:{1}
  |section_heading_number:{1.1.1}
  |section_level:{3}
  |section_number:{4}
@@ -90,6 +97,8 @@ $result_tree_text{'fonttextsize'} = '*document_root C10
     {spaces_after_argument:\\n}
  *@subsection C5 l15 {Subsection 11pts}
  |EXTRA
+ |identifier:{Subsection-11pts}
+ |is_target:{1}
  |section_heading_number:{1.1.2}
  |section_level:{3}
  |section_number:{5}
@@ -109,6 +118,8 @@ $result_tree_text{'fonttextsize'} = '*document_root C10
     {spaces_after_argument:\\n}
  *@subsection C5 l20 {Subsection 8pts}
  |EXTRA
+ |identifier:{Subsection-8pts}
+ |is_target:{1}
  |section_heading_number:{1.1.3}
  |section_level:{3}
  |section_number:{6}
@@ -128,6 +139,8 @@ $result_tree_text{'fonttextsize'} = '*document_root C10
     {spaces_after_argument:\\n}
  *@subsection C3 l25 {Subsection 15pts}
  |EXTRA
+ |identifier:{Subsection-15pts}
+ |is_target:{1}
  |section_heading_number:{1.1.4}
  |section_level:{3}
  |section_number:{7}
@@ -293,20 +306,25 @@ $result_converted{'latex_text'}->{'fonttextsize'} = '\\changefontsize{10}
 \\label{anchor:chapter}%
 
 \\section{{section}}
+\\label{anchor:section}%
 
 \\subsection{{Subsection 10pts}}
+\\label{anchor:Subsection-10pts}%
 In 10pts
 
 \\changefontsize{11}
 \\subsection{{Subsection 11pts}}
+\\label{anchor:Subsection-11pts}%
 
 In 11pts
 
 \\subsection{{Subsection 8pts}}
+\\label{anchor:Subsection-8pts}%
 
 In 8pts
 
 \\subsection{{Subsection 15pts}}
+\\label{anchor:Subsection-15pts}%
 
 In 15pts
 ';

@@ -1,14 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'no_node_but_top'} = '*document_root C2
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@top C1 l1 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -42,13 +48,14 @@ list:
 $result_headings_list{'no_node_but_top'} = '';
 
 
-$result_converted{'info'}->{'no_node_but_top'} = 'This is , produced from .
+$result_converted{'info'}->{'no_node_but_top'} = Encode::encode('utf-8', 'This is , produced from .
 
 top
 ***
 
 
 Tag Table:
+Ref: Top27
 
 End Tag Table
 
@@ -56,10 +63,13 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'no_node_but_top'} = '* W |document without nodes
  warning: document without nodes
+
+* W l1|@top outside of any node
+ warning: @top outside of any node
 
 ';
 

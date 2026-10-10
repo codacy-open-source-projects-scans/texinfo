@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'char_utf8_latin1_in_refs'} = '*document_root C14
  *before_node_section C2
@@ -521,6 +524,24 @@ list:
 $result_headings_list{'char_utf8_latin1_in_refs'} = '';
 
 $result_indices_sort_strings{'char_utf8_latin1_in_refs'} = 'cp:
+ Ä Ë Ï Ö Ü
+ â ê î ô û Â Ê Î Ô Û
+ ä ë ï ö ü ÿ
+ ç
+ é
+ è
+';
+
+$result_converted_sort_strings{'file_html'}->{'char_utf8_latin1_in_refs'} = 'cp:
+ Ä Ë Ï Ö Ü
+ â ê î ô û Â Ê Î Ô Û
+ ä ë ï ö ü ÿ
+ ç
+ é
+ è
+';
+
+$result_converted_sort_strings{'file_info'}->{'char_utf8_latin1_in_refs'} = 'cp:
  Ä Ë Ï Ö Ü
  â ê î ô û Â Ê Î Ô Û
  ä ë ï ö ü ÿ

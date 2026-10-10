@@ -127,9 +127,6 @@ info_parse_node (char *string)
     }
 }
 
-#define INFO_QUOTE '\177'
-#define INFO_QUOTE_STR "\177"
-
 /* Set *OUTPUT to a copy of the string starting at START and finishing at
    a character in TERMINATOR, unless START[0] == INFO_QUOTE, in which case
    copy string from START+1 until the next occurence of INFO_QUOTE.  If
@@ -1151,7 +1148,7 @@ scan_reference_label (REFERENCE *entry, int in_index)
 
       while (1)
         {
-          n = strcspn (p, ":\n");
+          n = strcspn (p, ":\n" INFO_QUOTE_STR);
           if (p[n] == ':')
             {
               m += n + 1;
@@ -1208,7 +1205,14 @@ scan_reference_label (REFERENCE *entry, int in_index)
     entry->start = text_buffer_off (&output_buf);
 
   /* Write text of label. */
-  copy_input_to_output (label_len);
+  if (inptr[0] == INFO_QUOTE && inptr[label_len - 1] == INFO_QUOTE)
+    {
+      skip_input (1);
+      copy_input_to_output (label_len - 2);
+      skip_input (1);
+    }
+  else
+    copy_input_to_output (label_len);
 
   if (rewrite_p)
     entry->end = text_buffer_off (&output_buf);
@@ -1327,7 +1331,7 @@ scan_reference_target (REFERENCE *entry, NODE *node, int in_parentheses)
       entry->nodename = 0;
       char *node_start = inptr + length;
 
-      /* First check for . followed by space or end of line. */
+      /* First check for . followed by space, tab or end of line. */
       if (*node_start != INFO_QUOTE)
         {
           /* Confine search to present line. */
@@ -1336,6 +1340,8 @@ scan_reference_target (REFERENCE *entry, NODE *node, int in_parentheses)
             *nl = '\0';
 
           char *node_end = strstr (node_start, ". ");
+          if (!node_end)
+            node_end = strstr (node_start, ".\t");
           if (!node_end)
             {
               /* Check for . at end of line. */
@@ -1444,7 +1450,7 @@ safe_string_index (char *ptr, long index, char *base, long len)
 static void
 scan_info_tag (NODE *node, int *in_index, FILE_BUFFER *fb)
 {
-  char *p, *p1;
+  const char *p, *p1;
   struct text_buffer *expansion = xmalloc (sizeof (struct text_buffer));
 
   p = inptr;

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'indices_in_begin_tables_lists'} = '*document_root C8
  *before_node_section C2
@@ -1395,6 +1398,138 @@ list:
 $result_headings_list{'indices_in_begin_tables_lists'} = '';
 
 $result_indices_sort_strings{'indices_in_begin_tables_lists'} = 'cp:
+ also a cindex in itemize
+ also a cindex in itemize
+ another
+ before comment
+ before text
+ before text and comment
+ cindex
+ cindex after line
+ cindex before line
+ cindex between lines
+ cindex first
+ cindex in table
+ cindex in table
+ direct in item in preformatted
+ first idx
+ in example itemize after comment
+ in example itemize alone before item
+ in example itemize before comment
+ in example itemize before item 1
+ in example itemize before item 2
+ in example itemize before line
+ index entry between item and itemx
+ index entry right after @item
+ index entry within itemize
+ index inter in enumerate after line
+ index inter in enumerate before line
+ index inter in enumerate between lines
+ samp cindex in table
+ samp cindex in table
+ second
+ sedond idx
+ third
+fn:
+ avar--b
+ b
+ c
+ d
+vr:
+ aasis--b
+ acode--b
+ b
+';
+
+$result_converted_sort_strings{'file_html'}->{'indices_in_begin_tables_lists'} = 'cp:
+ also a cindex in itemize
+ also a cindex in itemize
+ another
+ before comment
+ before text
+ before text and comment
+ cindex
+ cindex after line
+ cindex before line
+ cindex between lines
+ cindex first
+ cindex in table
+ cindex in table
+ direct in item in preformatted
+ first idx
+ in example itemize after comment
+ in example itemize alone before item
+ in example itemize before comment
+ in example itemize before item 1
+ in example itemize before item 2
+ in example itemize before line
+ index entry between item and itemx
+ index entry right after @item
+ index entry within itemize
+ index inter in enumerate after line
+ index inter in enumerate before line
+ index inter in enumerate between lines
+ samp cindex in table
+ samp cindex in table
+ second
+ sedond idx
+ third
+fn:
+ avar--b
+ b
+ c
+ d
+vr:
+ aasis--b
+ acode--b
+ b
+';
+
+$result_converted_sort_strings{'file_info'}->{'indices_in_begin_tables_lists'} = 'cp:
+ also a cindex in itemize
+ also a cindex in itemize
+ another
+ before comment
+ before text
+ before text and comment
+ cindex
+ cindex after line
+ cindex before line
+ cindex between lines
+ cindex first
+ cindex in table
+ cindex in table
+ direct in item in preformatted
+ first idx
+ in example itemize after comment
+ in example itemize alone before item
+ in example itemize before comment
+ in example itemize before item 1
+ in example itemize before item 2
+ in example itemize before line
+ index entry between item and itemx
+ index entry right after @item
+ index entry within itemize
+ index inter in enumerate after line
+ index inter in enumerate before line
+ index inter in enumerate between lines
+ samp cindex in table
+ samp cindex in table
+ second
+ sedond idx
+ third
+fn:
+ avar--b
+ b
+ c
+ d
+vr:
+ aasis--b
+ acode--b
+ b
+';
+
+$result_converted_sort_strings{'file_plaintext'}->{'indices_in_begin_tables_lists'} = 'cp:
  also a cindex in itemize
  also a cindex in itemize
  another

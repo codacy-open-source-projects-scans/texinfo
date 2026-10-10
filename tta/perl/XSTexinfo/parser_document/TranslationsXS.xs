@@ -26,11 +26,13 @@
 #undef context
 
 #include "tree_types.h"
+/*
 #include "xs_utils.h"
+ */
 #include "translations.h"
 /* for newSVpv_utf8 */
 #include "build_perl_info.h"
-/* for get_lang_info_hv */
+/* for get_lang_translation_sv */
 #include "get_perl_info.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
@@ -41,54 +43,59 @@ MODULE = Texinfo::Translations	PACKAGE = Texinfo::Translations
 PROTOTYPES: ENABLE
 
 void
-setup_output_strings (localesdir, strings_textdomain="texinfo_document")
+_XS_setup_output_strings (localesdir, SV *strings_textdomain_sv=0)
        char *localesdir = (char *)SvPVbyte_nolen($arg);
-       char *strings_textdomain;
+    PREINIT:
+       const char *strings_textdomain = "texinfo_document";
       CODE:
+       if (strings_textdomain_sv && SvOK (strings_textdomain_sv))
+         strings_textdomain = SvPVutf8_nolen (strings_textdomain_sv);
        setup_output_strings_translations (localesdir,
                                           strings_textdomain);
 
+# not used because the tree is in Perl only and the tree is associated to
+# the string in the array reference returned here, but the array reference
+# is recreated here for each call, therefore the tree is not reused.
 SV *
-cache_translate_string (string, SV *lang_translations, SV *translation_context_sv=0)
+unused_cache_translate_string (string, SV *lang_translations, SV *translation_context_sv=0, SV *debug_level_sv=0)
       const char *string = (char *)SvPVutf8_nolen($arg);
     PREINIT:
-        const char *result = 0;
+        int debug_level = 0;
+        TEXT result;
         AV *av;
      CODE:
+        text_init (&result);
+        if (debug_level_sv && SvOK (debug_level_sv))
+          debug_level = SvIV (debug_level_sv);
         if (SvOK (lang_translations))
           {
-            AV *lang_translations_av = (AV *) SvRV (lang_translations);
-            SV **lang_info_sv = av_fetch (lang_translations_av, 0, 0);
-
             const char *translated_context_string = 0;
-            LANG_TRANSLATION *lang_translation = 0;
-
-            if (lang_info_sv && SvOK (*lang_info_sv))
-              {
-                HV *lang_info_hv = (HV *) SvRV (*lang_info_sv);
-                DOCUMENT_LANG_INFO *info = get_lang_info_hv (lang_info_hv);
-                lang_translation
-                      = set_lang_info_translation (
-                                &translation_cache, info,
-                                TXI_CONVERT_STRINGS_NR);
-              }
+            const LANG_TRANSLATION *lang_translation
+              = get_lang_translation_sv (lang_translations);
 
             if (lang_translation)
               {
                 const TRANSLATION_TREE *translation_cache_result;
+
                 if (translation_context_sv
                     && SvOK (translation_context_sv))
                   translated_context_string
                     = SvPVutf8_nolen (translation_context_sv);
                 translation_cache_result
                    = cache_translate_string (string, lang_translation,
-                                             translated_context_string);
+                                             translated_context_string,
+                                             debug_level);
                 result = translation_cache_result->translation;
               }
           }
+        else
+          { /* not truly useful, but we want to call for similar debug
+               messages */
+            cache_translate_string (string, 0, 0, debug_level);
+          }
         av = newAV ();
-        if (result)
-          av_push (av, newSVpv_utf8 (result, 0));
+        if (result.text)
+          av_push (av, newSVpv_utf8 (result.text, result.end));
         else
           av_push (av, newSV (0));
         RETVAL = newRV_noinc ((SV *) av);

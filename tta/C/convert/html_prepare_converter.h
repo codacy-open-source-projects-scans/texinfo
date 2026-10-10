@@ -2,8 +2,12 @@
 #ifndef HTML_PREPARE_CONVERTER_H
 #define HTML_PREPARE_CONVERTER_H
 
+#include <stddef.h>
+
 #include "command_ids.h"
 #include "converter_types.h"
+/* htmlxref_split_type_chapter */
+#include "html_converter_state.h"
 
 /* NOTE the high-level functions are declared in html_converter_api.h.
         the intermediate level functions are declared in
@@ -61,7 +65,10 @@ void free_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info);
 
 void reset_html_page_css (CONVERTER *self);
 
-/* void html_conversion_initialization (CONVERTER *self, const char *context); */
+ /*
+void html_conversion_initialization (CONVERTER *self, const char *context,
+                                     DOCUMENT *document);
+  */
 
 void initialize_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info,
                                    size_t size);
@@ -82,7 +89,8 @@ void reset_html_targets (CONVERTER *self);
 
 
 int html_id_is_registered (CONVERTER *self, const char *string);
-void html_register_id (CONVERTER *self, const char *string);
+void html_register_id (CONVERTER *self, const char *string,
+                       const void *element_target);
 
 /* void html_prepare_conversion_units_targets (CONVERTER *self,
                                      const char *document_name); */
@@ -102,5 +110,23 @@ void html_reset_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info);
 /* FILE_SOURCE_INFO_LIST * html_prepare_units_directions_files (CONVERTER *self,
           const char *output_file, const char *destination_directory,
           const char *output_filename, const char *document_name); */
+
+
+
+#include "html_converter_types.h"
+
+/* Global data */
+
+extern COMMAND_ARGS_SPECIFICATION html_command_args_flags[BUILTIN_CMD_NUMBER];
+
+extern HTML_COMMAND_STRUCT html_commands_data[BUILTIN_CMD_NUMBER];
+
+extern SPECIAL_LIST_MARK_CSS_NO_ARGS_CMD
+            special_list_mark_css_string_no_arg_command[];
+
+extern COMMAND_ID_LIST no_arg_formatted_cmd;
+extern COMMAND_ID_LIST style_formatted_cmd;
+extern COMMAND_ID_LIST accent_cmd;
+extern COMMAND_ID_LIST format_raw_cmd;
 
 #endif

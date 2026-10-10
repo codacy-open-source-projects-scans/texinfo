@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'node_sectop_before_chapter_no_node'} = '*document_root C4
  *before_node_section C1
@@ -30,6 +33,8 @@ $result_tree_text{'node_sectop_before_chapter_no_node'} = '*document_root C4
   {empty_line:\\n}
  *@chapter C1 l4 {chap}
  |EXTRA
+ |identifier:{chap}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -140,6 +145,7 @@ $result_converted{'docbook'}->{'node_sectop_before_chapter_no_node'} = '';
 
 $result_converted{'latex_text'}->{'node_sectop_before_chapter_no_node'} = '\\begin{document}
 \\label{anchor:Top}%
+\\label{anchor:chap}%
 ';
 
 1;

@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'empty_quotation'} = '*document_root C1
- *before_node_section C7
+ *before_node_section C8
+  *preamble_before_content
   *@quotation C2 l1
    *arguments_line C1
     *block_line_arg C1
@@ -141,6 +145,13 @@ $result_converted{'latex'}->{'empty_quotation'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -210,6 +221,7 @@ $result_converted{'latex'}->{'empty_quotation'} = '\\documentclass{book}
 \\makeatother
 \\pagestyle{single}%
 
+\\begin{document}
 \\begin{quote}
 \\end{quote}
 

@@ -3,7 +3,7 @@
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
-   published by the Free Software Foundation, either version 3 of the
+   published by the Free Software Foundation; either version 2.1 of the
    License, or (at your option) any later version.
 
    This file is distributed in the hope that it will be useful,
@@ -405,11 +405,14 @@ bcp47_to_xpg (char *xpg, const char *bcp47, const char *codeset)
               p++;
             size_t subtag_len = p - subtag_start;
 
-            if (!past_script && subtag_len == 4
-                && (subtag_start[0] < '0' || subtag_start[0] > '9')
-                && (subtag_start[1] < '0' || subtag_start[0] > '9')
-                && (subtag_start[2] < '0' || subtag_start[0] > '9')
-                && (subtag_start[3] < '0' || subtag_start[0] > '9'))
+            if (!past_script
+                && subtag_len == 4
+                /* Subtags of length 4 that contain digits are variants,
+                   not scripts.  */
+                && !(subtag_start[0] >= '0' && subtag_start[0] <= '9')
+                && !(subtag_start[1] >= '0' && subtag_start[1] <= '9')
+                && !(subtag_start[2] >= '0' && subtag_start[2] <= '9')
+                && !(subtag_start[3] >= '0' && subtag_start[3] <= '9'))
               {
                 /* Parsed -script.  */
                 script_start = subtag_start;

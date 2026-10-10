@@ -28,6 +28,7 @@
 #include "element_types.h"
 #include "tree_types.h"
 #include "document_types.h"
+#include "list_macros.h"
 /* for fatal */
 #include "base_utils.h"
 #include "tree.h"
@@ -144,14 +145,10 @@ add_to_output_unit_list (OUTPUT_UNIT_LIST *list, OUTPUT_UNIT *output_unit)
   list->number++;
 }
 
-/* in addition to splitting, register the output_units list */
-size_t
-split_by_node (DOCUMENT *document)
+void
+split_by_node (DOCUMENT *document, OUTPUT_UNIT_LIST *output_units)
 {
   const ELEMENT *root = document->tree;
-  size_t output_units_descriptor = new_output_units_descriptor (document);
-  OUTPUT_UNIT_LIST *output_units
-    = retrieve_output_units (document, output_units_descriptor);
   OUTPUT_UNIT *current = new_output_unit (OU_unit);
   ELEMENT_LIST *pending_parts = new_list ();
   size_t i;
@@ -231,18 +228,23 @@ split_by_node (DOCUMENT *document)
     }
 
   destroy_list (pending_parts);
-
-  return output_units_descriptor;
 }
 
 /* in addition to splitting, register the output_units list */
 size_t
-split_by_section (DOCUMENT *document)
+register_split_by_node (DOCUMENT *document)
 {
-  const ELEMENT *root = document->tree;
   size_t output_units_descriptor = new_output_units_descriptor (document);
   OUTPUT_UNIT_LIST *output_units
     = retrieve_output_units (document, output_units_descriptor);
+  split_by_node (document, output_units);
+  return output_units_descriptor;
+}
+
+void
+split_by_section (DOCUMENT *document, OUTPUT_UNIT_LIST *output_units)
+{
+  const ELEMENT *root = document->tree;
   OUTPUT_UNIT *current = new_output_unit (OU_unit);
   size_t i;
 
@@ -257,7 +259,7 @@ split_by_section (DOCUMENT *document)
 
       ELEMENT *content = root->e.c->contents.list[i];
       enum command_id data_cmd = element_builtin_data_cmd (content);
-      unsigned long flags = builtin_command_data[data_cmd].flags;
+      unsigned long flags = command_data[data_cmd].flags;
       const NODE_RELATIONS *node_relations = 0;
       const SECTION_RELATIONS *new_section_relations = 0;
 
@@ -321,6 +323,16 @@ split_by_section (DOCUMENT *document)
       add_to_element_list (&current->unit_contents, content);
       content->e.c->associated_unit = current;
     }
+}
+
+/* in addition to splitting, register the output_units list */
+size_t
+register_split_by_section (DOCUMENT *document)
+{
+  size_t output_units_descriptor = new_output_units_descriptor (document);
+  OUTPUT_UNIT_LIST *output_units
+    = retrieve_output_units (document, output_units_descriptor);
+  split_by_section (document, output_units);
   return output_units_descriptor;
 }
 
@@ -623,15 +635,18 @@ units_directions (const C_HASHMAP *identifiers_target,
                   int print_debug)
 {
   size_t i;
-  ELEMENT_STACK up_list;
-  ELEMENT *node_top;
+  CONST_ELEMENT_LIST up_list;
+  const ELEMENT *top_node = 0;
+  const ELEMENT *top_target_element;
 
   if (!output_units || !output_units->number)
     return;
 
-  memset (&up_list, 0, sizeof (ELEMENT_STACK));
+  memset (&up_list, 0, sizeof (CONST_ELEMENT_LIST));
 
-  node_top = find_identifier_target (identifiers_target, "Top");
+  top_target_element = find_identifier_target (identifiers_target, "Top");
+  if (top_target_element && top_target_element->e.c->cmd == CM_node)
+    top_node = top_target_element;
 
   for (i = 0; i < output_units->number; i++)
     {
@@ -702,7 +717,7 @@ units_directions (const C_HASHMAP *identifiers_target,
               else if (node_directions && node_directions[D_up])
                 {
                   const ELEMENT *up = node_directions[D_up];
-                  push_stack_element (&up_list, node);
+                  add_(const_element) (&up_list, node);
                   while (1)
                     {
                       size_t i;
@@ -711,13 +726,13 @@ units_directions (const C_HASHMAP *identifiers_target,
                       const NODE_RELATIONS *up_node_relations = 0;
 
                       int in_up = 0;
-                      for (i = 0; i < up_list.top; i++)
-                        if (up == up_list.stack[i])
+                      for (i = 0; i < up_list.number; i++)
+                        if (up == up_list.list[i])
                           {
                             in_up = 1;
                             break;
                           }
-                      if (in_up || (node_top && node_top == up))
+                      if (in_up || (top_node && top_node == up))
                         break;
 
                       if (up->e.c->cmd == CM_node)
@@ -739,7 +754,7 @@ units_directions (const C_HASHMAP *identifiers_target,
                                    external_node_target_units);
                            break;
                         }
-                      push_stack_element (&up_list, up);
+                      add_(const_element) (&up_list, up);
                       if (up_node_relations
                           && up_node_relations->node_directions
                           && up_node_relations->node_directions[D_up])
@@ -747,7 +762,7 @@ units_directions (const C_HASHMAP *identifiers_target,
                       else
                         break;
                     }
-                  up_list.top = 0;
+                  up_list.number = 0;
                 }
             }
           if (directions[RUD_type_NodeForward]
@@ -904,7 +919,7 @@ units_directions (const C_HASHMAP *identifiers_target,
             }
         }
     }
-  free (up_list.stack);
+  free (up_list.list);
   if (print_debug > 0)
     {
       size_t i;
@@ -1012,9 +1027,9 @@ do_units_directions_pages (DOCUMENT *document,
   OUTPUT_UNIT_LIST *output_units = 0;
 
   if (units_split == UST_node)
-    output_units_descriptor = split_by_node (document);
+    output_units_descriptor = register_split_by_node (document);
   else if (units_split == UST_section)
-    output_units_descriptor = split_by_section (document);
+    output_units_descriptor = register_split_by_section (document);
 
   if (output_units_descriptor)
     {
@@ -1074,9 +1089,118 @@ add_ou_direction (STRING_LIST *ou_directions,
       xasprintf (&ou_direction_text, "%s->%s",
                  direction_name, direction_text);
       free (direction_text);
-      add_string (ou_direction_text, ou_directions);
+      add_string (ou_directions, ou_direction_text);
       free (ou_direction_text);
     }
+}
+
+/* can be called for debugging */
+char *
+print_output_unit (const OUTPUT_UNIT *output_unit, int use_filename)
+{
+  TEXT result;
+
+  text_init (&result);
+
+  text_append (&result, output_unit_type_names[output_unit->unit_type]);
+  if (output_unit->special_unit_variety)
+    text_printf (&result, "-%s", output_unit->special_unit_variety);
+
+  if (output_unit->unit_contents.number > 0)
+    text_printf (&result, "{C%zu}", output_unit->unit_contents.number);
+
+  if (output_unit->unit_type != OU_special_unit
+      && output_unit->uc.unit_command)
+    {
+      char *additional_info = 0;
+      char *root_command_texi
+        = root_command_element_string (output_unit->uc.unit_command);
+
+      /* determine the kind of command by comparing with
+         unit node or unit section.  Also show the texinfo code
+         of the node or section relations not associated to unit_command.
+       */
+      if (output_unit->unit_node)
+        {
+          if (output_unit->unit_node->element
+                 == output_unit->uc.unit_command)
+            {
+              text_append_n (&result, "{N:", 3);
+              if (root_command_texi)
+                text_append (&result, root_command_texi);
+            }
+          else
+            {
+              char *node_texi
+                = root_command_element_string (
+                                output_unit->unit_node->element);
+              if (node_texi)
+                {
+                  xasprintf (&additional_info, "{n:%s}", node_texi);
+                  free (node_texi);
+                }
+              else
+                xasprintf (&additional_info, "{n:}");
+            }
+        }
+
+      if (output_unit->unit_section)
+        {
+          const ELEMENT *section_element = output_unit->unit_section->element;
+          if (section_element == output_unit->uc.unit_command)
+            {
+              text_append_n (&result, "{S:@", 4);
+              text_append (&result, element_command_name (section_element));
+              if (root_command_texi)
+                {
+                  text_append_n (&result, " ", 1);
+                  text_append (&result, root_command_texi);
+                }
+            }
+          else
+            {
+              char *section_texi
+                = root_command_element_string (section_element);
+              if (section_texi)
+                {
+                  xasprintf (&additional_info, "{s:@%s %s}",
+                             element_command_name (section_element),
+                             section_texi);
+                  free (section_texi);
+                }
+              else
+                xasprintf (&additional_info, "{s:}");
+            }
+        }
+      text_append_n (&result, "}", 1);
+      if (additional_info)
+        {
+          text_append (&result, additional_info);
+          free (additional_info);
+        }
+      free (root_command_texi);
+    }
+
+  if (output_unit->unit_filename)
+    {
+      text_append_n (&result, " ", 1);
+      if (use_filename)
+        {
+          char *file_name_and_directory[2];
+          parse_file_path (output_unit->unit_filename,
+                           file_name_and_directory);
+
+          text_append (&result, file_name_and_directory[0]);
+
+          free (file_name_and_directory[0]);
+          free (file_name_and_directory[1]);
+        }
+      else
+        text_append (&result, output_unit->unit_filename);
+    }
+  text_append_n (&result, "\n", 1);
+
+  return result.text;
 }
 
 /* If numbering elements is needed, the caller should have prepared the
@@ -1102,97 +1226,10 @@ print_output_units_details (OUTPUT_UNIT_LIST *output_units,
     {
       size_t j;
       OUTPUT_UNIT *output_unit = output_units->list[i];
+      char *output_unit_str = print_output_unit (output_unit, use_filename);
 
-      text_printf (result, "U%zu %s", output_unit->index,
-                   output_unit_type_names[output_unit->unit_type]);
-      if (output_unit->special_unit_variety)
-        text_printf (result, "-%s", output_unit->special_unit_variety);
-
-      if (output_unit->unit_type != OU_special_unit
-          && output_unit->uc.unit_command)
-        {
-          char *additional_info = 0;
-          char *root_command_texi
-            = root_command_element_string (output_unit->uc.unit_command);
-
-          /* determine the kind of command by comparing with
-             unit node or unit section.  Also show the texinfo code
-             of the node or section relations not associated to unit_command.
-           */
-          if (output_unit->unit_node)
-            {
-              if (output_unit->unit_node->element
-                     == output_unit->uc.unit_command)
-                {
-                  text_append_n (result, "{N:", 3);
-                  if (root_command_texi)
-                    text_append (result, root_command_texi);
-                }
-              else
-                {
-                  char *node_texi
-                    = root_command_element_string (
-                                    output_unit->unit_node->element);
-                  if (node_texi)
-                    {
-                      xasprintf (&additional_info, "{n:%s}", node_texi);
-                      free (node_texi);
-                    }
-                  else
-                    xasprintf (&additional_info, "{n:}");
-                }
-            }
-
-          if (output_unit->unit_section)
-            {
-              if (output_unit->unit_section->element
-                     == output_unit->uc.unit_command)
-                {
-                  text_append_n (result, "{S:", 3);
-                  if (root_command_texi)
-                    text_append (result, root_command_texi);
-                }
-              else
-                {
-                  char *section_texi
-                    = root_command_element_string (
-                                  output_unit->unit_section->element);
-                  if (section_texi)
-                    {
-                      xasprintf (&additional_info, "{s:%s}", section_texi);
-                      free (section_texi);
-                    }
-                  else
-                    xasprintf (&additional_info, "{s:}");
-                }
-            }
-          text_append_n (result, "}", 1);
-          if (additional_info)
-            {
-              text_append (result, additional_info);
-              free (additional_info);
-            }
-          free (root_command_texi);
-        }
-
-      if (output_unit->unit_filename)
-        {
-          text_append_n (result, " ", 1);
-          if (use_filename)
-            {
-              char *file_name_and_directory[2];
-              parse_file_path (output_unit->unit_filename,
-                               file_name_and_directory);
-
-              text_append (result, file_name_and_directory[0]);
-
-              free (file_name_and_directory[0]);
-              free (file_name_and_directory[1]);
-            }
-          else
-            text_append (result, output_unit->unit_filename);
-        }
-      text_append_n (result, "\n", 1);
+      text_printf (result, "U%zu %s", output_unit->index, output_unit_str);
+      free (output_unit_str);
 
       if (output_unit->tree_unit_directions[D_prev]
           || output_unit->tree_unit_directions[D_next])
@@ -1255,7 +1292,7 @@ print_output_units_details (OUTPUT_UNIT_LIST *output_units,
               ELEMENT *element = output_unit->unit_contents.list[j];
               current_nr = print_tree_details (element, 1, 0, current_nr,
                                                   result, fname_encoding,
-                                                  use_filename);
+                                                  use_filename, 0);
             }
         }
     }

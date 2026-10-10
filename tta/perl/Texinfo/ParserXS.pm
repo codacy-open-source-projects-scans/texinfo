@@ -13,19 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Since there are different parser implementation, XS and NonXS, it is
-# better to have the Texinfo::Parser packages define only the parser
-# API functions.  Constants, functions useful in both parsers, and other
-# functions useful in other codes are better defined in other Texinfo
-# modules.
-
 # File to be loaded in conjunction with ParserXS.xs module
 #
 # In general, the Parser works with character strings decoded from the
 # command line, from input files or from the parsed document and returns
 # character strings.  There are exceptions for the following files and
 # directory names that are binary strings:
-# * the input file name passed through parse_texi_file is a binary string
+# * the input file name passed through parse_file is a binary string
 # * the 'file_name' values in 'source_info' from convert_errors and in
 #   the tree elements 'source_info' are returned as binary strings
 
@@ -38,14 +32,13 @@ use warnings;
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
 
-# Not directly used, but the returned variables are in this module, this
-# import makes sure that the functions associated to the objects are found.
-use Texinfo::Document;
-
-# ALTIMP tta/C/convert/texinfo.c txi_parser
+# ALTIMP C/parsetexi/parser_api.c parser
+# ALTIMP perl/Texinfo/ParserNonXS.pm
+#
 # Initialize the parser
 # The last argument, optional, is a hash provided by the user to change
-# the default values for what is present in %parser_document_parsing_options.
+# the default values for what is present in %parser_document_parsing_options
+# in the Perl Parser (these defaults values are set in C for the XS interface).
 sub parser(;$) {
   my $conf = shift;
 
@@ -59,7 +52,7 @@ sub parser(;$) {
   $debug = $conf->{'DEBUG'} if (defined($conf) and defined($conf->{'DEBUG'}));
 
   # The reset_parser call resets the conf to the same values as found in
-  # Texinfo::Common parser_document_parsing_options.
+  # %parser_document_parsing_options.
   reset_parser($debug);
 
   # (re)set debug in any case, assuming that undef DEBUG is no debug
@@ -73,11 +66,11 @@ sub parser(;$) {
   if (defined($conf)) {
     foreach my $key (keys(%$conf)) {
       if ($key eq 'INCLUDE_DIRECTORIES') {
-        parser_store_INCLUDE_DIRECTORIES($conf->{'INCLUDE_DIRECTORIES'});
+        _parser_store_INCLUDE_DIRECTORIES($conf->{'INCLUDE_DIRECTORIES'});
       } elsif ($key eq 'values') {
-        parser_store_values($conf->{'values'});
+        _parser_store_values($conf->{'values'});
       } elsif ($key eq 'EXPANDED_FORMATS') {
-        parser_store_EXPANDED_FORMATS($conf->{'EXPANDED_FORMATS'});
+        _parser_store_EXPANDED_FORMATS($conf->{'EXPANDED_FORMATS'});
       } elsif ($key eq 'documentlanguage') {
         if (defined($conf->{$key})) {
           parser_conf_set_documentlanguage($conf->{$key});
@@ -131,13 +124,10 @@ sub parser(;$) {
     }
   }
   if ($store_conf) {
-    register_parser_conf($parser);
+    _register_parser_conf($parser);
   }
 
   return $parser;
 }
 
 1;
-__END__
-
-The POD documentation of Texinfo::Parser is in Texinfo::ParserNonXS.

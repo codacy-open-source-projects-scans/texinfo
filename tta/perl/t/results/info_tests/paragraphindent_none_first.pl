@@ -1,14 +1,19 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'paragraphindent_none_first'} = '*document_root C1
  *before_node_section C11
-  {empty_line:\\n}
-  {spaces_before_paragraph:      }
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C1
+   {spaces_before_paragraph:      }
   *paragraph C1
    {first\\n}
   {empty_line:\\n}
@@ -42,8 +47,7 @@ $result_texis{'paragraphindent_none_first'} = '
 ';
 
 
-$result_texts{'paragraphindent_none_first'} = '
-first
+$result_texts{'paragraphindent_none_first'} = 'first
 
 second
 
@@ -62,7 +66,7 @@ $result_sectioning_root{'paragraphindent_none_first'} = '';
 $result_headings_list{'paragraphindent_none_first'} = '';
 
 
-$result_converted{'info'}->{'paragraphindent_none_first'} = 'This is , produced from .
+$result_converted{'info'}->{'paragraphindent_none_first'} = Encode::encode('utf-8', 'This is , produced from .
 
 first
 
@@ -78,7 +82,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'paragraphindent_none_first'} = '* W |document without nodes
  warning: document without nodes

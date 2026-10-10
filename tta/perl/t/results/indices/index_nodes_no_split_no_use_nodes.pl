@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'index_nodes_no_split_no_use_nodes'} = '*document_root C7
  *before_node_section C2
@@ -492,6 +495,21 @@ fn:
  somewhere
 ';
 
+$result_converted_sort_strings{'file_html'}->{'index_nodes_no_split_no_use_nodes'} = 'cp:
+ ! entry in node
+ a concept a node
+ another
+ entry a
+ entry after printindex
+ entry in node
+ entry in node
+ something
+fn:
+ a function
+ fun in node
+ somewhere
+';
+
 $result_converted_errors{'file_html'}->{'index_nodes_no_split_no_use_nodes'} = '* W index_nodes.texi|must specify a title with a title command or @top
  warning: must specify a title with a title command or @top
 
@@ -528,6 +546,21 @@ $result_converted_errors{'file_html'}->{'index_nodes_no_split_no_use_nodes'} = '
 * W index_nodes.texi:l42|entry for index `fn\' for @printindex fn outside of any section
  warning: entry for index `fn\' for @printindex fn outside of any section
 
+';
+
+$result_converted_sort_strings{'file_plaintext'}->{'index_nodes_no_split_no_use_nodes'} = 'cp:
+ ! entry in node
+ a concept a node
+ another
+ entry a
+ entry after printindex
+ entry in node
+ entry in node
+ something
+fn:
+ a function
+ fun in node
+ somewhere
 ';
 
 1;

@@ -1,27 +1,31 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'text_arguments'} = '*document_root C1
- *before_node_section C3
-  *@linemacro C3 l1
-  |EXTRA
-  |formal_args:A{one|two|three}
-  |macro_name:{nospace}
-   *arguments_line C1
-    {macro_line: nospace{one, two, three}\\n}
-   {raw:\\three\\@bullet{}\\two\\@minus{}\\one\\\\n}
-   *@end C1 l3
+ *before_node_section C2
+  *preamble_before_content C2
+   *@linemacro C3 l1
    |EXTRA
-   |text_arg:{linemacro}
-    *line_arg C3
-     {spaces_before_argument: }
-     {linemacro}
-     {spaces_after_argument:\\n}
-  {empty_line:\\n}
+   |formal_args:A{one|two|three}
+   |macro_name:{nospace}
+    *arguments_line C1
+     {macro_line: nospace{one, two, three}\\n}
+    {raw:\\three\\@bullet{}\\two\\@minus{}\\one\\\\n}
+    *@end C1 l3
+    |EXTRA
+    |text_arg:{linemacro}
+     *line_arg C3
+      {spaces_before_argument: }
+      {linemacro}
+      {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C5
    {Z}
    >SOURCEMARKS

@@ -87,10 +87,10 @@ if ($perl_format) {
   print OUT "#include <config.h>\n\n";
   print OUT "#include \"html_conversion_data.h\"\n";
   print OUT "#include \"tree_types.h\"\n";
-  print OUT "#include \"converter_types.h\"\n\n";
+  print OUT "#include \"document_types.h\"\n\n";
 }
 
-my $C_header_string = 'CONVERSION_DATA_H';
+my $C_header_string = 'HTML_CONVERSION_DATA_H';
 if ($perl_format) {
 } else {
   print HDR "/* Automatically generated from $program_name */\n\n";
@@ -181,6 +181,12 @@ if ($C_format) {
   print HDR "#define CUSTOMIZED_SPECIAL_UNIT_INFO_TYPE_NR "
   ."(SPECIAL_UNIT_INFO_TYPE_NR + SPECIAL_UNIT_INFO_TREE_NR)\n\n";
 
+  print HDR "extern const char"
+          . " *special_unit_info_type_names"
+          .  "[CUSTOMIZED_SPECIAL_UNIT_INFO_TYPE_NR];\n";
+  print HDR "extern const char"
+          . " *special_unit_info_tree_names[SPECIAL_UNIT_INFO_TREE_NR];\n\n";
+
   print HDR "/* translated */\n";
   print HDR "enum special_unit_info_tree {\n"
          ."   SUIT_type_none = -1,\n\n";
@@ -195,6 +201,14 @@ if ($C_format) {
          ."};\n\n";
 
   print HDR "};\n\n";
+
+  print HDR "typedef struct TRANSLATED_SUI_ASSOCIATION {\n";
+  print HDR "      enum special_unit_info_tree tree_type;\n";
+  print HDR "          enum special_unit_info_type string_type;\n";
+  print HDR "} TRANSLATED_SUI_ASSOCIATION;\n\n";
+
+  print HDR "extern const TRANSLATED_SUI_ASSOCIATION"
+          . " translated_special_unit_info[];\n\n";
 }
 
 # gather for direction structures below
@@ -536,6 +550,17 @@ if ($perl_format) {
     print HDR "   hgdt_name(${direction}) \\\n";
   }
   print HDR "\n\n";
+
+  print HDR "enum global_unit_direction {\n";
+  print HDR "#define hgdt_name(name) D_ ## name,\n";
+  print HDR "HTML_GLOBAL_DIRECTIONS_LIST\n";
+  print HDR "#undef hgdt_name\n";
+  print HDR "};\n\n";
+
+  print HDR "/* NOTE the special output units direction names\n";
+  print HDR "   are obtained dynamically from the perl input and stored in\n";
+  print HDR "   special_unit_info and put later on in\n";
+  print HDR "   special_units_direction_name */\n\n";
 
   print HDR "/* relative output unit directions */\n";
   print HDR "#define RUD_DIRECTIONS_TYPES_LIST \\\n";

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'def_syn_indices'} = '*document_root C5
  *before_node_section C1
@@ -490,7 +493,7 @@ pg:
 ';
 
 
-$result_converted{'info'}->{'def_syn_indices'} = 'This is , produced from .
+$result_converted{'info'}->{'def_syn_indices'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: Chapter index,  Up: (dir)
@@ -553,6 +556,18 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'def_syn_indices'} = 'codeidx:
+ a index entry tẽ î
+fn:
+ cindex entry
+ index truc
+pg:
+ abc index entry
+ defg index entry
+ pindex codeidx
+ truc kindex
 ';
 
 
@@ -596,6 +611,18 @@ definedx truc after
 
 ';
 
+$result_converted_sort_strings{'plaintext'}->{'def_syn_indices'} = 'codeidx:
+ a index entry tẽ î
+fn:
+ cindex entry
+ index truc
+pg:
+ abc index entry
+ defg index entry
+ pindex codeidx
+ truc kindex
+';
+
 
 $result_converted{'html_text'}->{'def_syn_indices'} = '
 <div class="top-level-extent" id="Top">
@@ -618,7 +645,7 @@ after
 <a class="index-entry-id" id="index-index-truc"></a>
 
 
-<a class="index-entry-id" id="index-a-index-entry-te-i"></a>
+<a class="index-entry-id" id="index-a-index-entry-t_1ebd-_00ee"></a>
 
 <a class="index-entry-id" id="index-cindex-entry"></a>
 
@@ -784,6 +811,13 @@ $result_converted{'latex'}->{'def_syn_indices'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -793,6 +827,8 @@ $result_converted{'latex'}->{'def_syn_indices'} = '\\documentclass{book}
 \\usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
 \\usepackage[hidelinks]{hyperref}
+
+\\hypersetup{pdftitle={top}}
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}

@@ -19,8 +19,10 @@ OUTPUT_UNIT_LIST *retrieve_output_units (const DOCUMENT *document,
                                          size_t output_units_descriptor);
 size_t new_output_units_descriptor (DOCUMENT *document);
 
-size_t split_by_node (DOCUMENT *document);
-size_t split_by_section (DOCUMENT *document);
+void split_by_node (DOCUMENT *document, OUTPUT_UNIT_LIST *output_units);
+void split_by_section (DOCUMENT *document, OUTPUT_UNIT_LIST *output_units);
+size_t register_split_by_node (DOCUMENT *document);
+size_t register_split_by_section (DOCUMENT *document);
 int unsplit (DOCUMENT *document);
 void split_pages (OUTPUT_UNIT_LIST *output_units,
                   const NODE_RELATIONS_LIST *nodes_list, const char *split);
@@ -44,6 +46,7 @@ void do_units_directions_pages (DOCUMENT *document,
                            enum units_split_type units_split,
                            const char *split_pages_string, int debug);
 
+char *print_output_unit (const OUTPUT_UNIT *output_unit, int use_filename);
 char *print_output_units_tree_details (OUTPUT_UNIT_LIST *output_units,
                                  ELEMENT *tree,
                                  const char *fname_encoding, int use_filename);

@@ -19,15 +19,17 @@
 
 /* PlainTexinfo Converter API */
 
+#include "text.h"
+#include "tree_types.h"
 #include "document_types.h"
 #include "converter_types.h"
 
 void rawtext_converter (CONVERTER *self,
                         const CONVERTER_INITIALIZATION_INFO *conf);
 
-char *rawtext_output (CONVERTER *converter, DOCUMENT *document);
+TEXT rawtext_output (CONVERTER *converter, DOCUMENT *document);
 
-char *rawtext_convert (CONVERTER *converter, DOCUMENT *document);
+TEXT rawtext_convert (CONVERTER *converter, DOCUMENT *document);
 
-char *rawtext_convert_tree (CONVERTER *converter, const ELEMENT *tree);
+TEXT rawtext_convert_tree (CONVERTER *converter, const ELEMENT *tree);
 #endif

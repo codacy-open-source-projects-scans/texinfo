@@ -75,6 +75,7 @@ use Carp qw(cluck);
 use Texinfo::Commands;
 use Texinfo::Options;
 use Texinfo::Common;
+use Texinfo::Indices;
 
 # for section_level_adjusted_command_name
 use Texinfo::Structuring;
@@ -725,7 +726,7 @@ sub output_ixin($$)
         my $associated_node_id = $main_entry_element->{'extra'}->{'element_node'};
         $associated_node_id = -1 if (!defined($associated_node_id));
         my $entry_content_element
-          = Texinfo::Common::index_content_element($main_entry_element);
+          = $self->converter_index_content_element($main_entry_element);
         my $entry = $self->convert_tree($entry_content_element);
         $dts_text_result .= $self->ixin_open_element('dtsentry',
                                                 [['nodeid', $associated_node_id]]);
@@ -966,8 +967,9 @@ sub output_ixin($$)
         my $file_name_text = "$basefile.$extension";
         my ($file_name, $file_name_encoding)
           = $self->encoded_input_file_name($file_name_text);
-        my $file = Texinfo::Common::locate_include_file($file_name,
-                                  $self->get_conf('INCLUDE_DIRECTORIES'));
+        my ($file, $use_inc_dir)
+          = Texinfo::Common::locate_include_file($file_name,
+                             $self->get_conf('INCLUDE_DIRECTORIES'));
         if (defined($file)) {
           my $filehandle = do { local *FH };
           if (open($filehandle, $file)) {

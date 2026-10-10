@@ -1,21 +1,25 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'multiple_documentlanguage'} = '*document_root C11
- *before_node_section C2
-  *@documentlanguage C1 l1
-  |EXTRA
-  |global_command_number:{1}
-  |text_arg:{ja}
-   *line_arg C3
-    {spaces_before_argument: }
-    {ja}
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C1
+  *preamble_before_content C2
+   *@documentlanguage C1 l1
+   |EXTRA
+   |global_command_number:{1}
+   |text_arg:{ja}
+    *line_arg C3
+     {spaces_before_argument: }
+     {ja}
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
  *@node C1 l3 {Top}
  |EXTRA
  |identifier:{Top}

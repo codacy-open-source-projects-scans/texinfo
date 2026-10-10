@@ -1,14 +1,19 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
- *before_node_section
- *@node C1 {Top}
+ *before_node_section C1
+  *preamble_before_content
+ *@node C1 l1 {Top}
  |EXTRA
+ |added:{1}
  |identifier:{Top}
  |is_target:{1}
  |node_number:{1}
@@ -27,15 +32,17 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
     {otp}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {a node}
+ *@node C1 l3 {a node [+1+]}
  |EXTRA
- |identifier:{a-node}
+ |added:{1}
+ |identifier:{a-node-_005b_002b1_002b_005d}
  |is_target:{1}
  |node_number:{2}
   *arguments_line C1
-   *line_arg C3
+   *line_arg C4
     {spaces_before_argument: }
     {a node}
+    { [+1+]}
     {spaces_after_argument:\\n}
  *@chapter C2 l3 {a node}
  |EXTRA
@@ -48,8 +55,9 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
     {a node}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {a node @code{in code}}
+ *@node C1 l5 {a node @code{in code}}
  |EXTRA
+ |added:{1}
  |identifier:{a-node-in-code}
  |is_target:{1}
  |node_number:{3}
@@ -80,8 +88,9 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
       {rawline_text:comment}
       {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {a @comma{}@comma{} node @code{a@comma{}b@comma{}}}
+ *@node C1 l7 {a @comma{}@comma{} node @code{a@comma{}b@comma{}}}
  |EXTRA
+ |added:{1}
  |identifier:{a-_002c_002c-node-a_002cb_002c}
  |is_target:{1}
  |node_number:{4}
@@ -117,8 +126,9 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
       {a,b,}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {@asis{(}in paren(too  aaa}
+ *@node C1 l9 {@asis{(}in paren(too  aaa}
  |EXTRA
+ |added:{1}
  |identifier:{_0028in-paren_0028too-aaa}
  |is_target:{1}
  |node_number:{5}
@@ -141,8 +151,9 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
     {(in paren(too  aaa}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {changed @code{node} and (@samp{file})}
+ *@node C1 l11 {changed @code{node} and (@samp{file})}
  |EXTRA
+ |added:{1}
  |identifier:{changed-node-and-_0028file_0029}
  |is_target:{1}
  |node_number:{6}
@@ -194,9 +205,10 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
     {)}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {@asis{} 1}
+ *@node C1 l13 {@asis{} [+1+]}
  |EXTRA
- |identifier:{-1}
+ |added:{1}
+ |identifier:{-_005b_002b1_002b_005d}
  |is_target:{1}
  |node_number:{7}
   *arguments_line C1
@@ -204,7 +216,7 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
     {spaces_before_argument: }
     *@asis C1
      *brace_container
-    { 1}
+    { [+1+]}
     {spaces_after_argument:\\n}
  *@subsection C2 l13 {@asis{}}
  |EXTRA
@@ -218,8 +230,9 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
      *brace_container
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {a@asis{::}b@asis{	} c}
+ *@node C1 l15 {a@asis{::}b@asis{	} c}
  |EXTRA
+ |added:{1}
  |identifier:{a_003a_003ab-c}
  |is_target:{1}
  |node_number:{8}
@@ -247,16 +260,17 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
     {a::b\\t c}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
- *@node C1 {a node 1}
+ *@node C1 l17 {a node [+2+]}
  |EXTRA
- |identifier:{a-node-1}
+ |added:{1}
+ |identifier:{a-node-_005b_002b2_002b_005d}
  |is_target:{1}
  |node_number:{9}
   *arguments_line C1
    *line_arg C4
     {spaces_before_argument: }
     {a node}
-    { 1}
+    { [+2+]}
     {spaces_after_argument:\\n}
  *@section C6 l17 {a node}
  |EXTRA
@@ -367,7 +381,7 @@ $result_tree_text{'various_added_nodes_and_refs'} = '*document_root C19
 $result_texis{'various_added_nodes_and_refs'} = '@node Top
 @top otp
 
-@node a node
+@node a node [+1+]
 @chapter a node
 
 @node a node @code{in code}
@@ -382,13 +396,13 @@ $result_texis{'various_added_nodes_and_refs'} = '@node Top
 @node changed @code{node} and (@samp{file})
 @subsection changed @ref{ @code{node}} and (@pxref{ ,, , @samp{file}})
 
-@node @asis{} 1
+@node @asis{} [+1+]
 @subsection @asis{}
 
 @node a@asis{::}b@asis{	} c
 @chapter a::b	 c
 
-@node a node 1
+@node a node [+2+]
 @section a node
 
 
@@ -453,6 +467,9 @@ $result_errors{'various_added_nodes_and_refs'} = '* W l25|@ref should not appear
 * E l11|@ref reference to nonexistent node `@code{node}\'
  @ref reference to nonexistent node `@code{node}\'
 
+* E l20|@ref reference to nonexistent node `a node\'
+ @ref reference to nonexistent node `a node\'
+
 * E l23|@ref reference to nonexistent node `a\'
  @ref reference to nonexistent node `a\'
 
@@ -476,8 +493,8 @@ $result_errors{'various_added_nodes_and_refs'} = '* W l25|@ref should not appear
 $result_nodes_list{'various_added_nodes_and_refs'} = '1|Top
  associated_section: otp
  node_directions:
-  next->a node
-2|a node
+  next->a node [+1+]
+2|a node [+1+]
  associated_section: 1 a node
  node_directions:
   next->a node @code{in code}
@@ -487,7 +504,7 @@ $result_nodes_list{'various_added_nodes_and_refs'} = '1|Top
  associated_section: 2 a node @code{in code}
  node_directions:
   next->a@asis{::}b@asis{	} c
-  prev->a node
+  prev->a node [+1+]
   up->Top
 4|a @comma{}@comma{} node @code{a@comma{}b@comma{}}
  associated_section: 2.1 a ,, node @code{a,b,}
@@ -502,9 +519,9 @@ $result_nodes_list{'various_added_nodes_and_refs'} = '1|Top
 6|changed @code{node} and (@samp{file})
  associated_section: 2.2.1 changed @ref{ @code{node}} and (@pxref{ ,, , @samp{file}})
  node_directions:
-  next->@asis{} 1
+  next->@asis{} [+1+]
   up->@asis{(}in paren(too  aaa
-7|@asis{} 1
+7|@asis{} [+1+]
  associated_section: 2.2.2 @asis{}
  node_directions:
   prev->changed @code{node} and (@samp{file})
@@ -514,7 +531,7 @@ $result_nodes_list{'various_added_nodes_and_refs'} = '1|Top
  node_directions:
   prev->a node @code{in code}
   up->Top
-9|a node 1
+9|a node [+2+]
  associated_section: 3.1 a node
  node_directions:
   up->a@asis{::}b@asis{	} c
@@ -529,7 +546,7 @@ $result_sections_list{'various_added_nodes_and_refs'} = '1|otp
   2|a node @code{in code}
   3|a::b	 c
 2|a node
- associated_node: a node
+ associated_node: a node [+1+]
  section_directions:
   next->a node @code{in code}
   up->otp
@@ -569,7 +586,7 @@ $result_sections_list{'various_added_nodes_and_refs'} = '1|otp
   next->@asis{}
   up->(in paren(too  aaa
 7|@asis{}
- associated_node: @asis{} 1
+ associated_node: @asis{} [+1+]
  section_directions:
   prev->changed @ref{ @code{node}} and (@pxref{ ,, , @samp{file}})
   up->(in paren(too  aaa
@@ -584,7 +601,7 @@ $result_sections_list{'various_added_nodes_and_refs'} = '1|otp
  section_children:
   1|a node
 9|a node
- associated_node: a node 1
+ associated_node: a node [+2+]
  section_directions:
   up->a::b	 c
 ';

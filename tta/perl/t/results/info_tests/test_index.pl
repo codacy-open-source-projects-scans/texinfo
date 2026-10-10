@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'test_index'} = '*document_root C13
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -76,12 +80,6 @@ $result_tree_text{'test_index'} = '*document_root C13
    *def_line C1 l12
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@var C1
-       |*brace_container C1
-        |{i}
    |element_node:{Top}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
@@ -108,10 +106,6 @@ $result_tree_text{'test_index'} = '*document_root C13
    *@deffnx C1 l13
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |{machin}
    |element_node:{Top}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffnx}
@@ -599,6 +593,8 @@ $result_tree_text{'test_index'} = '*document_root C13
   {empty_line:\\n}
  *@appendixsec C2 l219 {appendixsec}
  |EXTRA
+ |identifier:{appendixsec}
+ |is_target:{1}
  |section_heading_number:{A.1}
  |section_level:{2}
  |section_number:{4}
@@ -610,6 +606,8 @@ $result_tree_text{'test_index'} = '*document_root C13
   {empty_line:\\n}
  *@appendixsubsec C2 l221 {appendixsubsec}
  |EXTRA
+ |identifier:{appendixsubsec}
+ |is_target:{1}
  |section_heading_number:{A.1.1}
  |section_level:{3}
  |section_number:{5}
@@ -621,6 +619,8 @@ $result_tree_text{'test_index'} = '*document_root C13
   {empty_line:\\n}
  *@appendixsubsubsec C4 l223 {appendixsubsubsec}
  |EXTRA
+ |identifier:{appendixsubsubsec}
+ |is_target:{1}
  |section_heading_number:{A.1.1.1}
  |section_level:{4}
  |section_number:{6}
@@ -641,6 +641,8 @@ $result_tree_text{'test_index'} = '*document_root C13
   {empty_line:\\n}
  *@centerchap C2 l227 {centerchap}
  |EXTRA
+ |identifier:{centerchap}
+ |is_target:{1}
  |section_level:{1}
  |section_number:{7}
   *arguments_line C1
@@ -651,6 +653,8 @@ $result_tree_text{'test_index'} = '*document_root C13
   {empty_line:\\n}
  *@chapter C7 l229 {chapter end}
  |EXTRA
+ |identifier:{chapter-end}
+ |is_target:{1}
  |section_heading_number:{B}
  |section_level:{1}
  |section_number:{8}
@@ -1265,7 +1269,7 @@ fn:
 ';
 
 
-$result_converted{'info'}->{'test_index'} = 'This is , produced from .
+$result_converted{'info'}->{'test_index'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: name,  Up: (dir)
@@ -1523,7 +1527,12 @@ Tag Table:
 Node: Top27
 Node: name330
 Node: name1 looooooooooooooooooooooooooooooooooooooooooooooooooooooooong982
-Ref: a counting anchor3070
+Ref: appendixsec2865
+Ref: appendixsubsec2898
+Ref: appendixsubsubsec2941
+Ref: centerchap3019
+Ref: chapter end3042
+Ref: a counting anchor3071
 
 End Tag Table
 
@@ -1531,6 +1540,27 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
+');
+
+$result_converted_sort_strings{'info'}->{'test_index'} = 'cp:
+ ¡
+ "
+ @
+ in Top
+ index entry in appendix before para
+ index entry looooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+ index in chapter end
+fn:
+ a fun
+ after lines.
+ after more than 100 lines
+ function index entry
+ i
+ index entry between indices
+ itemx fun
+ machin
+ other function
+ second fun
 ';
 
 1;

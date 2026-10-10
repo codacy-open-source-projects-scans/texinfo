@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'multiline_image_and_align'} = '*document_root C1
- *before_node_section C9
+ *before_node_section C10
+  *preamble_before_content
   *@center C1 l1
    *line_arg C3
     {spaces_before_argument: }
@@ -145,37 +149,37 @@ $result_sectioning_root{'multiline_image_and_align'} = '';
 $result_headings_list{'multiline_image_and_align'} = '';
 
 
-$result_converted{'plaintext'}->{'multiline_image_and_align'} = '                               1  A  B  
-                               2  C  D
-                               3  E  F
+$result_converted{'plaintext'}->{'multiline_image_and_align'} = '                                1  A  B  
+                                 2  C  D
+                                 3  E  F
 
-                        CCCC   1  A  B  
-                               2  C  D
-                               3  E  F
+                           CCCC   1  A  B  
+                                 2  C  D
+                                 3  E  F
 
-fffffffffffffffffffffffffffffffffffffff   1  A  B  
-                               2  C  D
-                               3  E  F
+          fffffffffffffffffffffffffffffffffffffff   1  A  B  
+                                 2  C  D
+                                 3  E  F
 
-                        dddd   1  A  B  
-                               2  C  D
-                           3  E  F iiiii
+                           dddd   1  A  B  
+                                 2  C  D
+                              3  E  F iiiii
 
                                                                     AAA
-                                                             1  A  B  
-                                                             2  C  D
-                                                             3  E  F
+                                                              1  A  B  
+                                                                2  C  D
+                                                                3  E  F
 
-                                                       BBB   1  A  B  
-                                                             2  C  D
-                                              3  E  F gggg   1  A  B  
-                                                             2  C  D
-                                                             3  E  F
+                                                        BBB   1  A  B  
+                                                                2  C  D
+                                               3  E  F gggg   1  A  B  
+                                                                2  C  D
+                                                                3  E  F
 
                                                                     HHH
-                                                             1  A  B  
-                                                             2  C  D
-                        3  E  F JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
+                                                              1  A  B  
+                                                                2  C  D
+                         3  E  F JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
 ';
 
 1;

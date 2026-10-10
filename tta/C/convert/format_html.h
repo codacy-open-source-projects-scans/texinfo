@@ -17,11 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include <stddef.h>
+
 #include "command_ids.h"
 #include "element_types.h"
+#include "option_types.h"
+#include "text.h"
 #include "tree_types.h"
+#include "document_types.h"
 #include "converter_types.h"
-#include "html_converter_types.h"
+/* for HTML_TARGET ... */
+#include "html_converter_state.h"
 
 typedef struct ROOT_AND_UNIT {
     const OUTPUT_UNIT *output_unit;
@@ -87,7 +93,7 @@ char *html_command_description (CONVERTER *self, const ELEMENT *command,
 char *html_special_unit_info_text (CONVERTER *self,
                                 const enum special_unit_info_tree type,
                                 const char *special_unit_variety,
-                                enum conversion_context context_type);
+                                enum direction_string_context context_type);
 
 OUTPUT_UNIT *html_get_top_unit (DOCUMENT *document,
                                 const OUTPUT_UNIT_LIST *output_units);
@@ -303,5 +309,10 @@ SPECIAL_BODY_FORMATTING_FUNCTION(about)
 
 #undef SPECIAL_BODY_FORMATTING_FUNCTION
 
+
+
+/* Global arrays */
+extern const char *direction_string_type_names[];
+extern const char *direction_string_context_names[];
 
 #endif

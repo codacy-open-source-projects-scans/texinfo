@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'space_in_image'} = '*document_root C1
- *before_node_section C2
+ *before_node_section C3
+  *preamble_before_content
   *@image C5 l1
   |EXTRA
   |input_encoding_name:{utf-8}
@@ -69,7 +73,8 @@ $result_converted_errors{'html_text'}->{'space_in_image'} = '* W l1|@image file 
 ';
 
 
-$result_converted{'latex_text'}->{'space_in_image'} = '\\includegraphics[width=bb,height=cc]{a}. \\includegraphics{f}.';
+$result_converted{'latex_text'}->{'space_in_image'} = '\\begin{document}
+\\includegraphics[width=bb,height=cc,alt={dd}]{a}. \\includegraphics{f}.';
 
 $result_converted_errors{'latex_text'}->{'space_in_image'} = '* W l1|@image file `a\' (for LaTeX) not found
  warning: @image file `a\' (for LaTeX) not found

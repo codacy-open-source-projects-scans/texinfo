@@ -162,6 +162,7 @@ use 5.006;
 use if $] >= 5.012, feature => qw(unicode_strings);
 
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -181,6 +182,7 @@ use Texinfo::Convert::Texinfo;
 use Texinfo::Convert::NodeNameNormalization;
 use Texinfo::Convert::Text;
 use Texinfo::Indices;
+use Texinfo::Document::Indices;
 use Texinfo::Convert::Converter;
 
 our @ISA = qw(Texinfo::Convert::Converter);
@@ -232,7 +234,6 @@ foreach my $command (keys (%Texinfo::Commands::brace_commands)) {
   $brace_no_arg_commands{$command} = 1
     if ($Texinfo::Commands::brace_commands{$command} eq 'noarg');
 }
-my %accent_commands = %Texinfo::Commands::accent_commands;
 my %line_commands = %Texinfo::Commands::line_commands;
 my %nobrace_commands = %Texinfo::Commands::nobrace_commands;
 my %sectioning_heading_commands = %Texinfo::Commands::sectioning_heading_commands;
@@ -252,6 +253,8 @@ my %brace_code_commands       = %Texinfo::Commands::brace_code_commands;
 my %non_formatted_brace_command = %Texinfo::Commands::non_formatted_brace_command;
 
 my %nobrace_symbol_text = %Texinfo::CommandsValues::nobrace_symbol_text;
+my %text_brace_no_arg_commands
+  = %Texinfo::CommandsValues::text_brace_no_arg_commands;
 
 foreach my $kept_command (keys(%informative_commands),
    'documentlanguagevariant',
@@ -467,6 +470,30 @@ foreach my $text_only_no_arg_brace_command
     = '\mathord{\text{'.$LaTeX_command.'}}';
 }
 
+# commands with math mode used for their formatting and some other commands,
+# @error because of \fbox and \euro are not fit for PDF bookmark, therefore
+# a special command is used to allowed to replace their output in that context.
+# Here we prepare one hash with transliteration to ASCII, for cases where
+# there is no corresponding encoded character.  It is also used to
+# determine which command needs some replacement.  Unless UTF-8 is not used
+# as output encoding, which should be extremely rare, the value is not
+# used, 'error' value being an exception, as the encoded character is used.
+my %LaTeX_no_arg_brace_commands_ascii_replacement;
+foreach my $no_arg_command (keys(%{$LaTeX_no_arg_brace_commands{'cmd_text'}})) {
+  my $latex_code = $LaTeX_no_arg_brace_commands{'cmd_text'}->{$no_arg_command};
+  if ($latex_code =~ /^\$/) {
+    if (!exists($text_brace_no_arg_commands{$no_arg_command})) {
+      die "No ASCII text for $no_arg_command\n";
+    }
+    $LaTeX_no_arg_brace_commands_ascii_replacement{$no_arg_command}
+       = $text_brace_no_arg_commands{$no_arg_command};
+  }
+}
+# TODO translation
+$LaTeX_no_arg_brace_commands_ascii_replacement{'error'} = 'error';
+$LaTeX_no_arg_brace_commands_ascii_replacement{'euro'}
+   = $text_brace_no_arg_commands{'euro'};
+
 # dotless is special
 my %LaTeX_accent_commands = (
    # textmode
@@ -549,7 +576,7 @@ my %LaTeX_environment_commands = (
   'smallquotation' => ['quote', $small_font_size],
   'indentedblock' => ['Texinfoindented'],
   'smallindentedblock' => ['Texinfoindented', $small_font_size],
-  'cartouche' => ['mdframed'],
+  'cartouche' => ['Texinfocartouche'],
   'itemize' => ['itemize'],
   'enumerate' => ['enumerate'],
   'table' => ['description'],
@@ -561,11 +588,12 @@ my %LaTeX_environment_commands = (
 );
 
 my %LaTeX_environment_options = (
-  'cartouche' => {'mdframed' => 'style=Texinfocartouche'},
+  'cartouche' => {'Texinfocartouche' => undef},
+  #'cartouche' => {'Texinfocartouche' => 'style=Texinfocartouche'},
 );
 
 my %LaTeX_environment_packages = (
-  'cartouche' => ['mdframed'],
+  'cartouche' => ['tcolorbox'],
 );
 
 my %LaTeX_fixed_width_environments = (
@@ -586,7 +614,8 @@ foreach my $environment_command (@LaTeX_same_block_commands) {
   $LaTeX_environment_commands{$environment_command} = [$environment_command];
 }
 
-# no floating material in the corresponding environment (mdframed)
+# TODO there was no floating material in the corresponding environment
+# (mdframed), but now tcolorbox is used, could be different
 my %LaTeX_non_floating_environment_commands = (
   'cartouche' => 1,
 );
@@ -891,9 +920,7 @@ sub converter_destroy($) {
 sub conversion_initialization($;$) {
   my ($self, $document) = @_;
 
-  if (defined($document)) {
-    $self->set_document($document);
-  }
+  $self->set_document($document);
 
   # note that we use Texinfo::Common::document_settable_at_commands and not
   # informative_commands as in informative_commands set and clear have
@@ -913,6 +940,11 @@ sub conversion_initialization($;$) {
 
   %{$self->{'quotes_map'}} = %quotes_map;
 
+  # The Perl output encoding is ignored here, it is determined for each
+  # output file.
+  (undef, $self->{'output_encoding_name'})
+    = Texinfo::Common::processing_output_encoding(
+                    $self->get_conf('OUTPUT_ENCODING_NAME'));
   # this condition means that there is no way to turn off
   # @U expansion to utf-8 characters even though this
   # could output characters that are not known in the
@@ -920,8 +952,8 @@ sub conversion_initialization($;$) {
   # This is described in the Texinfo manual, but not in
   # in a precise way.
   # FIXME add a customization variable?  Use a fontenc with more points?
-  if ($self->get_conf('OUTPUT_ENCODING_NAME')
-      and $self->get_conf('OUTPUT_ENCODING_NAME') eq 'utf-8') {
+  if ($self->{'output_encoding_name'}
+      and $self->{'output_encoding_name'} eq 'utf-8') {
     # cache this to avoid redoing calls to get_conf
     $self->{'to_utf8'} = 1;
 
@@ -946,7 +978,6 @@ sub conversion_initialization($;$) {
   }
   # some caching to avoid calling get_conf
   $self->{'output_characters'} = $self->get_conf('OUTPUT_CHARACTERS');
-  $self->{'output_encoding_name'} = $self->get_conf('OUTPUT_ENCODING_NAME');
   $self->{'debug'} = $self->get_conf('DEBUG');
 }
 
@@ -968,12 +999,6 @@ sub _prepare_floats($) {
     $self->{'normalized_float_latex'} = {};
     my %latex_floats;
 
-    my $no_unidecode;
-    $no_unidecode = 1 if (defined($self->get_conf('USE_UNIDECODE'))
-                          and !$self->get_conf('USE_UNIDECODE'));
-    my $in_test;
-    $in_test = 1 if ($self->get_conf('TEST'));
-
     foreach my $normalized_float_type (sort(keys(%{$floats}))) {
       my $latex_variable_float_name;
       if (scalar(@{$floats->{$normalized_float_type}})) {
@@ -981,8 +1006,7 @@ sub _prepare_floats($) {
         my ($float, $float_section) = @$float_and_section;
         $latex_variable_float_name
           = Texinfo::Convert::NodeNameNormalization::transliterate_texinfo(
-                      $float->{'contents'}->[0]->{'contents'}->[0],
-                      $in_test, $no_unidecode);
+                               $float->{'contents'}->[0]->{'contents'}->[0]);
       } else {
         $latex_variable_float_name = $normalized_float_type;
       }
@@ -1011,28 +1035,25 @@ sub _prepare_floats($) {
 sub _prepare_indices($) {
   my $self = shift;
 
-  my $indices_information;
-  if (exists($self->{'document'})) {
-    $indices_information = $self->{'document'}->indices_information();
-  }
+  return if (!exists($self->{'document'}));
 
-  if (defined($indices_information)) {
-    $self->{'index_formatting_text_options'}
-      = Texinfo::Indices::setup_index_entry_keys_formatting($self);
-    my $merged_index_entries
-        = $self->{'document'}->merged_indices();
-    # select non empty indices
-    if (defined($merged_index_entries)) {
-      $self->{'index_entries'} = {};
-      foreach my $index_name (keys(%{$merged_index_entries})) {
-        # print STDERR "PI $index_name\n";
-        # print STDERR "".$merged_index_entries->{$index_name}."\n";
-        #print STDERR " -> ".join("|", @{$merged_index_entries->{$index_name}})."\n";
-        if (scalar(@{$merged_index_entries->{$index_name}})) {
-          $self->{'index_entries'}->{$index_name}
-               = $merged_index_entries->{$index_name};
-        }
-      }
+  my $indices_information = $self->{'document'}->indices_information();
+  return if (!defined($indices_information));
+  my $merged_index_entries
+    = Texinfo::Document::Indices::merged_indices($self->{'document'});
+  return if (!defined($merged_index_entries));
+
+  $self->{'index_formatting_text_options'}
+    = Texinfo::Indices::setup_index_entry_keys_formatting($self);
+
+  $self->{'index_entries'} = {};
+  foreach my $index_name (keys(%{$merged_index_entries})) {
+    # print STDERR "PI $index_name\n";
+    # print STDERR "".$merged_index_entries->{$index_name}."\n";
+    #print STDERR " -> ".join("|", @{$merged_index_entries->{$index_name}})."\n";
+    if (scalar(@{$merged_index_entries->{$index_name}})) {
+     $self->{'index_entries'}->{$index_name}
+          = $merged_index_entries->{$index_name};
     }
   }
 }
@@ -1119,6 +1140,14 @@ sub _associate_other_nodes_to_sections($$$) {
     } elsif (exists($element_content->{'cmdname'})
           and exists($root_commands{$element_content->{'cmdname'}})) {
       $current_sectioning_command = $element_content;
+      if (exists($element_content->{'extra'})
+          and exists($element_content->{'extra'}->{'identifier'})) {
+       # section without associated node, and with unique label.  Associate
+       # to itself
+        $additional_node_section_associations
+              ->{$element_content->{'extra'}->{'identifier'}}
+                   = $element_content;
+      }
       if (scalar(@$pending_nodes)) {
         foreach my $normalized_node_name (@$pending_nodes) {
           $additional_node_section_associations->{$normalized_node_name}
@@ -1138,7 +1167,7 @@ sub _associate_other_nodes_to_sections($$$) {
 
 # this type marks where the \begin{document} should be,
 # after the @-commands in preamble.  It is not setup
-# when using parse_texi_piece only.
+# when using parse_piece only.
 my $latex_document_type = 'preamble_before_content';
 
 sub output($$) {
@@ -1355,6 +1384,8 @@ my %LaTeX_encoding_names_map = (
   'utf-8' => ['utf8', 'T1'],
   # from https://ctan.gutenberg-asso.fr/macros/latex/base/inputenc.pdf
   # The ASCII encoding only allows characters in the range 32-127,
+  # NOTE this should never be selected, as ascii should be mapped to
+  # another character set that extend it, for instance 'iso-8859-1'.
   'us-ascii' => ['ascii', 'T1'],
   'iso-8859-1' => ['latin1', 'T1'],
   # The ISO Latin-9 encoding file defines the characters in the ISO 8859-15
@@ -1447,6 +1478,25 @@ sub _latex_header($) {
   } else {
     $settitle = $default_title;
   }
+
+  # setup pdftitle
+  my $fulltitle_tree = $self->get_fulltitle_tree();
+
+  if (defined($fulltitle_tree)) {
+    my $fulltitle = Texinfo::Convert::Text::convert_to_text(
+                                      $fulltitle_tree,
+                                    $self->{'convert_text_options'});
+    if ($fulltitle =~ /\S/) {
+      # in {} in PDF attributes, [] do not need to be escaped, and the
+      # processor tries to consider input text as plain text, therefore
+      # only {, } and % need to be escaped.
+      #$fulltitle = _protect_latex_text($fulltitle);
+      $fulltitle =~ s/([{}%])/\\$1/g;
+      $header_code .= "\\hypersetup{pdftitle={$fulltitle}}\n\n";
+    }
+  }
+
+
   $header_code .= "\\makeatletter\n";
 
   # this command is redefined for headings to include the "Chapter" name
@@ -1673,11 +1723,11 @@ sub _latex_header($) {
 ';
   }
 
-  if (exists($self->{'packages'}->{'mdframed'})) {
-   $header_code .= '% the mdframed style for @cartouche
-\mdfdefinestyle{Texinfocartouche}{
-innertopmargin=10pt, innerbottommargin=10pt,%
-roundcorner=10pt}
+  if (exists($self->{'packages'}->{'tcolorbox'})) {
+   # top and bottom margin could be added, with top=10pt and bottom=,
+   # but the default margins seem to be right.
+   $header_code .= '% the tcolorbox environment for @cartouche
+\newtcolorbox{Texinfocartouche}[1][]{#1}
 
 ';
   }
@@ -1719,8 +1769,8 @@ roundcorner=10pt}
   # etoolbox for \patchcmd, \ifstrempty and \AtBeginEnvironment.
   # In texlive-latex-recommended in debian
   # fontsize for \changefontsize. In texlive-latex-extra in debian
-  # mdframed is used for the formatting of @cartouche,
-  # caption for float in non floating environment, namely cartouche (mdframed)
+  # tcolorbox is used for the formatting of @cartouche,
+  # caption for float in non floating environment, namely cartouche
   # microtype is used for @microtype
   # microtype requires cm-super installed, or to use lmodern package.
   # In texlive-latex-recommended in debian.
@@ -1731,17 +1781,68 @@ roundcorner=10pt}
   # the section or chapter title
   my $class_and_usepackage_begin = $self->get_conf('CLASS_BEGIN_USEPACKAGE');
   if (!defined($class_and_usepackage_begin)) {
-    $class_and_usepackage_begin = "\\documentclass{$documentclass}\n";
-    $class_and_usepackage_begin .= '\usepackage{amsfonts}
-\usepackage{amsmath}
-\usepackage[gen]{eurosym}
+    $class_and_usepackage_begin = '';
+    my $math_usepackage;
+    my $latex_tagged_pdf_var = $self->get_conf('LATEX_TAGGED_PDF');
+    if (defined($latex_tagged_pdf_var)) {
+      $class_and_usepackage_begin .= "\\DocumentMetadata{tagging=on,\n";
+      if ($latex_tagged_pdf_var !~ /\S/) {
+        # set default value for tagged PDF options
+        my $default_bcp47_locale = $self->current_bcp47_locale();
+        $self->set_converter_preamble_language_commands();
+        my $preamble_bcp47_locale = $self->current_bcp47_locale();
+        if ($preamble_bcp47_locale ne '') {
+          # both lang and language exist, but accoding to the documentation,
+          # lang can be derived from language.
+          $class_and_usepackage_begin .= "language=$preamble_bcp47_locale,\n";
+        }
+        $class_and_usepackage_begin .= "pdfstandard=ua-2\n";
+
+        if ($default_bcp47_locale ne $preamble_bcp47_locale) {
+          $self->reset_lang_translation_from_customization(
+                           $self->get_conf('documentlanguage'),
+                           $self->get_conf('documentscript'));
+        }
+      } else {
+        $class_and_usepackage_begin .= $latex_tagged_pdf_var;
+      }
+      $class_and_usepackage_begin .= "}\n";
+      # amsfonts is supposed not to be needed with unicode-math, but it is
+      # needed for circledR.
+      $math_usepackage = "\\usepackage{amsfonts}\n\\usepackage{unicode-math}\n";
+    } else {
+      $math_usepackage = "\\usepackage{amsfonts}\n\\usepackage{amsmath}\n";
+    }
+    $class_and_usepackage_begin .= "\\documentclass{$documentclass}\n";
+    $class_and_usepackage_begin .= $math_usepackage;
+    $class_and_usepackage_begin .= '\usepackage[gen]{eurosym}
 \usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\makeatletter
+\providecommand\KV@Gin@alt{}
+\makeatother
 \usepackage{graphicx}
 \usepackage{etoolbox}
 \usepackage{titleps}
 ';
-    my $enc_usepackages = _enc_usepackage($self->{'output_encoding_name'});
-    $class_and_usepackage_begin .= $enc_usepackages;
+    if (!defined($latex_tagged_pdf_var)) {
+      my $enc_usepackages = _enc_usepackage($self->{'output_encoding_name'});
+      $class_and_usepackage_begin .= $enc_usepackages;
+    } else {
+      my $output_encoding = $self->{'output_encoding_name'};
+      if (defined($output_encoding) and $output_encoding ne ''
+          and lc($output_encoding) ne 'utf-8') {
+        my $encoding = $output_encoding;
+        if (exists($LaTeX_encoding_names_map{$output_encoding})) {
+          ($encoding, undef)
+            = @{$LaTeX_encoding_names_map{$output_encoding}};
+        }
+        $class_and_usepackage_begin .= "\\usepackage[$encoding]{inputenc}\n";
+      }
+    }
   }
   my $usepackage_end = $self->get_conf('END_USEPACKAGE');
   if (!defined($usepackage_end)) {
@@ -1768,9 +1869,8 @@ roundcorner=10pt}
     if (exists($self->{'packages'}->{'tabularx'})) {
       $usepackage_end .= "\\usepackage{tabularx}\n";
     }
-    if (exists($self->{'packages'}->{'mdframed'})) {
-      # framemethod=tikz needed for roundcorners for @cartouche
-      $usepackage_end .= "\\usepackage[framemethod=tikz]{mdframed}\n";
+    if (exists($self->{'packages'}->{'tcolorbox'})) {
+      $usepackage_end .= "\\usepackage{tcolorbox}\n";
     }
     if (exists($self->{'packages'}->{'caption'})) {
       # capt-of gives an error for float.t float_in_block_commands test
@@ -2145,14 +2245,13 @@ sub _protect_index_text($) {
 }
 
 # Protect LaTeX special characters.
-sub _protect_text($$) {
-  my ($self, $text) = @_;
+sub _protect_latex_text($;$$$$$) {
+  my ($text, $in_math, $in_raw, $in_code, $dot_not_end_sentence) = @_;
 
-  if ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1] eq 'ctx_math') {
+  if ($in_math) {
     # FIXME are there any special characters to protect in math mode,
     # for instance # and ~?
-  } elsif ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1]
-             ne 'ctx_raw') {
+  } elsif (!$in_raw) {
     # temporarily replace \ with a control character
     $text =~ s/\\/\x08/g;
 
@@ -2163,7 +2262,7 @@ sub _protect_text($$) {
 
     $text =~ s/\x08/\\textbackslash{}/g;
 
-    if ($self->{'formatting_context'}->[-1]->{'code'}->[-1]) {
+    if ($in_code) {
       # Prevent extra space after punctuation.  (We could use \frenchspacing
       # in the output, but this can break in section titles with hyperref.)
       $text =~ s/([.?!:;,]) /$1\\ /g;
@@ -2185,11 +2284,21 @@ sub _protect_text($$) {
     $text =~ s/\?`/{?}{`}/g;
     $text =~ s/!`/{!}{`}/g;
 
-    if ($self->{'formatting_context'}->[-1]->{'dot_not_end_sentence'}) {
+    if ($dot_not_end_sentence) {
       $text =~ s/\./\.\\@/g;
     }
   }
   return $text;
+}
+
+sub _protect_text($$) {
+  my ($self, $text) = @_;
+
+  return _protect_latex_text($text,
+    ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1] eq 'ctx_math'),
+    ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1] eq 'ctx_raw'),
+    $self->{'formatting_context'}->[-1]->{'code'}->[-1],
+    $self->{'formatting_context'}->[-1]->{'dot_not_end_sentence'})
 }
 
 # pagenum heading is not in Texinfo, it is used for the Table of Contents,
@@ -2484,12 +2593,21 @@ sub _set_environment_options($$$) {
   if (exists($LaTeX_environment_options{$command})) {
     my $option = $LaTeX_environment_options{$command};
     if ($command eq 'cartouche') {
+      my @environment_options;
+      if (defined($option->{'Texinfocartouche'})) {
+        push @environment_options, $option->{'Texinfocartouche'};
+      }
       # arguments_line type element
       my $arguments_line = $element->{'contents'}->[0];
       my $block_line_arg = $arguments_line->{'contents'}->[0];
       if (!Texinfo::Common::empty_spaces_argument($block_line_arg)) {
-        $option = {'mdframed' => $option->{'mdframed'} . ', frametitle={'
-                       . _convert($self, $block_line_arg) .'}'};
+        push @environment_options, 'title={'
+                     . _convert($self, $block_line_arg) .'}';
+      }
+      if (scalar(@environment_options) > 0) {
+        return {'Texinfocartouche' => join(',', @environment_options)};
+      } else {
+        return undef;
       }
     }
     return $option;
@@ -2655,8 +2773,8 @@ sub _index_entry($$) {
     $self->{'formatting_context'}->[-1]->{'index'} = 1;
     my @result;
     foreach my $subindex_command (@subindex_commands) {
-      my $content
-         = Texinfo::Common::index_content_element($subindex_command, 1);
+      my $content = $self->converter_index_content_element(
+                                             $subindex_command, 1);
       if ($in_code) {
         push @{$self->{'formatting_context'}->[-1]->{'code'}}, 1;
       }
@@ -2674,9 +2792,8 @@ sub _index_entry($$) {
       # text options data setup by setup_index_entry_keys_formatting.
       my $sort_string
            = Texinfo::Indices::index_entry_element_sort_string(
-                                          $self, $entry,
-                                          $subindex_command,
-                            $self->{'index_formatting_text_options'}, 1);
+                                  $self, $entry, $subindex_command,
+                                  $self->{'index_formatting_text_options'}, 1);
       my $result = '';
       if (defined($sort_string)) {
         # | in sort key breaks with hyperref
@@ -2784,8 +2901,7 @@ sub _convert_def_line($$) {
     my $category
       = Texinfo::Convert::Utils::definition_category_tree($element,
                                      $self->{'current_lang_translations'},
-                                     $self->get_conf('COMMAND_LINE_ENCODING'),
-                                             $self->get_conf('DEBUG'));
+                                             $self->{'debug'});
     if (defined($category)) {
       # category is converted in normal text context
       my $converted = _convert($self, $category);
@@ -2794,6 +2910,8 @@ sub _convert_def_line($$) {
 
     $self->{'packages'}->{'tabularx'} = 1;
     my $def_line_result = '';
+    $def_line_result .= "\\smallbreak\n";
+
     # First column (X) is as wide as possible, second column (r) is for
     # category.  @{} removes space at left side of table.
     # Without \noindent, a def* after a section beginning is indented
@@ -3232,28 +3350,38 @@ sub _convert($$) {
       }
       if (exists($LaTeX_no_arg_brace_commands{$command_format_context}
                                                      ->{$converted_command})) {
-        if ($converted_command eq 'error'
-            and $self->{'formatting_context'}->[-1]
-                                         ->{'in_sectioning_command_heading'}) {
+        if ($self->{'formatting_context'}->[-1]
+                                         ->{'in_sectioning_command_heading'}
+            and exists($LaTeX_no_arg_brace_commands_ascii_replacement{
+                                                    $converted_command})) {
           # in a sectioning command, the contents bookmark is also generated,
           # and some commands do not play well with the contents bookmark.
           # In particular \fbox.
           # \texorpdfstring allows to specify a different output for
           # the string in contents bookmark.
           #
-          # TODO Note that other commands than @error are not perfect in
-          # contents bookmarks, in particular all the commands formatted
-          # in math disappear.  However the other commands have no clear
-          # string representations, being removed in the contents bookmark
-          # strings is not so bad until a better solution is found
-          #
           # See also
           # https://github.com/latex3/hyperref/issues/207#issuecomment-920712424
+
+          # In general PDF bookmarks accepts encoded characters, so try that
+          # first
+          my $encoding = $self->{'output_encoding_name'};
+          my $conversion
+           = Texinfo::Convert::Unicode::brace_no_arg_command($converted_command,
+                                                             $encoding);
+          my $replacement_for_bookmark;
+          if (defined($conversion)) {
+            $replacement_for_bookmark = $conversion;
+          } else {
+            $replacement_for_bookmark
+                = $LaTeX_no_arg_brace_commands_ascii_replacement{
+                                                    $converted_command}
+          }
+
           $result .= '\texorpdfstring{'.
             $LaTeX_no_arg_brace_commands{$command_format_context}
                                                           ->{$converted_command}
-            # TODO translation
-            .'}{error}'
+            ."}{$replacement_for_bookmark}"
         } elsif ($converted_command eq 'lbracechar'
                    or $converted_command eq 'rbracechar') {
           $result .= _format_brace_command($self, $converted_command);
@@ -3266,7 +3394,8 @@ sub _convert($$) {
       }
       return $result;
     # commands with braces
-    } elsif (exists($accent_commands{$cmdname})) {
+    } elsif (exists($Texinfo::Commands::brace_commands{$cmdname})
+             and $Texinfo::Commands::brace_commands{$cmdname} eq 'accent') {
       if ($self->{'output_characters'}) {
         my $encoding = $self->{'output_encoding_name'};
         my $sc;
@@ -3454,7 +3583,7 @@ sub _convert($$) {
         foreach my $extension (@LaTeX_image_extensions) {
           my ($file_name, $file_name_encoding)
              = $self->encoded_input_file_name("$basefile.$extension");
-          my $located_file =
+          my ($located_file, $use_inc_dir) =
             Texinfo::Common::locate_include_file($file_name,
                                   $self->get_conf('INCLUDE_DIRECTORIES'));
           if (defined($located_file)) {
@@ -3474,48 +3603,61 @@ sub _convert($$) {
         # codepoints too.
         # using basefile with escaped characters, no extension to let LaTeX
         # choose the extension
-        # FIXME not clear at all what can be in filenames here,
-        # what should be escaped and how
+        # for LaTeX > 2020 (approximately) the file name does not need any
+        # protection, and cannot have anything protected as \ is left as
+        # is and does not protect the next character.  % and \% cannot
+        # appear in file name.
         my $converted_basefile = $basefile;
-        # for now minimal protection.  Not sure that % is problematic
-        $converted_basefile =~ s/([%{}\\])/\\$1/g;
+        # no need nor possibility of escaping
+        #$converted_basefile =~ s/([%{}\\])/\\$1/g;
         my $image_file = $converted_basefile;
-        my $width;
+
+        my @image_options;
         if (scalar(@{$element->{'contents'}}) >= 2) {
           push @{$self->{'formatting_context'}->[-1]->{'text_context'}},
                'ctx_raw';
-          $width = _convert($self, $element->{'contents'}->[1]);
+          my $width = _convert($self, $element->{'contents'}->[1]);
           my $old_context
             = pop @{$self->{'formatting_context'}->[-1]->{'text_context'}};
           die if ($old_context ne 'ctx_raw');
-          if ($width !~ /\S/) {
-            $width = undef;
+          if ($width =~ /\S/) {
+            push @image_options, "width=$width";
           }
         }
-        my $height;
         if (scalar(@{$element->{'contents'}}) >= 3) {
           push @{$self->{'formatting_context'}->[-1]->{'text_context'}},
                'ctx_raw';
-          $height = _convert($self, $element->{'contents'}->[2]);
+          my $height = _convert($self, $element->{'contents'}->[2]);
           my $old_context
              = pop @{$self->{'formatting_context'}->[-1]->{'text_context'}};
           die if ($old_context ne 'ctx_raw');
-          if ($height !~ /\S/) {
-            $height = undef;
+          if ($height =~ /\S/) {
+            push @image_options, "height=$height";
           }
         }
+        if (scalar(@{$element->{'contents'}}) >= 4
+            and !Texinfo::Common::empty_spaces_argument(
+                                 $element->{'contents'}->[3])) {
+          my $alt_text = Texinfo::Convert::Text::convert_to_text(
+                                  $element->{'contents'}->[3],
+                                    $self->{'convert_text_options'});
+          if ($alt_text =~ /\S/) {
+            # in {} in PDF attributes, [] do not need to be escaped, and the
+            # processor tries to consider input text as plain text, therefore
+            # only {, } and % need to be escaped.
+            #$alt_text =~ s/([{}%])/\\$1/g;
+            # However, if includegraphics is redefined, as in tests as
+            # \renewcommand{\includegraphics}[1]{\fbox{FIG \detokenize{#1}}}
+            # it may be more robust to protect more
+            $alt_text = _protect_latex_text($alt_text);
+            push @image_options, "alt={$alt_text}";
+          }
+        }
+
         $result .= "\\includegraphics";
-        if (defined($width) or defined($height)) {
+        if (scalar(@image_options) > 0) {
           $result .= "[";
-          if (defined($width)) {
-            $result .= "width=$width";
-            if (defined($height)) {
-              $result .= ",";
-            }
-          }
-          if (defined($height)) {
-            $result .= "height=$height";
-          }
+          $result .= join(',', @image_options);
           $result .= "]";
         }
         $result .= "{$image_file}";
@@ -4287,7 +4429,7 @@ sub _convert($$) {
         if (not $self->{'formatting_context'}->[-1]->{'in_skipped_node_top'}) {
           my $heading = '';
           my $line_arg;
-          if ($root_commands{$element->{'cmdname'}}) {
+          if (exists($root_commands{$element->{'cmdname'}})) {
             # arguments_line type element
             my $arguments_line = $element->{'contents'}->[0];
             $line_arg = $arguments_line->{'contents'}->[0];
@@ -4321,12 +4463,13 @@ sub _convert($$) {
         }
         # we add a label even if in_skipped_node_top (should only
         # be for the Top node, as another node ends in_skipped_node_top).
+        my $node_label;
         my $sections_list;
         if ($self->{'document'}) {
           $sections_list = $self->{'document'}->sections_list();
         }
-        if ($sections_list and $element->{'extra'}
-            and $element->{'extra'}->{'section_number'}) {
+        if ($sections_list and exists($element->{'extra'})
+            and defined($element->{'extra'}->{'section_number'})) {
           my $section_relations
             = $sections_list->[$element->{'extra'}->{'section_number'} -1];
           if ($section_relations->{'associated_node'}) {
@@ -4335,9 +4478,17 @@ sub _convert($$) {
             # arguments_line type element
             my $arguments_line = $associated_node->{'contents'}->[0];
             my $line_arg = $arguments_line->{'contents'}->[0];
-            my $node_label = _tree_anchor_label($line_arg);
-            $result .= "\\label{$node_label}%\n";
+            $node_label = _tree_anchor_label($line_arg);
           }
+        }
+        if (!defined($node_label) and exists($element->{'extra'})
+            and defined($element->{'extra'}->{'identifier'})) {
+         # section without associated node, and with unique label
+          my $line_arg = $element->{'contents'}->[0]->{'contents'}->[0];
+          $node_label = _tree_anchor_label($line_arg);
+        }
+        if (defined($node_label)) {
+          $result .= "\\label{$node_label}%\n";
         }
       }
       return $result unless ($root_commands{$element->{'cmdname'}});
@@ -4942,7 +5093,7 @@ sub convert_math_to_images($$$;$) {
                                         $document_root, \@math_at_commands);
 
   if (scalar(@$collected_commands) == 0) {
-    return undef;
+    return (undef, undef);
   }
 
   my $math2img_latex_basefile = $math2img_basename.'.tex';
@@ -4995,19 +5146,19 @@ sub convert_math_to_images($$$;$) {
     $counter++;
     if ($counter == 1) {
       local *MATH2IMG_TEXFILE;
+      my ($output_perl_encoding, $output_encoding_name)
+        = Texinfo::Common::processing_output_encoding(
+                               $self->get_conf('OUTPUT_ENCODING_NAME'));
+      # TODO why not use Texinfo::Convert::Utils::output_files_open_out?
       unless (open(*MATH2IMG_TEXFILE,
               ">$encoded_math2img_latex_file_path_name")) {
         $self->converter_document_error(
                 sprintf(__("math to images: could not open %s: %s"),
                                    $math2img_latex_file_path_name, $!));
-        return undef;
+        return (undef, undef);
       }
       $fh = *MATH2IMG_TEXFILE;
 
-      # TODO why not use Texinfo::Convert::Utils::output_files_open_out?
-      my $output_encoding = $self->get_conf('OUTPUT_ENCODING_NAME');
-      my $output_perl_encoding
-        = Texinfo::Common::processing_output_encoding($output_encoding);
       if (defined($output_perl_encoding)) {
         binmode($fh, ":encoding($output_perl_encoding)");
       }
@@ -5041,7 +5192,7 @@ sub convert_math_to_images($$$;$) {
 \documentclass[fleqn]{minimal}
 ';
       my $enc_usepackages
-        = _enc_usepackage($self->get_conf('OUTPUT_ENCODING_NAME'));
+        = _enc_usepackage($output_encoding_name);
       $class_and_usepackage_begin .= $enc_usepackages;
 
       $class_and_usepackage_begin .= '\usepackage{amsmath}
@@ -5077,7 +5228,7 @@ sub convert_math_to_images($$$;$) {
     # FIXME check close error
     close ($fh);
   } else {
-    return undef;
+    return (undef, undef);
   }
 
   # run LaTeX
@@ -5089,7 +5240,7 @@ sub convert_math_to_images($$$;$) {
     $self->converter_document_warn(
             sprintf(__("math to images: chdir %s failed: %s"),
                          $math2img_out_dir, $!));
-    return undef;
+    return (undef, undef);
   }
   print STDERR "cwd($encoded_math2img_out_dir): " . Cwd::cwd() ."\n"
     if ($self->get_conf('VERBOSE'));
@@ -5117,18 +5268,18 @@ sub convert_math_to_images($$$;$) {
 
   # do not use system in order to be sure that STDIN is not
   # mixed up with the main script STDIN.  It is important because
-  # if latex fails, it will may from STDIN and the input may trigger
+  # if latex fails, it may read from STDIN and the input may trigger
   # diverse actions.
   if (not(open(MATH2IMG, "|-", $encoded_cmd))) {
     $self->converter_document_error(sprintf(__(
                          "math to images: command failed: %s"), $cmd));
-    return undef;
+    return (undef, undef);
   }
   if (!close(MATH2IMG)) {
     $self->converter_document_warn(sprintf(__(
                      "math to images: closing communication failed: %s: %s"),
                          $cmd, $!));
-    return undef;
+    return (undef, undef);
   }
 
   my $math2img_dvi_basefile = $math2img_basename.'.dvi';
@@ -5159,13 +5310,13 @@ sub convert_math_to_images($$$;$) {
     $self->converter_document_warn(sprintf(__(
      "math to images: system `%s' failed: %d\n"), $to_image_exec . ' ' .
          join(' ', @to_images_options). ' '.$math2img_dvi_basefile, $?));
-    return undef;
+    return (undef, undef);
   }
 
   unless (chdir $math2img_initial_dir) {
     $self->converter_document_warn(sprintf(__(
           "math to images: unable to return to initial directory: %s"), $!));
-    return undef;
+    return (undef, undef);
   }
 
   # Now extract depth information from output of dvipng, which looks like
@@ -5184,7 +5335,7 @@ sub convert_math_to_images($$$;$) {
     $result->{$element}->{'depth'} = shift @depths;
   }
 
-  return $result;
+  return ($result, $collected_commands);
 }
 
 

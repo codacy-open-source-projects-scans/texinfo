@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'test_errormsg'} = '*document_root C1
- *before_node_section C1
+ *before_node_section C2
+  *preamble_before_content
   *paragraph C5
    {Some text\\n}
    *@errormsg C1 l2
@@ -73,7 +77,8 @@ $result_converted{'xml'}->{'test_errormsg'} = '<para>Some text
 </para>';
 
 
-$result_converted{'latex_text'}->{'test_errormsg'} = 'Some text
+$result_converted{'latex_text'}->{'test_errormsg'} = '\\begin{document}
+Some text
 
 
 ';

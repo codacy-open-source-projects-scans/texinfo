@@ -21,7 +21,9 @@
 #include <stddef.h>
 
 #include "source_mark_types.h"
+#include "text.h"
 #include "tree_types.h"
+#include "document_types.h"
 #include "types_data.h"
 /* for fatal */
 #include "base_utils.h"
@@ -356,18 +358,6 @@ reallocate_list (ELEMENT_LIST *list)
     }
 }
 
-static void
-reallocate_const_element_list (CONST_ELEMENT_LIST *list)
-{
-  if (list->number + 1 >= list->space)
-    {
-      list->space += 10;
-      list->list = realloc (list->list, list->space * sizeof (const ELEMENT *));
-      if (!list->list)
-        fatal ("realloc failed");
-    }
-}
-
 /* Make sure there is space for at least N more elements. */
 static void
 reallocate_list_for (size_t n, ELEMENT_LIST *list)
@@ -394,31 +384,15 @@ reallocate_const_element_list_for (size_t n, CONST_ELEMENT_LIST *list)
     }
 }
 
-void
-add_to_const_element_list (CONST_ELEMENT_LIST *list, const ELEMENT *e)
-{
-  reallocate_const_element_list (list);
-
-  list->list[list->number++] = e;
-}
-
-void
-add_to_element_list (ELEMENT_LIST *list, ELEMENT *e)
-{
-  /* NOTE there could be theoretically an overflow if
-     list->number + 1 > SIZE_MAX.  The numbers are big, this is unlikely
-     to happen */
-  reallocate_list (list);
-
-  list->list[list->number++] = e;
-}
+def_list_fns(CONST_ELEMENT_LIST, const_element, const ELEMENT *, 10);
+def_list_fns(ELEMENT_LIST, element, ELEMENT *, 10);
 
 /* should not be used for text elements */
 void
 add_to_element_contents (ELEMENT *parent, ELEMENT *e)
 {
   ELEMENT_LIST *list = &parent->e.c->contents;
-  add_to_element_list (list, e);
+  add_(element) (list, e);
   e->e.c->parent = parent;
 }
 
@@ -429,7 +403,7 @@ void
 add_to_contents_as_array (ELEMENT *parent, ELEMENT *e)
 {
   ELEMENT_LIST *list = &parent->e.c->contents;
-  add_to_element_list (list, e);
+  add_(element) (list, e);
 }
 
 /* to be used when it is not known whether the element is a text
@@ -438,7 +412,7 @@ void
 add_element_to_element_contents (ELEMENT *parent, ELEMENT *e)
 {
   ELEMENT_LIST *list = &parent->e.c->contents;
-  add_to_element_list (list, e);
+  add_(element) (list, e);
 
   if (!(type_data[e->type].flags & TF_text))
     e->e.c->parent = parent;
@@ -608,7 +582,7 @@ add_element_if_not_in_list (ELEMENT_LIST *list, ELEMENT *e)
           return;
         }
     }
-  add_to_element_list (list, e);
+  add_(element) (list, e);
 }
 
 /* Remove elements from START inclusive to END exclusive.  Do not
@@ -642,15 +616,6 @@ last_contents_child (const ELEMENT *current)
     return 0;
 
   return current->e.c->contents.list[current->e.c->contents.number - 1];
-}
-
-ELEMENT *
-contents_child_by_index (const ELEMENT *e, size_t index)
-{
-  if (index >= e->e.c->contents.number)
-    return 0;
-
-  return e->e.c->contents.list[index];
 }
 
 /* Remove or replace first REMOVED from LIST */

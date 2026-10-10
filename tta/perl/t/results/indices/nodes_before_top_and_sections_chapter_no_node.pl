@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'nodes_before_top_and_sections_chapter_no_node'} = '*document_root C13
  *before_node_section C2
@@ -834,6 +837,25 @@ list:
 $result_headings_list{'nodes_before_top_and_sections_chapter_no_node'} = '';
 
 $result_indices_sort_strings{'nodes_before_top_and_sections_chapter_no_node'} = 'cp:
+ ! entry in node
+ a concept a node
+ another
+ entry a
+ entry after printindex
+ entry in node
+ first before top
+ node in chapter
+ node in menu before top
+ printindex node in menu before top
+ something
+ top section
+fn:
+ a function
+ fun in node
+ somewhere
+';
+
+$result_converted_sort_strings{'file_html'}->{'nodes_before_top_and_sections_chapter_no_node'} = 'cp:
  ! entry in node
  a concept a node
  another

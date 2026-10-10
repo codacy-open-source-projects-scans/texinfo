@@ -37,6 +37,7 @@ use 5.006;
 use if $] >= 5.014, re => '/a';
 
 use strict;
+use warnings;
 
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
@@ -44,8 +45,11 @@ use strict;
 # debugging
 use Carp qw(cluck confess);
 
+use Scalar::Util qw(weaken);
+
 # Next two only needed for debugging, if customization variable TEST
-# is set > 2 (which never happens automatically).
+# is >= 2 (which only happens automatically if Devel::Refcount is detected
+# by configure).
 eval { require Devel::Refcount; Devel::Refcount->import(); };
 eval { require Devel::FindRef; Devel::FindRef->import(); };
 
@@ -60,27 +64,24 @@ use Texinfo::Common;
 require Exporter;
 our @ISA = qw(Exporter);
 
+our $VERSION = '7.3dev';
+
 our @EXPORT_OK = qw(
 move_index_entries_after_items_in_document
-relate_index_entries_to_table_items_in_document
+normalized_entry_associated_internal_node
 protect_colon_in_tree
 protect_comma_in_tree
 protect_first_parenthesis
 protect_node_after_label_in_tree
-normalized_entry_associated_internal_node
+reference_to_arg_in_tree
+relate_index_entries_to_table_items_in_document
 );
 
-our $VERSION = '7.3dev';
-
 BEGIN {
-  my $shared_library_name = "ManipulateTreeXS";
-  if (!Texinfo::XSLoader::XS_structuring_enabled()) {
-    undef $shared_library_name;
-  }
   Texinfo::XSLoader::init (
     "Texinfo::ManipulateTree",
     "Texinfo::ManipulateTreeNonXS",
-    $shared_library_name,
+    'ManipulateTreeXS',
     undef,
     ['texinfo', 'texinfoxs'],
   );
@@ -88,41 +89,20 @@ BEGIN {
 
 
 
-my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
-
 # expected number of references to the object
 # The $element variable owns one count to reference and to object.
 # The parent contents or the extra key or the info key or the
 # source mark element key also holds a count to the object.
 # plus possibly one count owned by the C code
-my $destroyed_objects_refcount;
-# used in messages
-my $destroyed_objects_refcount_text;
-# expected number of references to the object if created in Perl without
-# any reference owned by the C code.  Only possible with XS parser, and
-# with structure without XS.
-my $no_XS_objects_refcount;
+my $destroyed_objects_refcount = 2;
 
 # expected number of references to the element SV
 my $element_SV_target_count = 1;
 
-$destroyed_objects_refcount = 2;
-$destroyed_objects_refcount_text = $destroyed_objects_refcount;
-
-if (Texinfo::XSLoader::XS_parser_enabled()
+if (Texinfo::XSLoader::XS_modules_enabled()
     and $Texinfo::XSLoader::core_modules_built) {
   # a reference in C too
   $destroyed_objects_refcount++;
-
-  if (!$XS_structuring) {
-    # transformations may create elements in pure Perl only when
-    # structuring is not done with XS extensions.
-    $no_XS_objects_refcount = $destroyed_objects_refcount -1;
-    $destroyed_objects_refcount_text
-      = "$destroyed_objects_refcount or $no_XS_objects_refcount";
-  } else {
-    $destroyed_objects_refcount_text = $destroyed_objects_refcount;
-  }
 }
 
 
@@ -187,7 +167,7 @@ sub _copy_tree($;$) {
     $command_or_type = $current->{'type'};
   }
 
-  #print STDERR "CTNEW $current ".debug_print_element($current)." $new\n";
+  #print STDERR "CTNEW $current ".Texinfo::Common::debug_print_element($current)." $new\n";
 
   if (exists($current->{'contents'})) {
     if (!defined($current->{'contents'})) {
@@ -203,6 +183,7 @@ sub _copy_tree($;$) {
       my $added = _copy_tree($child, $other_trees);
       if (exists($child->{'parent'})) {
         $added->{'parent'} = $new;
+        weaken($added->{'parent'});
       }
       push @{$new->{'contents'}}, $added;
     }
@@ -243,8 +224,9 @@ sub _copy_tree($;$) {
                  and $key ne 'node_content'
                  and $key ne 'node_manual'
                  # point to element only in extra, not in the document tree
-                 and $key ne 'def_index_element'
-                 and $key ne 'def_index_ref_element')) {
+                 #and $key ne 'def_index_element'
+                 #and $key ne 'def_index_ref_element'
+           )) {
           next;
         }
         if ($extra_directions{$key}) {
@@ -381,17 +363,21 @@ sub copy_element_tree($;$) {
 sub copy_contents($;$) {
   my ($element, $type) = @_;
 
-  my $copy;
-  my $tmp = Texinfo::Common::non_leading_trailing_tree($element);
-  if (defined($tmp)) {
-    $copy = copy_element_tree($tmp);
-  } else {
-    $copy = Texinfo::TreeElement::new({});
-  }
+  my $tmp = {};
   if (defined($type)) {
-    $copy->{'type'} = $type;
+    $tmp->{'type'} = $type;
   }
-  return $copy;
+  my $copied = Texinfo::TreeElement::new($tmp);
+
+  my ($start_idx, $end_idx)
+    = Texinfo::Common::non_leading_trailing_indices($element);
+  if (!defined($start_idx)) {
+    return $copied;
+  }
+
+  $copied->{'contents'} = [@{$element->{'contents'}}[$start_idx .. $end_idx]];
+
+  return copy_element_tree($copied);
 }
 
 
@@ -479,20 +465,20 @@ sub tree_remove_parents($) {
     foreach my $content (@{$element->{'contents'}}) {
       tree_remove_parents($content);
     }
-    if (exists($element->{'extra'})) {
-      if (exists($element->{'extra'}->{'def_index_element'})) {
-        tree_remove_parents($element->{'extra'}->{'def_index_element'});
-        if (exists($element->{'extra'}->{'def_index_ref_element'})) {
-          tree_remove_parents($element->{'extra'}->{'def_index_ref_element'});
-        }
-      }
+    #if (exists($element->{'extra'})) {
+      #if (exists($element->{'extra'}->{'def_index_element'})) {
+      #  tree_remove_parents($element->{'extra'}->{'def_index_element'});
+      #  if (exists($element->{'extra'}->{'def_index_ref_element'})) {
+      #    tree_remove_parents($element->{'extra'}->{'def_index_ref_element'});
+      #  }
+      #}
       # elements also in $element->{'contents'} (without parent when added).
       #foreach my $key ('node_content', 'manual_content') {
       #  if (exists($element->{'extra'}->{$key})) {
       #    tree_remove_parents($element->{'extra'}->{$key});
       #  }
       #}
-    }
+    #}
   }
 }
 
@@ -532,17 +518,9 @@ sub _element_remove_references($;$$) {
 
     if (exists($element->{'contents'})) {
       if (exists($element->{'extra'})) {
-        if (exists($element->{'extra'}->{'def_index_element'})) {
-          _element_remove_references($element->{'extra'}->{'def_index_element'},
-                                 $check_refcount, $silent_refcount);
-          delete $element->{'extra'}->{'def_index_element'};
-          if (exists($element->{'extra'}->{'def_index_ref_element'})) {
-            _element_remove_references(
-              $element->{'extra'}->{'def_index_ref_element'},
-                                   $check_refcount, $silent_refcount);
-            delete $element->{'extra'}->{'def_index_ref_element'};
-          }
-        }
+        # if there were out of tree elements, they would be recursed into
+        # here.
+        #
         # hold duplicates of the element label contents
         foreach my $key ('node_content', 'manual_content') {
           if (exists($element->{'extra'}->{$key})) {
@@ -567,9 +545,7 @@ sub _element_remove_references($;$$) {
     #if (1) {
     #Devel::Peek::Dump($element);
     if ($reference_count != $element_SV_target_count
-        or ($object_count != $destroyed_objects_refcount
-            and !(defined($no_XS_objects_refcount)
-                  and $object_count == $no_XS_objects_refcount))) {
+        or $object_count != $destroyed_objects_refcount) {
       my $findref_info;
       if ($devel_findref_loading_error) {
         $findref_info = '';
@@ -577,7 +553,7 @@ sub _element_remove_references($;$$) {
         $findref_info = Devel::FindRef::track($element)."\n";
       }
       my $message = "Element refcount ($reference_count, $object_count) != ".
-             "($element_SV_target_count, $destroyed_objects_refcount_text)";
+             "($element_SV_target_count, $destroyed_objects_refcount)";
       warn "You found a bug: $message for $element\n\n".
       Texinfo::ManipulateTree::element_print_details($element)."\n".
        $findref_info;
@@ -738,7 +714,8 @@ sub _print_element_add_prepend_info($$$$;$$) {
 }
 
 # extra elements out of tree.  Corresponds to C AI_KEYS_LIST element_oot
-my @extra_out_of_tree = ('def_index_element', 'def_index_ref_element');
+#my @extra_out_of_tree = ('def_index_element', 'def_index_ref_element');
+my @extra_out_of_tree = ();
 
 # keep in sync with elt_info_names in C/main/tree.c
 my @elt_info_names = ('spaces_after_cmd_before_arg');
@@ -1314,6 +1291,78 @@ sub protect_first_parenthesis($) {
   }
 }
 
+# This converts a reference @-command to simple text using one of the
+# arguments.  This is used to remove reference @-command from
+# constructed node names trees, as node names cannot contain
+# reference @-command while there could be some in the tree used in
+# input for the node name tree.
+sub _reference_to_arg($$$) {
+  my ($type, $current, $document) = @_;
+
+  if (exists($current->{'cmdname'}) and
+      exists($Texinfo::Commands::ref_commands{$current->{'cmdname'}})) {
+
+    if (!exists($current->{'contents'})) {
+      $current = undef;
+      return [];
+    }
+
+    # remove from internal references
+    if (defined($document)) {
+      my $internal_references = $document->internal_references_information();
+      Texinfo::Common::replace_remove_list_element($internal_references,
+                                                   $current);
+    }
+
+    my @args_try_order;
+    if ($current->{'cmdname'} eq 'inforef'
+        or $current->{'cmdname'} eq 'link') {
+      @args_try_order = (0, 1, 2);
+    } else {
+      @args_try_order = (0, 1, 2, 4, 3);
+    }
+    foreach my $index (@args_try_order) {
+      if (defined($current->{'contents'}->[$index])) {
+        my $arg = $current->{'contents'}->[$index];
+        # this will not detect if the arg expands as spaces only, like
+        # @asis{ }, @ , but it is not an issue or could even be considered
+        # as a feature.
+        if (!Texinfo::Common::is_content_empty($arg)) {
+          my $new
+            = Texinfo::TreeElement::new({'parent' => $current->{'parent'}});
+          foreach my $content (@{$arg->{'contents'}}) {
+            if (!exists($content->{'type'})
+                or ($content->{'type'} ne 'spaces_before_argument'
+                    and $content->{'type'} ne 'spaces_after_argument')) {
+              $content->{'parent'} = $new if (exists($content->{'parent'}));
+              push @{$new->{'contents'}}, $content;
+            }
+          }
+          $arg->{'contents'} = undef;
+          $current->{'contents'} = undef;
+          # may not actually be needed, but should not hurt either.
+          $arg = undef;
+          $current = undef;
+          return [$new];
+        }
+      }
+    }
+    # ref command without non-empty argument
+    $current->{'contents'} = undef;
+    $current = undef;
+    return [];
+  } else {
+    return undef;
+  }
+}
+
+sub reference_to_arg_in_tree($;$) {
+  my ($tree, $document) = @_;
+
+  return modify_tree($tree, \&_reference_to_arg, $document);
+}
+
+
 
 
 # Methods used to get information on menu entries and nodes.  Used in
@@ -1515,6 +1564,12 @@ options values registered in document> object.
 
 =over
 
+=item insert_nodes_for_sectioning_commands($document)
+X<C<insert_nodes_for_sectioning_commands>>
+
+Insert nodes for sectioning commands without node in C<$document>
+tree.
+
 =item move_index_entries_after_items_in_document($document)
 X<C<move_index_entries_after_items_in_document>>
 
@@ -1551,6 +1606,20 @@ X<C<relate_index_entries_to_table_items_in_document>>
 In tables, relate index entries preceding and following an
 entry with said item.  Reference one of them in the entry's
 C<entry_associated_element>.
+
+=item $modified_tree = reference_to_arg_in_tree($tree, $document)
+X<C<reference_to_arg_in_tree>>
+
+Modify I<$tree> by converting reference @-commands to simple text using one of
+the arguments.  This transformation can be used, for example, to remove
+reference @-command from constructed node names trees, as node names cannot
+contain reference @-command while there could be some in the tree used in input
+for the node name tree.  The I<$document> argument is optional.  If given,
+the converted reference @-command is removed from the I<$document> internal
+references list.
+
+A I<$modified_tree> is not systematically returned, if the I<$tree> in argument
+is not replaced, undef may also be returned.
 
 =back
 

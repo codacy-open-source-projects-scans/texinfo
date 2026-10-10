@@ -1,22 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'inter_item_commands_in_def'} = '*document_root C1
- *before_node_section C1
+ *before_node_section C2
+  *preamble_before_content
   *@deffn C7 l1
    *def_line C1 l1
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@var C1
-       |*brace_container C1
-        |{i}
    |index_entry:I{fn,1}
    |original_def_cmdname:{deffn}
     *block_line_arg C9
@@ -49,11 +47,6 @@ $result_tree_text{'inter_item_commands_in_def'} = '*document_root C1
    *@deffnx C1 l4
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*brace_arg C2
-      |{spaces_before_argument: }
-      |{log trap1}
    |index_entry:I{fn,2}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -81,16 +74,6 @@ $result_tree_text{'inter_item_commands_in_def'} = '*document_root C1
    *@deffnx C1 l6
    |EXTRA
    |def_command:{deffn}
-   |def_index_element:
-    |* C1
-     |*def_line_arg C1
-      |*@b C1
-       |*brace_container C3
-        |{id }
-        |*@samp C1
-         |*brace_container C1
-          |{i}
-        |{ ule}
    |index_entry:I{fn,3}
    |original_def_cmdname:{deffnx}
     *line_arg C7
@@ -196,6 +179,15 @@ $result_converted{'plaintext'}->{'inter_item_commands_in_def'} = ' -- fset: I a 
  -- cmde2: id i ule truc
 
      In deff item.
+';
+
+$result_converted_sort_strings{'plaintext'}->{'inter_item_commands_in_def'} = 'cp:
+ between deffnx
+ cindex in deff item
+fn:
+ i
+ id i ule
+ log trap1
 ';
 
 1;

@@ -1,17 +1,22 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'novalidate_empty_refs'} = '*document_root C5
- *before_node_section C3
-  {empty_line:\\n}
-  *@novalidate C1 l2
-   *line_arg C1
-    {spaces_before_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C2
+  *preamble_before_beginning C1
+   {text_before_beginning:\\n}
+  *preamble_before_content C2
+   *@novalidate C1 l2
+    *line_arg C1
+     {spaces_before_argument:\\n}
+   {empty_line:\\n}
  *@node C4 l4 {Top}
  |EXTRA
  |identifier:{Top}
@@ -79,7 +84,6 @@ $result_texis{'novalidate_empty_refs'} = '
 
 $result_texts{'novalidate_empty_refs'} = '
 
-
 .
  .
 
@@ -111,7 +115,7 @@ $result_sectioning_root{'novalidate_empty_refs'} = '';
 $result_headings_list{'novalidate_empty_refs'} = '';
 
 
-$result_converted{'info'}->{'novalidate_empty_refs'} = 'This is , produced from .
+$result_converted{'info'}->{'novalidate_empty_refs'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -128,6 +132,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

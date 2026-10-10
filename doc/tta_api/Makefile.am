@@ -10,6 +10,10 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
+# Do not install the Info manual, as it is only of use for Texinfo
+# development and can be read from the build directory.
+AUTOMAKE_OPTIONS = foreign no-installinfo
+
 # Without menus completed the Index appendix node in
 # texi2any_internals_indices.texi does not appear in any menu.
 AM_MAKEINFOFLAGS = -c INFO_SPECIAL_CHARS_WARNING=0 -c TREE_TRANSFORMATIONS=complete_tree_nodes_menus
@@ -29,8 +33,6 @@ TEXI2DVI = $(TEXI2DVI_ENVIRONMENT) $(top_srcdir)/util/texi2dvi
 # of each module, so split at chapters.
 AM_MAKEINFOHTMLFLAGS = --split=chapter
 
-# since the texi2any_internals 'manual' is referred to extensively in the
-# texi2any_api, we setup the build targets.
 info_TEXINFOS = texi2any_internals.texi
 
 TEXINFO_TEX = ../texinfo.tex
@@ -57,7 +59,7 @@ texi2any_internals_dependencies = \
   $(top_srcdir)/tta/perl/Texinfo/Commands.pod \
   $(top_srcdir)/tta/perl/Texinfo/CommandsValues.pod \
   $(top_srcdir)/tta/perl/Texinfo/Common.pm \
-  $(top_srcdir)/tta/perl/Texinfo/ParserNonXS.pm \
+  $(top_srcdir)/tta/perl/Texinfo/Parser.pm \
   $(top_srcdir)/tta/perl/Texinfo/Document.pm \
   $(top_srcdir)/tta/perl/Texinfo/ManipulateTree.pm \
   $(top_srcdir)/tta/perl/Texinfo/Structuring.pm \
@@ -65,6 +67,7 @@ texi2any_internals_dependencies = \
   $(top_srcdir)/tta/perl/Texinfo/Translations.pm \
   $(top_srcdir)/tta/perl/Texinfo/Transformations.pm \
   $(top_srcdir)/tta/perl/Texinfo/Indices.pm \
+  $(top_srcdir)/tta/perl/Texinfo/Document/Indices.pm \
   $(top_srcdir)/tta/perl/Texinfo/OutputUnits.pm \
   $(top_srcdir)/tta/perl/Texinfo/Convert/Texinfo.pm \
   $(top_srcdir)/tta/perl/Texinfo/Convert/Utils.pm \
@@ -81,7 +84,10 @@ texi2any_internals_dependencies = \
   $(top_srcdir)/tta/perl/Texinfo/TreeElement.pm \
   $(top_srcdir)/tta/perl/Texinfo/Reader.pm
 
+# Note: we need to build in tta/ first to make sure the texi2any XS
+# modules are built.
 $(srcdir)/texi2any_internals.texi: $(texi2any_internals_dependencies) $(srcdir)/texi2any_internals_indices.texi $(srcdir)/texi2any_internals_preamble.texi
+	cd $(top_builddir)/tta && $(MAKE) $(AM_MAKEFLAGS)
 	target=$(srcdir)/texi2any_internals.texi ; \
 	if $(MAKEINFO_ENVIRONMENT) $(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=section --preamble - --outdir=$(srcdir)/api_includes --subdir=api_includes $(texi2any_internals_dependencies) < $(srcdir)/texi2any_internals_preamble.texi >$${target}.tmp ; then \
 	  cat $${target}.tmp  | sed -e 's/^@bye/@__bye/' | sed -e '/^@__bye/r $(srcdir)/texi2any_internals_indices.texi' | sed -e 's/^@__bye//' > $${target} ; \

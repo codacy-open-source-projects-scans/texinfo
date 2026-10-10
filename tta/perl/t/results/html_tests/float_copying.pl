@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'float_copying'} = '*document_root C6
  *before_node_section C2
@@ -493,6 +496,16 @@ $result_headings_list{'float_copying'} = '1|listoffloats
 ';
 
 $result_indices_sort_strings{'float_copying'} = 'cp:
+ indexed caption
+ indexed caption copying footnote
+ listofloats
+ Top
+fn:
+ indexed caption function
+ public domain function
+';
+
+$result_converted_sort_strings{'file_html'}->{'float_copying'} = 'cp:
  indexed caption
  indexed caption copying footnote
  listofloats

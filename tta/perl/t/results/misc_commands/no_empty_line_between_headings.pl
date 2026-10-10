@@ -1,14 +1,20 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'no_empty_line_between_headings'} = '*document_root C4
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@top C2 l1 {Top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -26,6 +32,8 @@ $result_tree_text{'no_empty_line_between_headings'} = '*document_root C4
     {spaces_after_argument:\\n}
  *@chapter C1 l3 {Chapter}
  |EXTRA
+ |identifier:{Chapter}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -36,6 +44,8 @@ $result_tree_text{'no_empty_line_between_headings'} = '*document_root C4
     {spaces_after_argument:\\n}
  *@section C1 l4 {Section}
  |EXTRA
+ |identifier:{Section}
+ |is_target:{1}
  |section_heading_number:{1.1}
  |section_level:{2}
  |section_number:{3}
@@ -134,6 +144,13 @@ $result_converted{'latex'}->{'no_empty_line_between_headings'} = '\\documentclas
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -142,6 +159,8 @@ $result_converted{'latex'}->{'no_empty_line_between_headings'} = '\\documentclas
 \\usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX
 \\usepackage[hidelinks]{hyperref}
+
+\\hypersetup{pdftitle={Top}}
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}
@@ -203,21 +222,25 @@ $result_converted{'latex'}->{'no_empty_line_between_headings'} = '\\documentclas
 \\makeatother
 \\pagestyle{single}%
 
+\\begin{document}
 \\part*{{Top}}
+\\label{anchor:Top}%
 \\subsection*{{Subheading}}
 \\Texinfochapter{{Chapter}}
+\\label{anchor:Chapter}%
 \\section{{Section}}
+\\label{anchor:Section}%
 \\end{document}
 ';
 
 
-$result_converted{'docbook'}->{'no_empty_line_between_headings'} = '<chapter label="">
+$result_converted{'docbook'}->{'no_empty_line_between_headings'} = '<chapter label="" id="Top">
 <title>Top</title>
 <bridgehead renderas="sect2">Subheading</bridgehead>
 </chapter>
-<chapter label="1">
+<chapter label="1" id="Chapter">
 <title>Chapter</title>
-<sect1 label="1.1">
+<sect1 label="1.1" id="Section">
 <title>Section</title>
 </sect1>
 </chapter>

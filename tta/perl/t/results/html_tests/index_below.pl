@@ -1,19 +1,25 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
-$result_tree_text{'index_below'} = 'U0 unit{S:top}
+use Encode;
+
+$result_tree_text{'index_below'} = 'U0 unit{C2}{S:@top top}
 unit_directions:D[next->[U1]]
 UNIT_DIRECTIONS
 This: [U0]
 Forward: [U1]
 FastForward: [U1]
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@top C2 l1 {top}
  |EXTRA
+ |identifier:{Top}
+ |is_target:{1}
  |section_level:{0}
  |section_number:{1}
   *arguments_line C1
@@ -22,7 +28,7 @@ FastForward: [U1]
     {top}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U1 unit{S:1 chap}
+U1 unit{C1}{S:@chapter 1 chap}
 unit_directions:D[next->[U2]|prev->[U0]]
 UNIT_DIRECTIONS
 This: [U1]
@@ -32,6 +38,8 @@ FastBack: [U0]
 Up: [U0]
  *@chapter C2 l3 {chap}
  |EXTRA
+ |identifier:{chap}
+ |is_target:{1}
  |section_heading_number:{1}
  |section_level:{1}
  |section_number:{2}
@@ -41,7 +49,7 @@ Up: [U0]
     {chap}
     {spaces_after_argument:\\n}
   {empty_line:\\n}
-U2 unit{S:1.1 sec}
+U2 unit{C1}{S:@section 1.1 sec}
 unit_directions:D[prev->[U1]]
 UNIT_DIRECTIONS
 This: [U2]
@@ -50,6 +58,8 @@ FastBack: [U1]
 Up: [U1]
  *@section C4 l5 {sec}
  |EXTRA
+ |identifier:{sec}
+ |is_target:{1}
  |section_heading_number:{1.1}
  |section_level:{2}
  |section_number:{3}
@@ -146,7 +156,7 @@ $result_converted{'html'}->{'index_below'} = '<!DOCTYPE html>
 <meta name="distribution" content="global">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<link href="#top" rel="start" title="top">
+<link href="#Top" rel="start" title="top">
 <link href="#chap" rel="index" title="1 chap">
 <style type="text/css">
 a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
@@ -161,10 +171,10 @@ th.index-letter-header-printindex {text-align: left}
 </head>
 
 <body>
-<div class="top-level-extent" id="top">
+<div class="top-level-extent" id="Top">
 <p class="nav-panel">
 <span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
-<h1 class="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
+<h1 class="top"><span>top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <ul class="mini-toc">
 <li><a href="#chap" accesskey="1">chap</a></li>
@@ -172,7 +182,7 @@ th.index-letter-header-printindex {text-align: left}
 <hr>
 <div class="chapter-level-extent" id="chap">
 <p class="nav-panel">
-<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span><span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
+<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span><span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h2 class="chapter"><span>1 chap<a class="copiable-link" href="#chap"> &para;</a></span></h2>
 
 <ul class="mini-toc">
@@ -201,6 +211,10 @@ th.index-letter-header-printindex {text-align: left}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'index_below'} = 'cp:
+ entry
 ';
 
 1;

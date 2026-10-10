@@ -1,12 +1,16 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'anchor_on_vtable_item'} = '*document_root C7
- *before_node_section
+ *before_node_section C1
+  *preamble_before_content
  *@node C1 l1 {Top}
  |EXTRA
  |identifier:{Top}
@@ -341,8 +345,8 @@ th.index-letter-header-printindex {text-align: left}
 <tr><td colspan="2"><hr></td></tr>
 <tr><th class="index-letter-header-printindex vr-letter-header-printindex" colspan="2" id="Idx_vr_letter-L">L</th></tr>
 <tr><td class="printindex-index-entry"><a href="#index-lab3"><code>lab3</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
-<tr><td class="printindex-index-entry"><a href="#index-label1"><code><a class="anchor" id="label1"></a>label1</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
-<tr><td class="printindex-index-entry"><a href="#index-label2"><code><a class="anchor" id="label2"></a>label2</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
+<tr><td class="printindex-index-entry"><a href="#index-label1"><code>label1</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
+<tr><td class="printindex-index-entry"><a href="#index-label2"><code>label2</code></a></td><td class="printindex-index-section"><a href="#chap">chap</a></td></tr>
 <tr><td colspan="2"><hr></td></tr>
 </table>
 </div>
@@ -355,6 +359,12 @@ th.index-letter-header-printindex {text-align: left}
 
 </body>
 </html>
+';
+
+$result_converted_sort_strings{'html'}->{'anchor_on_vtable_item'} = 'vr:
+ lab3
+ label1
+ label2
 ';
 
 1;

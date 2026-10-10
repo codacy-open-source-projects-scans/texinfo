@@ -1,0 +1,1284 @@
+# Info.pm: output tree as Info. Implementation of functions with an
+#          XS interface
+#
+# Copyright 2010-2026 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License,
+# or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Original author: Patrice Dumas <pertusus@free.fr>
+#
+# Names of methods from Texinfo::Convert::Plaintext overriden begin with format_.
+#
+# ALTIMPL C/convert/convert_to_info.c
+
+package Texinfo::Convert::Info;
+
+use 5.006;
+use strict;
+use warnings;
+
+# To check if there is no erroneous autovivification
+#no autovivification qw(fetch delete exists store strict);
+
+use Carp qw(cluck confess);
+
+use File::Spec;
+
+use Texinfo::Documentlanguages;
+use Texinfo::Common;
+
+use Texinfo::TreeElement;
+
+use Texinfo::OutputUnits;
+use Texinfo::Convert::Text;
+use Texinfo::Convert::Plaintext;
+
+use Texinfo::Convert::Paragraph qw(add_next add_text
+                                   remove_end_sentence
+                                   set_space_protection
+                                   set_double_width_no_break);
+
+
+my $STDIN_DOCU_NAME = 'stdin';
+
+my $plaintext_defaults
+  = Texinfo::Convert::Plaintext->converter_defaults();
+my $defaults = { %$plaintext_defaults };
+# Customization option variables
+$defaults->{'FORMAT_MENU'} = 'menu';
+$defaults->{'EXTENSION'} = 'info';
+$defaults->{'USE_SETFILENAME_EXTENSION'} = 1;
+$defaults->{'OUTFILE'} = undef;
+# in the Emacs Info reader and in old readers, DEL character will appear,
+# but the node names are problematic in those readers, so it is not
+# such an issue to have them marked that way.
+$defaults->{'INFO_SPECIAL_CHARS_QUOTE'} = 1;
+# set as default independently of INFO_SPECIAL_CHARS_QUOTE as long
+# as the Emacs Info reader does not support node names quoting.
+$defaults->{'INFO_SPECIAL_CHARS_WARNING'} = 1;
+
+sub converter_defaults($;$) {
+  return $defaults;
+}
+
+# define converter here such that the function is replaced by the XS
+# interface.
+sub converter($;$) {
+  my ($class, $conf) = @_;
+  return Texinfo::Convert::Converter::converter($class, $conf);
+}
+
+
+# Wrapper around Texinfo::Convert::Utils::output_files_open_out.  Open the file
+# with any CR-LF conversion disabled.  We need this for tag tables to
+# be correct under MS-Windows.   Return filehandle or undef on failure.
+sub _open_info_file($$) {
+  my ($self, $filename) = @_;
+
+  my ($encoded_filename, $path_encoding)
+      = $self->encoded_output_file_name($filename);
+
+  # the third return information, set if the file has already been used
+  # in this files_information is not checked as this cannot happen.
+  my ($fh, $error_message) = Texinfo::Convert::Utils::output_files_open_out(
+                               $self->output_files_information(),
+                               $encoded_filename, 'use_binmode',
+                               $self->get_conf('OUTPUT_ENCODING_NAME'));
+
+  if (!defined($fh)) {
+    $self->converter_document_error(sprintf(
+        __("could not open %s for writing: %s"),
+        $filename, $error_message));
+    return (undef, undef);
+  }
+  return ($fh, $encoded_filename);
+}
+
+# Return (encoded) info header
+sub _info_header($$$) {
+  my ($self, $input_basefile, $output_filename) = @_;
+
+  my $formatter = $self->new_formatter('paragraph', 0);
+  push @{$self->{'formatters'}}, $formatter;
+  my $paragraph = $formatter->{'container'};
+  my $para_text = add_text($paragraph, "This is ");
+  # This ensures that spaces in file are kept.
+  $para_text .= add_next($paragraph, $output_filename);
+  my $program = $self->get_conf('PROGRAM');
+  my $version = $self->get_conf('PACKAGE_VERSION');
+  if (defined($program) and $program ne '') {
+    $para_text .=
+        add_text($paragraph, ", produced by $program version $version from ");
+  } else {
+    $para_text .= add_text($paragraph, ", produced from ");
+  }
+  $para_text .= add_next($paragraph, $input_basefile);
+  $para_text .= add_text($paragraph, '.');
+  $para_text .= Texinfo::Convert::Paragraph::end($paragraph);
+  $para_text .= "\n";
+  $self->_stream_output($para_text);
+  Texinfo::Convert::Paragraph::destroy($paragraph);
+  pop @{$self->{'formatters'}};
+
+  my $global_commands;
+  if (exists($self->{'document'})) {
+    $global_commands = $self->{'document'}->global_commands_information();
+  }
+
+  if (defined($global_commands) and exists($global_commands->{'copying'})) {
+    print STDERR "COPYING HEADER\n" if ($self->get_conf('DEBUG'));
+    $self->{'in_copying_header'} = 1;
+    $self->_convert({'contents' =>
+          $global_commands->{'copying'}->{'contents'}});
+    $self->format_footnotes();
+    delete $self->{'in_copying_header'};
+  }
+  if (exists($global_commands->{'dircategory_direntry'})) {
+    delete $self->{'ignored_commands'}->{'direntry'};
+    foreach my $command (@{$global_commands->{'dircategory_direntry'}}) {
+      if ($command->{'cmdname'} eq 'dircategory') {
+        if (exists($command->{'contents'}->[0]->{'contents'})) {
+          $self->_stream_output("INFO-DIR-SECTION ");
+          $self->convert_line($command->{'contents'}->[0], undef, undef,
+                              {'no_added_eol' => 1});
+          $self->_stream_output("\n");
+        }
+      } elsif ($command->{'cmdname'} eq 'direntry') {
+        $self->_stream_output("START-INFO-DIR-ENTRY\n");
+        $self->_convert($command);
+        $self->_stream_output("END-INFO-DIR-ENTRY\n\n");
+      }
+    }
+    $self->{'ignored_commands'}->{'direntry'} = 1;
+  }
+  $self->_add_newline_if_needed();
+  my $result = $self->_stream_final_result();
+
+  return $result;
+}
+
+sub output($$) {
+  my ($self, $document) = @_;
+
+  $self->conversion_initialization($document);
+
+  my $result;
+
+  my ($output_file, $destination_directory, $output_filename,
+      $document_name, $input_basefile)
+        = $self->determine_files_and_directory(
+                               $self->get_conf('TEXINFO_OUTPUT_FORMAT'));
+  my ($encoded_destination_directory, $dir_encoding)
+    = $self->encoded_output_file_name($destination_directory);
+  my ($succeeded, $created_directory)
+    = $self->create_destination_directory($encoded_destination_directory,
+                                          $destination_directory);
+  unless ($succeeded) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  # for format_node
+  $self->{'output_filename'} = $output_filename;
+
+  $input_basefile = $STDIN_DOCU_NAME if ($input_basefile eq '-');
+
+  # no splitting when writing to the null device or to stdout
+  if (Texinfo::Common::is_null_device_name($output_file)
+      or $output_file eq '-') {
+    $self->force_conf('SPLIT_SIZE', undef);
+  }
+
+  my ($fh, $encoded_outfile_name);
+  if ($output_file ne '') {
+    if ($self->get_conf('VERBOSE')) {
+      print STDERR "Output file $output_file\n";
+    }
+    ($fh, $encoded_outfile_name) = _open_info_file($self, $output_file);
+    if (!defined($fh)) {
+      $self->conversion_finalization();
+      return undef;
+    }
+  }
+  # Always encode output, even when outputting to a string, as Info is
+  # a binary format which has no meaningful representation as character
+  # string.
+  $self->_setup_output_encoding();
+
+  # not initialized in plaintext
+  $self->{'target_locations'} = [];
+  $self->{'bytes'} = 0;
+
+  my $global_commands;
+  if (exists($self->{'document'})) {
+    $global_commands = $self->{'document'}->global_commands_information();
+  }
+
+  my $default_bcp47_locale = $self->current_bcp47_locale();
+
+  # This also sets the language related options to their pre-conversion
+  # values.
+  $self->set_converter_preamble_language_commands();
+
+  # format the Info header and cached node names using the last value
+  # of the preamble.
+  my @informative_global_commands = $self->get_informative_global_commands();
+  $self->set_global_document_commands('preamble',
+                                      \@informative_global_commands);
+
+  my $preamble_bcp47_locale = $self->current_bcp47_locale();
+
+  my $preamble_documentlanguage;
+  my $preamble_documentscript;
+  my $preamble_documentlanguagevariant;
+  if (exists($self->{'current_lang_translations'})) {
+    my $lang_info = $self->{'current_lang_translations'}->[0];
+    if (exists($lang_info->{'lang'})) {
+      $preamble_documentlanguage = $lang_info->{'lang'};
+      if (exists($lang_info->{'region'})) {
+        $preamble_documentlanguage .= '_' .$lang_info->{'region'};
+      }
+      if (exists($lang_info->{'script'})) {
+        # ISO 4 letter lang tag
+        $preamble_documentscript = $lang_info->{'script'};
+        # if possible, convert to value used in XPG locales
+        if (exists($Texinfo::Documentlanguages::documentscript_XPG_script{
+             $preamble_documentscript})) {
+          $preamble_documentscript
+            = $Texinfo::Documentlanguages::documentscript_XPG_script{
+                                            $preamble_documentscript};
+        }
+      }
+      if (exists($lang_info->{'variants'})) {
+        # FIXME use - or ', ' as delimiter?
+        $preamble_documentlanguagevariant
+          = join('-', @{$lang_info->{'variants'}});
+      }
+    }
+  }
+
+  $self->_cache_node_names($document->nodes_list());
+
+  my $header = $self->_info_header($input_basefile, $output_filename);
+  my $header_bytes = length($header);
+  # header + text between setfilename and first node
+  my $complete_header;
+  my $complete_header_bytes;
+
+  my $output_units = Texinfo::OutputUnits::split_by_node($document);
+  $self->register_output_units_lists([$output_units]);
+
+  $self->set_global_document_commands('before', \@informative_global_commands);
+
+  if ($default_bcp47_locale ne $preamble_bcp47_locale) {
+    $self->reset_lang_translation_from_customization(
+                           $self->get_conf('documentlanguage'),
+                           $self->get_conf('documentscript'));
+  }
+
+  my $elements_images;
+  if ($self->get_conf('INFO_MATH_IMAGES')) {
+    require Texinfo::Convert::LaTeX;
+    Texinfo::Convert::LaTeX->import;
+    my $math_images_dir;
+    if (!defined($destination_directory) or $destination_directory =~ /^\s*$/
+        or $destination_directory eq File::Spec->curdir()) {
+      $math_images_dir = $document_name.'_info_images';
+    } else {
+      $math_images_dir = $destination_directory;
+    }
+    my ($elements_images, $collected_commands)
+        = Texinfo::Convert::LaTeX::convert_math_to_images($self, $document,
+                                                    $document_name.'_info',
+                                                    $math_images_dir);
+    if (defined($elements_images)) {
+      $self->{'elements_images'} = $elements_images;
+    }
+    #if (defined($elements_images)) {
+    #  foreach my $element (%$elements_images) {
+    #    print STDERR "$element $elements_images->{$element}\n";
+    #  }
+    #}
+  }
+
+  print STDERR "DOCUMENT\n" if ($self->get_conf('DEBUG'));
+
+  my $out_file_nr = 0;
+  my $new_output_file;
+  my $encoded_new_filename;
+  my @indirect_files;
+  if (not defined($output_units->[0]->{'unit_command'})) {
+    my $input_file_name;
+    if (exists($self->{'document'})) {
+      my $document_info = $self->{'document'}->global_information();
+      if (defined($document_info)) {
+        $input_file_name = $document_info->{'input_file_name'};
+      }
+    }
+    if (defined($input_file_name)) {
+      $self->converter_line_warn(__("document without nodes"),
+             {'file_name' => $input_file_name});
+    } else {
+      $self->converter_document_warn(__("document without nodes"));
+    }
+
+    my $root = $document->tree();
+    $self->_convert($root);
+    $self->format_footnotes();
+    my $root_output = $self->_stream_final_result();
+
+    my $output = $header.$root_output;
+    if (defined($fh)) {
+      print $fh $header.$root_output;
+    } else {
+      $result = $output;
+    }
+  } else {
+    my $identifiers_target;
+    my $top_node;
+
+    $complete_header = $header;
+    $complete_header_bytes = $header_bytes;
+
+    if (exists($self->{'document'})) {
+      $identifiers_target = $self->{'document'}->labels_information();
+    }
+    if (defined($identifiers_target)) {
+      my $top_target_element = $identifiers_target->{'Top'};
+      if (defined($top_target_element)
+          and $top_target_element->{'cmdname'} eq 'node') {
+        $top_node = $top_target_element;
+      }
+    }
+
+    if (!defined($top_node)) {
+      my $input_file_name;
+      if (exists($self->{'document'})) {
+        my $document_info = $self->{'document'}->global_information();
+        if (defined($document_info)) {
+          $input_file_name = $document_info->{'input_file_name'};
+        }
+      }
+      if (defined($input_file_name)) {
+        $self->converter_line_warn(__("document without Top node"),
+             {'file_name' => $input_file_name});
+      } else {
+        $self->converter_document_warn(__("document without Top node"));
+      }
+    }
+    $out_file_nr = 1;
+    my $first_node_seen = 0;
+    my $split_size = $self->get_conf('SPLIT_SIZE');
+    foreach my $output_unit (@$output_units) {
+      if ($first_node_seen
+          and defined($split_size)
+          and $self->{'bytes'} > $out_file_nr * $split_size
+          and defined($fh)) {
+        # Split the output into an additional output file.
+        my $close_error;
+        if (!close ($fh)) {
+          $close_error = $!;
+        }
+        if ($out_file_nr == 1) {
+          # Switch to split output.
+          Texinfo::Convert::Utils::output_files_register_closed(
+             $self->output_files_information(), $encoded_outfile_name);
+          if (defined($close_error)) {
+            $self->converter_document_error(
+                  sprintf(__("error on closing %s: %s"),
+                                  $output_file, $close_error));
+            $self->conversion_finalization();
+            return undef;
+          }
+          if ($self->get_conf('VERBOSE')) {
+            print STDERR "Renaming first output file as ".
+                  $output_file.'-'.$out_file_nr."\n";
+          }
+          my ($encoded_new_first, $new_path_encoding)
+            = $self->encoded_output_file_name($output_file.'-'.$out_file_nr);
+          unless (rename($encoded_outfile_name,
+                         $encoded_new_first)) {
+            $self->converter_document_error(
+                  sprintf(__("rename %s failed: %s"),
+                                         $output_file, $!));
+            $self->conversion_finalization();
+            return undef;
+          }
+          # remove the main file from opened files since it was renamed
+          # and add the file with a number.
+          Texinfo::Convert::Utils::output_files_rename_opened(
+                         $self->output_files_information(),
+                         $encoded_outfile_name, $encoded_new_first);
+          push @indirect_files, [$output_filename.'-'.$out_file_nr,
+                                 $complete_header_bytes];
+          #print STDERR join(' --> ', @{$indirect_files[-1]}) ."\n";
+        } else {
+          Texinfo::Convert::Utils::output_files_register_closed(
+             $self->output_files_information(), $encoded_new_filename);
+          if (defined($close_error)) {
+            $self->converter_document_error(
+                  sprintf(__("error on closing %s: %s"),
+                          $new_output_file, $close_error));
+            $self->conversion_finalization();
+            return undef;
+          }
+        }
+        $out_file_nr++;
+        $new_output_file = $output_file.'-'.$out_file_nr;
+        if ($self->get_conf('VERBOSE')) {
+          print STDERR "New output file $new_output_file\n";
+        }
+        ($fh, $encoded_new_filename)
+           = _open_info_file($self, $new_output_file);
+        if (!defined($fh)) {
+          $self->conversion_finalization();
+          return undef;
+        }
+        print $fh $complete_header;
+        $self->{'bytes'} += $complete_header_bytes;
+        push @indirect_files, [$output_filename.'-'.$out_file_nr,
+                               $self->{'bytes'}];
+        #print STDERR join(' --> ', @{$indirect_files[-1]}) ."\n";
+      }
+
+      $self->convert_output_unit($output_unit);
+      $self->_add_newline_if_needed();
+      my $node_text = $self->_stream_final_result();
+
+      if (!$first_node_seen) {
+        # We are outputting the first node.
+        $first_node_seen = 1;
+        $node_text = $header . $node_text;
+
+        # When the first node was converted in convert_output_unit above, the
+        # text before the first node (type 'before_node_section') was saved in
+        # 'text_before_first_node'.  Save this text for subsequent use in
+        # case of split Info output.
+        if (defined($self->{'text_before_first_node'})) {
+          $complete_header .= $self->{'text_before_first_node'};
+          $complete_header_bytes += length($self->{'text_before_first_node'});
+        }
+      }
+      if (defined($fh)) {
+        print $fh $node_text;
+      } else {
+        $result .= $node_text;
+      }
+    }
+  }
+  my $tag_text = '';
+  if ($out_file_nr > 1) {
+    Texinfo::Convert::Utils::output_files_register_closed(
+             $self->output_files_information(), $encoded_new_filename);
+    if (!close($fh)) {
+      $self->converter_document_error(
+               sprintf(__("error on closing %s: %s"),
+                            $new_output_file, $!));
+      $self->conversion_finalization();
+      return undef;
+    }
+    if ($self->get_conf('VERBOSE')) {
+      print STDERR "Outputing the split manual file $output_file\n";
+    }
+    ($fh, $encoded_outfile_name) = _open_info_file($self, $output_file);
+    if (!defined($fh)) {
+      $self->conversion_finalization();
+      return undef;
+    }
+    $tag_text = $complete_header;
+    $tag_text .= "\x{1F}\nIndirect:\n";
+    foreach my $indirect (@indirect_files) {
+      $tag_text .= "$indirect->[0]: $indirect->[1]\n";
+    }
+  }
+
+  # FIXME we assume ASCII compatible encoding in the Info format, the labels
+  # and numbers are not encoded.  Also the coding information is at the end
+  # which make it difficult to fix that.
+  $tag_text .= "\x{1F}\nTag Table:\n";
+  if ($out_file_nr > 1) {
+    $tag_text .=  "(Indirect)\n";
+  }
+  # This may happen for anchors in @insertcopying
+  my %seen_anchors;
+  foreach my $location (@{$self->{'target_locations'}}) {
+    my $element = $location->{'target_element'};
+
+    next unless (exists($element->{'extra'})
+                 and $element->{'extra'}->{'is_target'});
+    my $prefix;
+
+    my ($label_text, undef) = $self->node_name($element);
+
+    if (exists($seen_anchors{$label_text})) {
+      my $label_element = Texinfo::Common::get_label_element($element);
+
+      $self->plaintext_line_error($self,
+                                  sprintf(__("\@%s output more than once: %s"),
+          $element->{'cmdname'},
+          Texinfo::Convert::Texinfo::convert_contents_to_texinfo(
+                                                          $label_element)),
+        $element->{'source_info'});
+      next;
+    } else {
+      $seen_anchors{$label_text} = 1;
+    }
+
+    if ($element->{'cmdname'} eq 'node') {
+      $prefix = 'Node';
+    } else { # anchor, namedanchor, float and section without node
+      $prefix = 'Ref';
+    }
+
+    $tag_text .=  "$prefix: ".$self->_encode_string($label_text)
+                                      ."\x{7F}$location->{'bytes'}\n";
+  }
+  $tag_text .=  "\x{1F}\nEnd Tag Table\n";
+
+  my $coding = $self->{'encoding_name'};
+  $coding = undef if (defined($coding) and $coding eq '');
+
+  if (defined($coding) or defined($preamble_documentlanguage)) {
+    # Note: Info readers expect the Local Variables section to be
+    # under 1000 bytes in length so not many variables can be added here.
+    $tag_text .= "\n\x{1F}\nLocal Variables:\n";
+    $tag_text .= "coding: $coding\n" if (defined($coding));
+    if (defined($preamble_documentlanguage)) {
+      $tag_text .= "Info-documentlanguage: $preamble_documentlanguage\n";
+      $tag_text .= "Info-documentscript: $preamble_documentscript\n"
+        if (defined($preamble_documentscript));
+      $tag_text
+       .= "Info-documentlanguagevariant: $preamble_documentlanguagevariant\n"
+        if (defined($preamble_documentlanguagevariant));
+    }
+    $tag_text .= "End:\n";
+  }
+  if (defined($fh)) {
+    print $fh $tag_text;
+    # Do not close STDOUT now such that the file descriptor is not reused
+    # by open, which uses the lowest-numbered file descriptor not open,
+    # for another filehandle.  Closing STDOUT is handled by the caller.
+    unless ($output_file eq '-') {
+      Texinfo::Convert::Utils::output_files_register_closed(
+             $self->output_files_information(), $encoded_outfile_name);
+      if (!close ($fh)) {
+        $self->converter_document_error(
+                  sprintf(__("error on closing %s: %s"),
+                              $output_file, $!));
+      }
+    }
+  } else {
+    $result .= $tag_text;
+  }
+  $self->conversion_finalization();
+  return $result;
+}
+
+
+
+# formatting functions differing from Plaintext formatting functions.
+
+sub format_warn_strong_note($) {
+  return 1;
+}
+
+sub format_contents($$$) {
+  my ($self, $section_root, $contents_or_shortcontents) = @_;
+
+  return ('', 0);
+}
+
+sub format_footnotes($;$) {
+  my ($self, $output_unit) = @_;
+
+  my $formatter = $self->new_formatter('line'); # may not be used
+  push @{$self->{'formatters'}}, $formatter;
+
+  if (scalar(@{$self->{'pending_footnotes'}})) {
+    my $node_element;
+    my $label_element;
+    if (defined($output_unit) and exists($output_unit->{'unit_command'})) {
+      $node_element = $output_unit->{'unit_command'};
+      # We only do new nodes with nodes, not with sectioning command
+      # without node that can be a target to cross-references.
+      if ($node_element->{'cmdname'} eq 'node'
+          and exists($node_element->{'extra'})
+          and exists($node_element->{'extra'}->{'identifier'})) {
+        # arguments_line type element
+        my $arguments_line = $node_element->{'contents'}->[0];
+        $label_element = $arguments_line->{'contents'}->[0];
+      }
+    }
+
+    $self->_add_newline_if_needed();
+    my $footnotestyle = $self->get_conf('footnotestyle');
+    if (!defined($footnotestyle) or $footnotestyle ne 'separate'
+        # no node label happens only in very special cases, such as
+        # a @footnote in @copying and @insertcopying (and USE_NODES=0?)
+        or !defined($label_element)) {
+      my $footnotes_header = "   ---------- Footnotes ----------\n\n";
+      $self->_stream_output($footnotes_header);
+      $self->_add_lines_count(2);
+    } else {
+      my $footnotes_node_arg
+            = Texinfo::TreeElement::new({'type' => 'line_arg',
+                             'contents' => [$label_element,
+                        Texinfo::TreeElement::new({'text' => '-Footnotes'})]});
+      my $footnotes_node = Texinfo::TreeElement::new({
+        'cmdname' => 'node',
+        'contents' => [Texinfo::TreeElement::new({'type' => 'arguments_line',
+                                      'contents' => [$footnotes_node_arg],})],
+        'extra' => {'is_target' => 1,
+                'identifier'
+                  => $node_element->{'extra'}->{'identifier'}.'-Footnotes',
+                   }
+      });
+      my $footnotes_node_relations = {
+         'element' => $footnotes_node,
+         'node_directions' => {'up' => $node_element},
+      };
+      $self->format_node($footnotes_node, $footnotes_node_relations);
+      $self->{'current_node'} = $footnotes_node;
+    }
+
+    while (@{$self->{'pending_footnotes'}}) {
+      my $footnote_info = shift @{$self->{'pending_footnotes'}};
+      my $footnote_number = $footnote_info->{'number'};
+
+      # If nested within another footnote and footnotestyle is separate,
+      # the element here will be the parent element and not the footnote
+      # element, while the pxref will point to the name with the
+      # footnote node taken into account.  Not really problematic as
+      # nested footnotes are not right.
+      if (defined($label_element) and defined($self->{'target_locations'})) {
+        my $footnote_anchor_postfix = "-Footnote-$footnote_number";
+        my $footnote_anchor_arg
+          = Texinfo::Common::non_leading_trailing_tree($label_element);
+        $footnote_anchor_arg->{'type'} = 'brace_arg';
+        push @{$footnote_anchor_arg->{'contents'}},
+               Texinfo::TreeElement::new({'text' => $footnote_anchor_postfix});
+        my $footnote_anchor = Texinfo::TreeElement::new({'cmdname' => 'anchor',
+                                    'contents' => [$footnote_anchor_arg],
+                                    'extra' => {'is_target' => 1,
+                                                'identifier'
+       => $node_element->{'extra'}->{'identifier'}.$footnote_anchor_postfix},
+                            });
+        $self->add_target_location($footnote_anchor);
+      }
+
+      $self->process_one_footnote($footnote_info);
+    }
+  }
+  $self->{'footnote_index'} = 0;
+
+  $self->_stream_output_count_nl(
+                 Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+
+  pop @{$self->{'formatters'}};
+  Texinfo::Convert::Paragraph::destroy($formatter->{'container'});
+
+  return;
+}
+
+sub format_reference_to_footnote($) {
+  my $self = shift;
+
+  my $footnotestyle = $self->get_conf('footnotestyle');
+  if (defined($footnotestyle) and $footnotestyle eq 'separate'
+      and exists($self->{'current_node'})) {
+    # arguments_line type element
+    my $arguments_line = $self->{'current_node'}->{'contents'}->[0];
+    my $line_arg = $arguments_line->{'contents'}->[0];
+    $self->_convert(Texinfo::TreeElement::new({'contents' =>
+           [Texinfo::TreeElement::new({'text' => ' ('}),
+            Texinfo::TreeElement::new({'cmdname' => 'pxref',
+             'contents' => [
+               Texinfo::TreeElement::new({'type' => 'brace_arg',
+                'contents' => [
+                   $line_arg,
+                   Texinfo::TreeElement::new(
+                        {'text' => "-Footnote-$self->{'footnote_index'}"})
+                ]
+               })
+             ]
+            }),
+            Texinfo::TreeElement::new({'text' => ')'})],
+      }));
+  }
+}
+
+sub format_printindex($$) {
+  my ($self, $printindex) = @_;
+
+  $self->process_printindex($printindex, 1);
+  return;
+}
+
+sub format_error_outside_of_any_node($$) {
+  my ($self, $element) = @_;
+
+  if (!exists($self->{'current_node'})) {
+    $self->plaintext_line_warn($self,
+         sprintf(__("\@%s outside of any node"),
+                 $element->{'cmdname'}), $element->{'source_info'});
+  }
+}
+
+sub format_anchor($$) {
+  my ($self, $anchor) = @_;
+
+  if (!($self->{'multiple_pass'} or $self->{'in_copying_header'})) {
+    $self->add_target_location($anchor);
+    $self->format_error_outside_of_any_node($anchor);
+  }
+}
+
+sub format_ref($$$) {
+  my ($self, $cmdname, $element) = @_;
+
+  return if (!exists($element->{'contents'}));
+
+  my $formatter = $self->{'formatters'}->[-1];
+
+  my @args;
+  foreach my $arg (@{$element->{'contents'}}) {
+    if (Texinfo::Common::empty_spaces_argument($arg)) {
+      push @args, undef;
+    } else {
+      push @args, $arg;
+    }
+  }
+
+  my $node_arg = $element->{'contents'}->[0];
+
+  # normalize node name, to get a ref with the right formatting
+  # NOTE as a consequence, the line numbers appearing in case of errors
+  # correspond to the node lines numbers, and not the @ref.
+  my $label_element;
+  my $target_element;
+
+  my $identifiers_target;
+  if (exists($self->{'document'})) {
+    $identifiers_target = $self->{'document'}->labels_information();
+  }
+
+  if (exists($node_arg->{'extra'})
+      and !exists($node_arg->{'extra'}->{'manual_content'})
+      # exclude external nodes, as only internal refs get an extra normalized
+      and defined($node_arg->{'extra'}->{'normalized'})
+      # exclude external nodes again, in case internal refs get normalized
+      and !defined($args[3])
+      and !defined($args[4])
+      and defined($identifiers_target)
+      and exists($identifiers_target->{$node_arg->{'extra'}->{'normalized'}})) {
+    $target_element
+      = $identifiers_target->{$node_arg->{'extra'}->{'normalized'}};
+    $label_element
+      = Texinfo::Common::get_label_element($target_element);
+    # cannot happen, target of references must have contents
+    if (defined($label_element) and !exists($label_element->{'contents'})) {
+      $label_element = undef;
+      $target_element = undef;
+    }
+  }
+  if (!defined($label_element)) {
+    # may still be undef if node argument is empty
+    $label_element = $args[0];
+  }
+
+  # if it a reference to a float with a label, $args[1] is
+  # set to '$type $number' or '$number' if there is no type.
+  if (! defined($args[1])
+      and defined($target_element) and exists($target_element->{'cmdname'})
+      and $target_element->{'cmdname'} eq 'float') {
+    my $name = $self->float_type_number($target_element);
+    $args[1] = $name;
+  }
+
+  if ($cmdname eq 'inforef' and scalar(@args) >= 3) {
+    $args[3] = $args[2];
+    $args[2] = undef;
+  }
+
+  my $name;
+  if (defined($args[1])) {
+    $name = $args[1];
+  } elsif (defined($args[2])) {
+    $name = $args[2];
+  }
+
+  # Treat cross-reference commands in a multitable cell as if they
+  # were surrounded by @w{ ... }, so not to split output across
+  # lines, leading text from other columns appearing to be part of the
+  # cross-reference.
+  my $in_multitable = 0;
+  if ($self->{'document_context'}->[-1]->{'in_multitable'}) {
+    $in_multitable = 1;
+    $formatter->{'w'}++;
+    set_space_protection($formatter->{'container'}, 1)
+      if ($formatter->{'w'} == 1);
+  }
+  # Disallow breaks in runs of Chinese text in node names, because a
+  # break would be normalized to a single space by the Info reader, and
+  # the node wouldn't be found.
+  set_double_width_no_break($formatter->{'container'}, 1);
+
+  my $note_element;
+  if ($cmdname eq 'xref') {
+    $note_element = Texinfo::TreeElement::new({'text' => '*Note '});
+  } else {
+    $note_element = Texinfo::TreeElement::new({'text' => '*note '});
+  }
+
+  $self->_convert(Texinfo::TreeElement::new(
+                    {'type' => '_stop_upper_case',
+                     'contents' => [$note_element]}));
+
+  if (defined($name)) {
+    # Convert line for sole purpose of checking if the output contains
+    # a colon.  Output may differ slightly from the current formatting
+    # context (e.g if inside @sc) but this should not make a difference.
+    my ($pending, undef) = $self->convert_line_new_context($name);
+    my $name_text_checked = $self->_pending_to_text($pending);
+    my $quoting_required = 0;
+    if ($name_text_checked =~ /:/m) {
+      if ($self->{'info_special_chars_warning'}) {
+        $self->plaintext_line_warn($self, sprintf(__(
+           "\@%s cross-reference name should not contain `:'"),
+                                 $cmdname), $element->{'source_info'});
+      }
+      if ($self->{'info_special_chars_quote'}) {
+        $quoting_required = 1;
+      }
+    }
+
+    # do the actual output of name
+    my $quote = "\x{7f}";
+
+    if ($quoting_required) {
+      $self->_stream_output_add_text($quote);
+    }
+    $self->_convert($name);
+    if ($quoting_required) {
+      $self->_stream_output_add_text($quote);
+    }
+    $self->_stream_output_add_text(": ");
+  }
+
+  my $has_file = 0;
+  if (defined($args[3])) {
+    my $file = Texinfo::TreeElement::new({'contents' => [
+               Texinfo::TreeElement::new({'text' => '('}),
+               Texinfo::TreeElement::new({'type' => '_stop_upper_case',
+                  'contents' => [Texinfo::TreeElement::new(
+                                  {'type' => '_code',
+                                   'contents' => [$args[3]]})],}),
+               Texinfo::TreeElement::new({'text' => ')'}),]});
+    $self->_convert($file);
+    $has_file = 1;
+  } elsif (defined($args[4])) {
+    # add a () such that the node is considered to be external,
+    # even though the manual name is not known.  This should only
+    # happen if a book argument is given, but no manual name.
+    $self->_convert(Texinfo::TreeElement::new({'text' => '()'}));
+    $has_file = 1;
+  }
+
+  my $node_name;
+
+  # Get the node name to be output.
+  # Due to the paragraph formatter holding pending text, converting
+  # the node name with the current formatter does not yield all the
+  # converted text.  To get the full node name (and no more), we
+  # can use the cached text if the node is an internal node.  Otherwise,
+  # we can convert in a new context, using convert_line_new_context.
+  # However, it is slow to do this for every node.  So in the most
+  # frequent case when the node name is a simple text element, use
+  # that text instead.
+  if (defined($target_element)) {
+    ($node_name, undef) = $self->node_name($target_element);
+  } elsif (defined($label_element)
+      and scalar(@{$label_element->{'contents'}}) == 1
+      and exists($label_element->{'contents'}->[0]->{'text'})) {
+    $node_name = $label_element->{'contents'}->[0]->{'text'};
+  } elsif (defined($label_element)) {
+    $self->{'silent'} = 0 if (!defined($self->{'silent'}));
+    $self->{'silent'}++;
+
+    my ($pending, undef) = $self->convert_line_new_context(
+        Texinfo::TreeElement::new({'type' => '_code',
+                                   'contents' => [$label_element]}),
+                                   0, undef,
+                                  {'suppress_styles' => 1,
+                                    'no_added_eol' => 1});
+    $node_name = $self->_pending_to_text($pending);
+    $self->{'silent'}--;
+  } else {
+    $node_name = '';
+  }
+  if ($has_file and $node_name !~ /\S/) {
+    # Some Info reader versions, at least the Info reader from
+    # Texinfo 6.8 and 7.1 cannot follow a cross-reference
+    # consisting only of a manual name, such as *Note (manual)::.
+    # The Emacs Info reader does not seem to have this problem.
+    # Add a Top node to have a node name.
+    # Should probably be removed about 10-15 years after Info
+    # reader have been fixed.
+    $label_element = {'text' => 'Top'};
+  }
+
+  if (defined($label_element)) {
+    my $quoting_required = 0;
+
+    if (defined($target_element) and substr($node_name, 0, 1) eq '(') {
+      if ($self->{'info_special_chars_quote'}) {
+        $quoting_required = 1;
+      }
+    }
+
+    my $check_chars;
+    if (defined($name)) {
+      $check_chars = quotemeta ",\t.";
+    } else {
+      $check_chars = quotemeta ":";
+    }
+
+    if ($node_name =~ /([$check_chars])/m) {
+      if ($self->{'info_special_chars_warning'}) {
+        $self->plaintext_line_warn($self, sprintf(__(
+           "\@%s node name should not contain `%s'"), $cmdname, $1),
+                         $element->{'source_info'});
+      }
+      if ($self->{'info_special_chars_quote'}) {
+        $quoting_required = 1;
+      }
+    }
+
+    my $pre_quote = $quoting_required ? "\x{7f}" : '';
+    my $post_quote = $pre_quote;
+
+    # node name
+    $self->_stream_output_add_next($pre_quote)
+           if ($pre_quote);
+
+    $self->{'formatters'}->[-1]->{'suppress_styles'} = 1;
+    $self->_convert(Texinfo::TreeElement::new(
+                  {'type' => '_stop_upper_case',
+                   'contents' => [
+                     Texinfo::TreeElement::new({'type' => '_code',
+                      'contents' => [$label_element]})]}));
+    delete $self->{'formatters'}->[-1]->{'suppress_styles'};
+
+    $self->_stream_output_add_next($post_quote)
+         if ($pre_quote);
+  }
+
+  if (!defined($name)) {
+    $self->_stream_output_add_next('::');
+  }
+
+  # Check if punctuation follows the ref command with a label
+  # argument.  If not, add a full stop.
+  if (defined($name)) {
+    # Find next element
+    my $next;
+    my $current_contents = $element->{'parent'}->{'contents'};
+    my $contents_nr = scalar(@$current_contents);
+    for (my $i = 0; $i < $contents_nr - 1; $i++) {
+      if ($current_contents->[$i] == $element) {
+        $next = $current_contents->[$i+1];
+        last;
+      }
+    }
+
+    if (!(defined($next) and exists($next->{'text'})
+          and $next->{'text'} =~ /^[\.,]/)) {
+      # In the past, it was explicily described in the manual that
+      # some punctuation was automatically added for @pxref only,
+      # while the other commands required a following full stop or
+      # comma.
+      #
+      # It is better if the user manages to find a wording with a
+      # comma or full stop following naturally the ref command.
+      # However, it is not possible in general except for @xref -- and
+      # even for @xref it may be cumbersome.  Therefore we only warn
+      # that a comma or full stop is missing with @xref such that the
+      # user tries to add it in that case, in the other case, we
+      # automatically add a full stop without warning.
+      #
+      # There cannot be a perfect solution, as these issues stem from
+      # the Info language design where it is not possible to
+      # distinguish if punctuation used in cross reference is
+      # part of the text or is added and should be considered as markup.
+      if ($cmdname eq 'xref') {
+        if (defined($next) and exists($next->{'text'})
+            and $next->{'text'} =~ /\S/) {
+          my $text = $next->{'text'};
+          $text =~ s/^\s*//;
+          my $char = substr($text, 0, 1);
+          $self->plaintext_line_warn($self, sprintf(__(
+                      "`.' or `,' must follow \@xref, not %s"),
+                                   $char), $element->{'source_info'});
+        } else {
+          $self->plaintext_line_warn($self,
+                     __("`.' or `,' must follow \@xref"),
+                           $element->{'source_info'});
+        }
+      }
+      $self->_stream_output_add_text('.');
+      # The added full stop does not end a sentence.  Info readers will
+      # have a chance of guessing correctly whether the full stop was
+      # added by whether it is followed by 2 spaces (although this
+      # doesn't help at the end of a line nor when a parenthesis
+      # follows the ref command).
+      remove_end_sentence($formatter->{'container'});
+    }
+  }
+
+  if ($in_multitable) {
+    $formatter->{'w'}--;
+    set_space_protection($formatter->{'container'}, 0)
+      if ($formatter->{'w'} == 0);
+  }
+  set_double_width_no_break($formatter->{'container'}, 0);
+}
+
+my @directions = ('Next', 'Prev', 'Up');
+sub format_node($$;$) {
+  my ($self, $node, $node_relations) = @_;
+
+  return if (not exists($node->{'extra'})
+                or not $node->{'extra'}->{'is_target'});
+
+  my ($node_text, undef) = $self->node_name($node);
+
+  my $output_filename;
+  if (defined($self->{'output_filename'})) {
+    $output_filename = $self->{'output_filename'};
+  } else {
+    # May happen when only converting a fragment
+    $output_filename = '';
+  }
+
+  $self->add_target_location($node);
+  my $node_begin = "\x{1F}\nFile: $output_filename,  Node: ";
+  $self->_stream_output($node_begin);
+
+  my $pre_quote = '';
+  my $post_quote = '';
+  if ($node_text =~ /,/) {
+    if ($self->{'info_special_chars_warning'}) {
+      $self->plaintext_line_warn($self, sprintf(__(
+                 "\@node name should not contain `,': %s"),
+                     $node_text), $node->{'source_info'});
+    }
+    if ($self->{'info_special_chars_quote'}) {
+      $pre_quote = "\x{7f}";
+      $post_quote = $pre_quote;
+    }
+  }
+
+  $self->_stream_output($pre_quote . $node_text . $post_quote);
+
+  if (!defined($node_relations)) {
+    my $nodes_list = $self->{'document'}->nodes_list();
+    $node_relations = $nodes_list->[$node->{'extra'}->{'node_number'} -1];
+  }
+  foreach my $direction (@directions) {
+    if (exists($node_relations->{'node_directions'})
+        and exists($node_relations->{'node_directions'}->{lc($direction)})) {
+      my $node_direction
+          = $node_relations->{'node_directions'}->{lc($direction)};
+
+      $self->_stream_output(",  $direction: ");
+
+      # file
+      if (exists($node_direction->{'extra'}->{'manual_content'})) {
+        my $file_formatted = Texinfo::TreeElement::new(
+                         {'type' => '_code',
+                          'contents' => [
+                        Texinfo::TreeElement::new({'text' => '('}),
+                             $node_direction->{'extra'}->{'manual_content'},
+                               Texinfo::TreeElement::new({'text' => ')'})]});
+        $self->convert_line($file_formatted, undef, undef,
+                            {'suppress_styles' => 1});
+      }
+
+      if (exists($node_direction->{'extra'}->{'identifier'})
+          or exists($node_direction->{'extra'}->{'normalized'})) {
+        my $pre_quote = '';
+        my $post_quote = '';
+        my ($node_text, undef) = $self->node_name($node_direction);
+
+        if (substr($node_text, 0, 1) eq '('
+            and !exists($node_direction->{'extra'}->{'manual_content'})) {
+          if ($self->{'info_special_chars_quote'}) {
+            $pre_quote = "\x{7f}";
+            $post_quote = $pre_quote;
+          }
+        }
+
+        # Up may not strictly need protection, as it is the last direction,
+        # but we protect consistently
+        if ($node_text =~ /,/) {
+          if ($self->{'info_special_chars_warning'}
+              # warn only for external nodes, internal nodes should already
+              # trigger a warning when defined
+              and $node_direction->{'extra'}->{'manual_content'}) {
+            $self->plaintext_line_warn($self, sprintf(__(
+                 "\@node %s name should not contain `,': %s"),
+                                           $direction, $node_text),
+                             $node->{'source_info'});
+          }
+          if ($self->{'info_special_chars_quote'}) {
+            $pre_quote = "\x{7f}";
+            $post_quote = $pre_quote;
+          }
+        }
+        $self->_stream_output($pre_quote . $node_text . $post_quote);
+      }
+    } elsif ($direction eq 'Up'
+             and $node->{'extra'}->{'identifier'} eq 'Top') {
+      # add an up direction for Top node
+      my $top_node_up = $self->get_conf('TOP_NODE_UP');
+      if (defined($top_node_up)) {
+        $self->_stream_output(",  $direction: ".$top_node_up);
+      }
+    }
+  }
+  $self->_stream_output("\n\n");
+  $self->{'count_context'}->[-1]->{'lines'} = 3;
+
+  return;
+}
+
+sub format_image($$$;$$$) {
+  my ($self, $image_file, $text, $alt, $dpi, $depth) = @_;
+
+  my $result = '';
+  if (defined($image_file)) {
+    $image_file =~ s/\\/\\\\/g;
+    $image_file =~ s/\"/\\\"/g;
+  } else {
+    $image_file = '';
+  }
+  $result = "\x{00}\x{08}[image src=\"$image_file\"";
+
+  if (defined($dpi) and $dpi > 0) {
+    # make sure we output a positive integer, regardless of whether
+    # this function is passed a string or value with a fraction.
+    $dpi = int($dpi);
+    $result .= " dpi=$dpi";
+  }
+  if (defined($depth) and $depth >= 0) {
+    # make sure we output a non-negative integer
+    $depth = int($depth);
+    $result .= " depth=$depth";
+  }
+  if (defined($alt) and $alt ne '') {
+    $alt =~ s/\\/\\\\/g;
+    $alt =~ s/\"/\\\"/g;
+    $result .= " alt=\"$alt\"";
+  }
+  if (defined($text)) {
+    $text =~ s/\\/\\\\/g;
+    $text =~ s/\"/\\\"/g;
+    $result .= " text=\"$text\"";
+  }
+  $result .= "\x{00}\x{08}]";
+
+  return $result;
+}
+
+my @image_files_extensions = ('.png', '.jpg');
+sub format_image_element($$) {
+  my ($self, $element) = @_;
+
+  my $lines_count = 0;
+
+  if (exists($element->{'contents'})
+      and not Texinfo::Common::empty_spaces_argument(
+                              $element->{'contents'}->[0])) {
+    Texinfo::Convert::Text::set_options_code(
+                                 $self->{'convert_text_options'});
+    my $basefile = Texinfo::Convert::Text::convert_to_text(
+                                         $element->{'contents'}->[0],
+                                   $self->{'convert_text_options'});
+    Texinfo::Convert::Text::reset_options_code(
+                                 $self->{'convert_text_options'});
+
+    my @extensions;
+    if (defined($element->{'contents'}->[4])
+        and exists($element->{'contents'}->[4]->{'contents'})) {
+      Texinfo::Convert::Text::set_options_code(
+                                 $self->{'convert_text_options'});
+      my $extension = Texinfo::Convert::Text::convert_to_text(
+                                         $element->{'contents'}->[4],
+                                   $self->{'convert_text_options'});
+      Texinfo::Convert::Text::reset_options_code(
+                                 $self->{'convert_text_options'});
+      @extensions = ("$extension", ".$extension");
+    }
+    push @extensions, @image_files_extensions;
+    my $image_file;
+    foreach my $extension (@extensions) {
+      my ($file_name, $file_name_encoding)
+        = $self->encoded_input_file_name($basefile.$extension);
+      my ($file, $use_inc_dir)
+        = Texinfo::Common::locate_include_file($file_name,
+                             $self->get_conf('INCLUDE_DIRECTORIES'));
+      if (defined($file)) {
+        # use the basename and not the file found.  It is agreed that it is
+        # better, since in any case the files are moved.
+        # If the file path found was to be used it should be decoded to perl
+        # codepoints too.
+        $image_file = $basefile.$extension;
+        last;
+      }
+    }
+    my ($text, $width) = $self->txt_image_text($element, $basefile);
+    my $alt;
+    if (defined($element->{'contents'}->[3])
+        and exists($element->{'contents'}->[3]->{'contents'})) {
+     $alt = Texinfo::Convert::Text::convert_to_text(
+                                    $element->{'contents'}->[3],
+                                  $self->{'convert_text_options'});
+    }
+
+    my $result;
+
+    if (defined($image_file) or (defined($text) and defined($alt))) {
+      # remove last end of line
+      chomp($text) if (defined($text));
+      $result = $self->format_image($image_file, $text, $alt);
+      $lines_count = ($result =~ tr/\n/\n/);
+      my $trailing_text;
+      if ($self->{'formatters'}->[-1]->{'_top_formatter'}) {
+        $trailing_text = "\n";
+        $lines_count++;
+      } else {
+        $trailing_text = '';
+      }
+      $self->add_quoted_image($result, $trailing_text);
+      return $lines_count;
+    } else {
+      my $lines_count
+       = $self->stream_image_formatted_text($element, $basefile, $text);
+      return $lines_count;
+    }
+  }
+  return 0;
+}
+
+1;

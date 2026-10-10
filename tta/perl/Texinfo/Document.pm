@@ -27,6 +27,7 @@
 
 package Texinfo::Document;
 
+use 5.006;
 use strict;
 use warnings;
 
@@ -44,21 +45,15 @@ use Texinfo::TreeElement;
 use Texinfo::Common;
 
 use Texinfo::Report;
-use Texinfo::Indices;
 use Texinfo::ManipulateTree;
 
 our $VERSION = '7.3dev';
 
 BEGIN {
-  my $shared_library_name = "DocumentXS";
-  if (!Texinfo::XSLoader::XS_parser_enabled()) {
-    undef $shared_library_name;
-  }
-
   Texinfo::XSLoader::init (
     "Texinfo::Document",
     "Texinfo::DocumentNonXS",
-    $shared_library_name,
+    'DocumentXS',
     undef,
     ['texinfo', 'texinfoxs'],
   );
@@ -248,8 +243,9 @@ sub remove_document_references($;$) {
     #if (1) {
     if (0) {
       foreach my $lang (sort(keys(
-                         %{$Texinfo::Translations::translation_cache}))) {
-        my $lang_cache = $Texinfo::Translations::translation_cache->{$lang};
+                 %{$Texinfo::Translations::converters_translation_cache}))) {
+        my $lang_cache
+           = $Texinfo::Translations::converters_translation_cache->{$lang};
         foreach my $string (sort(keys(%$lang_cache))) {
           foreach my $context (sort(keys(%{$lang_cache->{$string}}))) {
             my ($translation, $trans_tree)
@@ -284,96 +280,6 @@ sub remove_document_references($;$) {
       delete $document->{'tree'};
     }
   }
-}
-
-
-
-# Indices
-
-# No XS override.
-# This method is already called by other methods, in particular
-# sorted_indices_by_* when the indexes are sorted.  When the indexes
-# are merged but not sorted, it is sensible to call this function
-# directly.  Also called directly in tests.
-# XS override is not needed, if the converters calling this function
-# are implemented in C, even partly, they should call the C counterpart
-# rather than go through an XS interface.
-sub merged_indices($) {
-  my $self = shift;
-
-  if (exists($self->{'indices'})) {
-    if (!exists($self->{'merged_indices'})) {
-      $self->{'merged_indices'}
-        = Texinfo::Indices::merge_indices($self->{'indices'});
-    }
-  }
-  return $self->{'merged_indices'};
-}
-
-# calls Texinfo::Indices::sort_indices_by_letter and caches the result.
-# No XS override, as there is no reason to call this function directly
-# outside of tests, Texinfo::Convert::Converter
-# get_converter_indices_sorted_by_letter should be called directly.
-# In general a CONVERTER argument is given, but if not the DOCUMENT is
-# used instead to register error messages.
-sub sorted_indices_by_letter($$$$) {
-  my ($document, $converter, $use_unicode_collation, $locale_lang) = @_;
-
-  my $lang_key;
-  if (!$use_unicode_collation) {
-    $lang_key = '';
-  } elsif (!defined($locale_lang)) {
-    # special name corresponding to Unicode Collation with 'Non-Ignorable'
-    # set for variable collation elements
-    $lang_key = '-';
-  } else {
-    $lang_key = $locale_lang;
-  }
-
-  $document->{'sorted_indices_by_letter'} = {}
-    if (!exists($document->{'sorted_indices_by_letter'}));
-
-  if (!exists($document->{'sorted_indices_by_letter'}->{$lang_key})) {
-    $document->merged_indices();
-    $document->{'sorted_indices_by_letter'}->{$lang_key}
-      = Texinfo::Indices::sort_indices_by_letter
-                    ($document, $converter,
-                     $use_unicode_collation, $locale_lang);
-  }
-  return $document->{'sorted_indices_by_letter'}->{$lang_key};
-}
-
-# calls Texinfo::Indices::sort_indices_by_index and caches the result.
-# No XS override, as there is no reason to call this function directly
-# outside of tests, Texinfo::Convert::Converter
-# get_converter_indices_sorted_by_index should be called directly.
-# In general a CONVERTER argument is given, but if not the DOCUMENT is
-# used instead to register error messages.
-sub sorted_indices_by_index($$$$) {
-  my ($document, $converter, $use_unicode_collation, $locale_lang) = @_;
-
-  my $lang_key;
-  if (!$use_unicode_collation) {
-    $lang_key = '';
-  } elsif (!defined($locale_lang)) {
-    # special name corresponding to Unicode Collation with 'Non-Ignorable'
-    # set for variable collation elements
-    $lang_key = '-';
-  } else {
-    $lang_key = $locale_lang;
-  }
-
-  $document->{'sorted_indices_by_index'} = {}
-    if (!exists($document->{'sorted_indices_by_index'}));
-
-  if (!exists($document->{'sorted_indices_by_index'}->{$lang_key})) {
-    $document->merged_indices();
-    $document->{'sorted_indices_by_index'}->{$lang_key}
-      = Texinfo::Indices::sort_indices_by_index
-                      ($document, $converter,
-                       $use_unicode_collation, $locale_lang);
-  }
-  return $document->{'sorted_indices_by_index'}->{$lang_key};
 }
 
 
@@ -479,6 +385,7 @@ sub register_label_element($$;$$) {
 
 1;
 __END__
+
 =head1 NAME
 
 Texinfo::Document - Texinfo document tree and information
@@ -488,7 +395,7 @@ Texinfo::Document - Texinfo document tree and information
   use Texinfo::Parser;
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_file("somefile.texi");
+  my $document = $parser->parse_file("somefile.texi");
 
   my $indices_information = $document->indices_information();
   my $float_types_arrays = $document->floats_information();
@@ -525,7 +432,7 @@ For example, the I<$document> obtained in the following example is a
 C<Texinfo::Document> object:
 
   my $parser = Texinfo::Parser::parser();
-  my $document = $parser->parse_texi_file("somefile.texi");
+  my $document = $parser->parse_file("somefile.texi");
 
 =head1 METHODS
 
@@ -760,79 +667,6 @@ the indexes corresponding to the following texinfo
                   'fn' => {'name' => 'fn', 'in_code' => 1, },
                   'some' => {'name' => 'some', 'in_code' => 0},
                   'code' => {'name' => 'code', 'in_code' => 1}};
-
-=back
-
-=head2 Merging and sorting indexes
-
-Merged and sorted document indexes are also available.  Parsed indexes
-are not merged nor sorted, L<Texinfo::Indices> functions are
-called to merge or sort the indexes the first time the following
-methods are called.  The results are afterwards associated to the
-document and simply returned.
-
-=over
-
-=item $merged_indices = $document->merged_indices()
-X<C<merged_indices>>
-
-Merge indexes if needed and return merged indexes.  The I<$merged_indices>
-returned is a hash reference whose keys are the index names and values arrays
-of index entry structures described in L</index_entries>.
-
-L<< C<Texinfo::Indices::merge_indices>|Texinfo::Indices/$merged_indices = merge_indices($indices_information) >>
-is used to merge the indexes.
-
-It is not useful to call this function directly if indexes are sorted, as
-it is already called by index sorting functions.
-
-=back
-
-In general, the sorting methods should not be called directly, instead
-L<Texinfo::Convert::Converter/Index sorting> Converter methods should be
-used, which already call the following functions.
-
-=over
-
-=item $sorted_indices = sorted_indices_by_index($document, $converter, $use_unicode_collation, $locale_lang)
-
-=item $sorted_indices = sorted_indices_by_letter($document, $converter, $use_unicode_collation, $locale_lang)
-X<C<sorted_indices_by_index>> X<C<sorted_indices_by_letter>>
-
-C<sorted_indices_by_letter> returns the indices sorted by index and letter,
-while C<sorted_indices_by_index> returns the indexes with all entries
-of an index together.
-
-By default, indexes are sorted according to the I<Unicode Collation Algorithm>
-defined in the L<Unicode Technical Standard
-#10|http://www.unicode.org/reports/tr10/>, without language-specific collation
-tailoring.  If I<$use_unicode_collation> is set to 0, the sorting will not use
-the I<Unicode Collation Algorithm> and simply sort according to the codepoints.
-If I<$locale_lang> is set, the language is used for linguistic tailoring of the
-sorting, if possible.
-
-When sorting by letter, an array reference of letter hash references is
-associated with each index name.  Each letter hash reference has two
-keys, a I<letter> key with the letter, and an I<entries> key with an array
-reference of sorted index entries beginning with the letter.  The letter
-is a character string suitable for sorting letters, but is not necessarily
-the best to use for output.
-
-When simply sorting, the array of the sorted index entries is associated
-with the index name.
-
-The optional I<$converter> argument is used for error reporting, if not
-defined, the I<$document> is used.
-
-L<< C<Texinfo::Indices::sort_indices_by_index>|Texinfo::Indices/$index_entries_sorted = sort_indices_by_index($document, $converter, $use_unicode_collation, $locale_lang) >>
-and L<< C<Texinfo::Indices::sort_indices_by_letter>|Texinfo::Indices/$index_entries_sorted = sort_indices_by_letter($document, $converter, $use_unicode_collation, $locale_lang) >>
-are used to sort the indexes, if needed.
-
-In general, those methods should not be called directly, instead
-L<< C<Texinfo::Convert::Converter::get_converter_indices_sorted_by_index>|Texinfo::Convert::Converter/$sorted_indices = $converter->get_converter_indices_sorted_by_index() >>
-and L<< C<Texinfo::Convert::Converter::get_converter_indices_sorted_by_letter>|Texinfo::Convert::Converter/$sorted_indices = $converter->get_converter_indices_sorted_by_letter() >>
-should be used.  The C<Texinfo::Convert::Converter> methods call
-C<sorted_indices_by_index> and C<sorted_indices_by_letter>.
 
 =back
 

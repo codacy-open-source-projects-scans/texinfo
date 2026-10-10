@@ -19,8 +19,7 @@
    the language define.  This is likely to be the case for Perl, see comments
    in build_perl_info.c.
 
-   We define DATADIR, LIBDIR, CONVERTER_CONFIG and PACKAGE_VERSION_CONFIG
-   on the command-line.
+   We define DATADIR on the command-line.
  */
 
 /* All the functions defined inline should have their name prefixed by
@@ -35,25 +34,26 @@
 /* not necessarily used, but could be for debugging */
 #include <stdio.h>
 
-#include "use_interpreter_types.h"
 #include "source_mark_types.h"
 #include "element_types.h"
 #include "types_data.h"
 #include "tree_types.h"
 #include "reader_types.h"
-#include "api.h"
+#include "translations.h"
+#include "parser_api.h"
 #include "parser_conf.h"
-#include "conf.h"
+#include "set_parser_conf.h"
 #include "tree.h"
 #include "targets.h"
 #include "utils.h"
 #include "errors.h"
+#include "node_name_normalization.h"
 #include "convert_to_texinfo.h"
 #include "manipulate_tree.h"
 #include "document.h"
 #include "manipulate_indices.h"
+#include "transformations.h"
 #include "reader_api.h"
-#include "texinfo.h"
 #include "convert_to_text.h"
 /* expand_verbatiminclude */
 #include "convert_utils.h"
@@ -64,54 +64,35 @@
 #include "swig_parser_api.h"
 %}
 
-#define interface_version 0
+// incremented for incompatible changes after 7.3
+#define interface_version 1
 
 // Initialization
 
 %init %{
-txi_general_output_strings_setup ();
+general_output_strings_setup ();
 
 reset_parser (0);
 %}
 
-%include "use_interpreter_types.h"
-
 %rename(setup) txi_ext_inline_setup;
+// TODO consider removing the paths arguments, there is no clear use case
+// which would require setting a different path than the one
+// automatically determined.
 void
-txi_ext_inline_setup (int texinfo_uninstalled=0,
-       enum interpreter_use use_interpreter=txi_interpreter_use_none,
-       int updirs=3, const char *datadir_in=0,
-       const char *converterdatadir_in=0,
-       const char *converterlibdir_in=0,
-       const char *t2a_builddir_in=0,
-       const char *t2a_srcdir_in=0);
+txi_ext_inline_setup (int texinfo_uninstalled=0, const char *datadir_in=0,
+                      const char *t2a_builddir_in=0,
+                      const char *t2a_srcdir_in=0);
 
 %{
 void
-txi_ext_inline_setup (int texinfo_uninstalled,
-       enum interpreter_use use_interpreter,
-       int updirs, const char *datadir_in,
-       const char *converterdatadir_in,
-       const char *converterlibdir_in,
-       const char *t2a_builddir_in,
-       const char *t2a_srcdir_in)
+txi_ext_inline_setup (int texinfo_uninstalled, const char *datadir_in,
+                      const char *t2a_builddir_in,
+                      const char *t2a_srcdir_in)
 {
-  const char *version_for_embedded_interpreter_check;
   char *t2a_srcdir = 0;
   char *t2a_builddir = 0;
-  char *converterdatadir = 0;
-  const char *converterlibdir = 0;
   const char *datadir;
-  enum interpreter_use do_use_interpreter = txi_interpreter_use_no_interpreter;
-#ifdef EMBED_PERL
-  do_use_interpreter = txi_interpreter_use_embedded;
-#endif
-#ifdef USE_PERL_INTERPRETER
-  do_use_interpreter = txi_interpreter_use_interpreter;
-#endif
-
-  if (use_interpreter != txi_interpreter_use_none)
-    do_use_interpreter = use_interpreter;
 
   if (datadir_in)
     datadir = datadir_in;
@@ -143,31 +124,14 @@ txi_ext_inline_setup (int texinfo_uninstalled,
             t2a_builddir = strdup (t2a_builddir);
         }
     }
-  else
-    {
-      if (converterdatadir_in)
-        converterdatadir = strdup (converterdatadir_in);
-      else
-        xasprintf (&converterdatadir, "%s/" CONVERTER_CONFIG, datadir);
-      if (converterlibdir_in)
-        converterlibdir = converterlibdir_in;
-      else
-        converterlibdir = LIBDIR "/" CONVERTER_CONFIG;
-    }
 
-  if (texinfo_uninstalled)
-    version_for_embedded_interpreter_check = PACKAGE_VERSION_CONFIG "+nc";
-  else
-    version_for_embedded_interpreter_check = PACKAGE_VERSION_CONFIG;
+  /* initialize the C library */
+  messages_and_encodings_setup (datadir);
+  setup_texinfo_main (texinfo_uninstalled, datadir,
+                      t2a_builddir, t2a_srcdir);
 
-  txi_setup_main_load_interpreter (do_use_interpreter, texinfo_uninstalled,
-                                   datadir, converterdatadir, converterlibdir,
-                                   t2a_builddir, t2a_srcdir, updirs,
-                                   0, 0, 0,
-                                   version_for_embedded_interpreter_check);
   free (t2a_builddir);
   free (t2a_srcdir);
-  free (converterdatadir);
 }
 %}
 
@@ -292,14 +256,14 @@ DOCUMENT *txi_ext_parse_text (PARSER *parser, const char *string,
 // Only one of the next two function should be called as both clear the
 // document errors list.
 
-// texinfo.h
+// swig_interface.h
 // Output the error messages on stderr
-%rename(output_parser_error_messages) txi_output_parser_error_messages;
-size_t txi_output_parser_error_messages (DOCUMENT *document,
+%rename(output_parser_error_messages) txi_ext_output_parser_error_messages;
+
+size_t txi_ext_output_parser_error_messages (DOCUMENT *document,
                                   const char *message_encoding=0,
                                   int no_warn=0, int use_filename=0);
 
-// swig_interface.h
 // Get the error messages.  The caller should call
 // destroy_error_messages_list on the return value when done.
 %rename(get_parser_error_messages) txi_ext_get_parser_error_messages;
@@ -318,42 +282,51 @@ void set_document_options (DOCUMENT *document,
                       const OPTIONS_LIST *cmdline_options=0,
                       const OPTIONS_LIST *init_files_options=0);
 
-// texinfo.h
+// transformations.h
 /* document tree transformations selection flags */
 #define STTF_complete_tree_nodes_menus              0x0001
 #define STTF_complete_tree_nodes_missing_menu       0x0002
 #define STTF_fill_gaps_in_sectioning                0x0004
-#define STTF_insert_nodes_for_sectioning_commands   0x0008
-#define STTF_move_index_entries_after_items         0x0010
-#define STTF_regenerate_master_menu                 0x0020
-#define STTF_relate_index_entries_to_table_items    0x0040
+#define STTF_move_index_entries_after_items         0x0008
+#define STTF_regenerate_master_menu                 0x0010
+#define STTF_relate_index_entries_to_table_items    0x0020
 
 /* document structuring selection flags */
 #define STTF_floats                                 0x0080
 #define STTF_no_warn_non_empty_parts                0x0100
 #define STTF_nodes_tree                             0x0200
-#define STTF_setup_index_entries_sort_strings       0x0400
+/* #define STTF_       0x0400 */
 
 /* for complete_tree_nodes_menus, complete_tree_nodes_missing_menu
    and regenerate_master_menu */
 #define STTF_complete_menus_use_sections            0x0800
 
-%rename(complete_document) txi_complete_document;
+/* backward compatibility */
+#define STTF_insert_nodes_for_sectioning_commands   0x8000
 
-void txi_complete_document (DOCUMENT *document, unsigned long flags,
-                            int format_menu);
+void complete_transform_document (DOCUMENT *document, unsigned long flags,
+                                  int format_menu, int auto_section_node=0,
+                                  const char *fill_gap_heading_texi=0);
+
+// manipulate_tree.h
+ELEMENT *protect_comma_in_tree (ELEMENT *tree);
+ELEMENT *protect_colon_in_tree (ELEMENT *tree);
+ELEMENT *reference_to_arg_in_tree (ELEMENT *tree, DOCUMENT *document);
+// transformations.h
+ELEMENT *protect_hashchar_at_line_beginning (ELEMENT *tree, DOCUMENT *document);
+void protect_first_parenthesis_in_targets (ELEMENT *tree);
+
 
 // Only one of the next two function should be called as both clear the
 // document errors list.
 
-// texinfo.h
+// swig_interface.h
 // Output the error messages on stderr
-%rename(output_document_error_messages) txi_output_document_error_messages;
-size_t txi_output_document_error_messages (DOCUMENT *document,
+%rename(output_document_error_messages) txi_ext_output_document_error_messages;
+size_t txi_ext_output_document_error_messages (DOCUMENT *document,
                                     const char *message_encoding=0,
                                     int no_warn=0, int use_filename=0);
 
-// swig_interface.h
 // Get the error messages.  The caller should call
 // destroy_error_messages_list on the return value when done.
 %rename(get_document_error_messages) txi_ext_get_document_error_messages;
@@ -401,6 +374,10 @@ ELEMENT *txi_ext_document_global_unique_command (DOCUMENT *document,
 const ELEMENT_LIST *txi_ext_document_global_command_list (DOCUMENT *document,
                                                           const char *cmdname);
 
+// node_name_normalization.h
+%newobject convert_to_identifier;
+char *convert_to_identifier (const ELEMENT *element);
+
 // index sorting and associated data
 
 // tree_types.h
@@ -429,13 +406,25 @@ INDEX_ENTRY *txi_ext_sorted_index_entries_by_index (
 int txi_ext_sorted_index_entries_number (
                      const INDEX_SORTED_BY_INDEX *index_sorted);
 
-%rename(get_index_sorted_by_index) txi_ext_get_index_sorted_by_index;
-const INDEX_SORTED_BY_INDEX *txi_ext_get_index_sorted_by_index (
+// FIXME remove to avoid needing translations in the interface?
+// no language tailoring available, since we use C code only and there
+// is no language tailoring for index sorting in C only.
+%rename(get_index_sorted_by_index) txi_ext_inline_get_index_sorted_by_index;
+const INDEX_SORTED_BY_INDEX *txi_ext_inline_get_index_sorted_by_index (
                            DOCUMENT *document,
                            const char *index_name,
-                           int use_unicode_collation=1,
-                           const char *collation_language=0,
-                           const char *collation_locale=0);
+                           int use_unicode_collation=1);
+/* wrapper without language tailoring */
+%{
+const INDEX_SORTED_BY_INDEX *txi_ext_inline_get_index_sorted_by_index (
+                           DOCUMENT *document,
+                           const char *index_name,
+                           int use_unicode_collation)
+{
+  return txi_ext_get_index_sorted_by_index (document, index_name,
+                              use_unicode_collation, 0, 0);
+}
+%}
 
 // listoffloats
 // tree_types.h
@@ -694,21 +683,8 @@ const READER_TOKEN *txi_reader_skip_children (struct READER *reader,
 
 // Finish
 
-// Beware of the name clash, destroy_document exists already in texinfo libs
-%rename(destroy_document) txi_ext_inline_destroy_document;
-%inline %{
-void txi_ext_inline_destroy_document (DOCUMENT *document);
-%}
-
-// texinfo.h
-%{
-void
-txi_ext_inline_destroy_document (DOCUMENT *document)
-{
-  txi_destroy_document (document, 0, 0);
-}
-%}
-
+// document.h
+void destroy_document (DOCUMENT *document);
 
 // Conversion
 
@@ -728,6 +704,9 @@ char *convert_contents_to_texinfo (const ELEMENT *e);
 %rename(text_options_set_encoding) txi_ext_text_options_set_encoding;
 %rename(text_options_clear_expanded_formats) txi_ext_text_options_clear_expanded_formats;
 %rename(text_options_add_expanded_format) txi_ext_text_options_add_expanded_format;
+// TODO document that it should be called early to be set to values before
+// starting conversion, to set as expected the language to end of preamble
+// language
 %rename(document_text_options) txi_ext_document_text_options;
 
 #define tico_option_name(name) \
@@ -751,7 +730,7 @@ char *convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options);
 // manipulate_tree.h
 %newobject tree_print_details;
 char *tree_print_details (ELEMENT *tree, const char *fname_encoding=0,
-                          int use_filename=0);
+                          int use_filename=0, int show_element_pointer=0);
 
 %newobject element_print_details;
 char *element_print_details (ELEMENT *element, const char *fname_encoding=0,
@@ -772,8 +751,34 @@ ELEMENT *get_label_element (const ELEMENT *e);
 // or let it be re-implemented in the diverse languages?
 
 // manipulate_indices.h
-ELEMENT *index_content_element (const ELEMENT *element,
-                                int prefer_reference_element=0);
+// used in a test
+// FIXME remove to avoid needing translations in the interface?
+%rename(index_content_element) txi_ext_inline_index_content_element;
+ELEMENT *txi_ext_inline_index_content_element (const ELEMENT *element,
+                                DOCUMENT *document,
+                                int prefer_reference_element=0,
+                                int debug_level=0);
+
+%inline %{
+ELEMENT * txi_ext_inline_index_content_element (const ELEMENT *element,
+                                DOCUMENT *document,
+                                int prefer_reference_element,
+                                int debug_level);
+%}
+
+%{
+ELEMENT *
+txi_ext_inline_index_content_element (const ELEMENT *element,
+                                DOCUMENT *document,
+                                int prefer_reference_element,
+                                int debug_level)
+{
+  return element_index_content_element (element, prefer_reference_element,
+                                        document, debug_level);
+}
+%}
+
+
 // TODO add a wrapper around new_complete_menu_master_menu?
 
 // utils.h

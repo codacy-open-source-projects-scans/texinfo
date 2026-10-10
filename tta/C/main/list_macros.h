@@ -1,0 +1,111 @@
+/* list_macros.h: generic macros for handling list data structures */
+#ifndef LIST_MACROS_H
+#define LIST_MACROS_H
+/* Copyright 2026 Free Software Foundation, Inc.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
+
+#define def_list_type(NAME, TYPE) \
+  typedef struct NAME { \
+      TYPE *list; \
+      size_t number; \
+      size_t space; \
+  } NAME
+
+/* Output declarations for header files. */
+#define decl_list_fns(LISTNAME, OBJNAME, TYPE) \
+  void reallocate_ ## OBJNAME ## _list (LISTNAME *list); \
+  void add_to_ ## OBJNAME ## _list (LISTNAME *list, TYPE object)
+
+/*
+        size_t old_space = list->space; \
+            list->list = malloc_free_realloc (list->list, \
+                                              old_space * sizeof (TYPE)), \
+                                              list->space * sizeof (TYPE)); \
+ */
+/* Output function definitions for .c source files. */
+#define def_list_fns(LISTNAME, OBJNAME, TYPE, INC) \
+    void reallocate_ ## OBJNAME ## _list (LISTNAME *list) { \
+        if (list->number + 1 >= list->space) { \
+            list->space += INC; \
+            list->list = realloc (list->list, list->space * sizeof (TYPE)); \
+            if (!list->list) \
+                fatal ("realloc failed"); \
+        }} \
+    void add_to_ ## OBJNAME ## _list (LISTNAME *list, TYPE object) { \
+        reallocate_ ## OBJNAME ## _list (list); \
+        list->list[list->number++] = object; }
+
+/* Conveniences to avoid using synthetic names.  This can help in navigating
+   the source code, otherwise it could be hard to find where the names are
+   defined. */
+#define reallocate_(OBJNAME) reallocate_ ## OBJNAME ## _list
+#define add_(OBJNAME) add_to_ ## OBJNAME ## _list
+
+/* extra function when list is used as a reusable array.  Allocate and
+   zero the newly allocated memory */
+
+/* Output declarations for header files. */
+#define decl_alloc_fns(LISTNAME, OBJNAME, TYPE) \
+   void reallocate_init_to_ ## OBJNAME ## _list (LISTNAME *list, size_t n); \
+   TYPE *add_init_to ## OBJNAME ## _list (LISTNAME *list)
+
+/* Output function definitions for .c source files. */
+#define def_alloc_fns(LISTNAME, OBJNAME, TYPE, INC) \
+   void reallocate_init_to_ ## OBJNAME ## _list (LISTNAME *list, size_t n) { \
+       if (list->space < n) { \
+           size_t new_space = n; \
+           list->list = realloc (list->list, new_space * sizeof (TYPE)); \
+           if (!list->list) \
+               fatal ("realloc failed"); \
+           memset (&list->list[list->space], 0, (new_space - list->space) \
+              * sizeof (TYPE)); \
+           list->space = new_space; \
+       }} \
+   TYPE *add_init_to ## OBJNAME ## _list (LISTNAME *list) { \
+     if (list->number + 1 >= list->space) { \
+         reallocate_init_to_ ## OBJNAME ## _list (list, list->number +1 +INC); \
+     } \
+     list->number++; \
+     return &list->list[list->number -1]; \
+   }
+
+#define init_to_(OBJNAME) reallocate_init_to_ ## OBJNAME ## _list
+#define add_init_(OBJNAME) add_init_to ## OBJNAME ## _list
+
+
+/* Extra functions when list is used as a stack. */
+
+/* Output declarations for header files. */
+#define decl_stack_fns(LISTNAME, OBJNAME, TYPE) \
+  TYPE *top_of_ ## OBJNAME ## _list (LISTNAME *list); \
+  void pop_ ## OBJNAME ## _list (LISTNAME *list)
+
+/* Output function definitions for .c source files. */
+#define def_stack_fns(LISTNAME, OBJNAME, TYPE) \
+    TYPE *top_of_ ## OBJNAME ## _list (LISTNAME *list) { \
+        if (list->number == 0) fatal (#OBJNAME " stack empty\n"); \
+        return &list->list[list->number - 1]; } \
+    void pop_ ## OBJNAME ## _list (LISTNAME *list) { \
+        if (list->number == 0) fatal (#OBJNAME " stack empty\n"); \
+        list->number--; }
+
+
+#define top_(OBJNAME) top_of_ ## OBJNAME ## _list
+#define pop_(OBJNAME) pop_ ## OBJNAME ## _list
+
+
+#endif
+
+

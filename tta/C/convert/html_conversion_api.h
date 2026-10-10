@@ -20,10 +20,13 @@
 /* HTML functions that are needed to implement converter_initialize()
    and conversion with output() or convert() */
 
-#include "tree_types.h"
 #include "option_types.h"
+#include "options_data.h"
+#include "tree_types.h"
 #include "document_types.h"
 #include "converter_types.h"
+/* for FILE_SOURCE_INFO_LIST */
+#include "html_converter_state.h"
 
 /* in html_converter_init_options.c */
 extern OPTIONS_LIST *html_default_options;
@@ -42,7 +45,8 @@ void html_default_options_setup (void);
 void html_fill_options_directions (OPTIONS *options, const CONVERTER *converter);
 
 /* in html_prepare_converter.c */
-void html_conversion_initialization (CONVERTER *self, const char *context);
+void html_conversion_initialization (CONVERTER *self, const char *context,
+                                     DOCUMENT *document);
 
 int html_setup_output (CONVERTER *self, char **paths);
 void html_setup_convert (CONVERTER *self);
@@ -74,9 +78,9 @@ int html_prepare_converted_output_info (CONVERTER *self,
                                         const char *output_file,
                                         const char *output_filename);
 
-char *html_convert_convert (CONVERTER *self, const ELEMENT *root);
+TEXT html_convert_convert (CONVERTER *self, const ELEMENT *root);
 
-char *html_convert_output (CONVERTER *self, const ELEMENT *root,
+TEXT html_convert_output (CONVERTER *self, const ELEMENT *root,
                            const char *output_file,
                            const char *destination_directory,
                            const char *output_filename,

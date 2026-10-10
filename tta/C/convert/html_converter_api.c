@@ -17,13 +17,11 @@
 #include <config.h>
 
 #include <stdlib.h>
-#include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 
 #include "document_types.h"
-/* converter_set_document */
-#include "converter.h"
+#include "option_types.h"
 #include "html_conversion_api.h"
 #include "html_converter_api.h"
 
@@ -42,7 +40,7 @@ html_converter_initialize (CONVERTER *converter)
 }
 
 /* similar to Texinfo::Convert::HTML->output */
-char *
+TEXT
 html_output (CONVERTER *converter, DOCUMENT *document)
 {
   int i;
@@ -51,13 +49,13 @@ html_output (CONVERTER *converter, DOCUMENT *document)
   const char *destination_directory;
   const char *output_filename;
   const char *document_name;
-  char *result = 0;
+  TEXT result;
   int status;
 
-  /* prepare conversion to HTML */
-  converter_set_document (converter, document);
+  text_init (&result);
 
-  html_conversion_initialization (converter, "_output");
+  /* prepare conversion to HTML */
+  html_conversion_initialization (converter, "_output", document);
 
   status = html_setup_output (converter, paths);
 
@@ -95,10 +93,10 @@ html_output (CONVERTER *converter, DOCUMENT *document)
                         document_name);
     }
 
-  if (!result)
+  if (!result.text)
     goto finalization;
 
-  if (strlen (result) && !strlen (output_file))
+  if (result.end > 0 && !strlen (output_file))
     {
       if (converter->conf->TEST.o.integer <= 0 )
         {
@@ -125,14 +123,12 @@ html_output (CONVERTER *converter, DOCUMENT *document)
 }
 
 /* similar to Texinfo::Convert::HTML->convert */
-char *
+TEXT
 html_convert (CONVERTER *converter, DOCUMENT *document)
 {
-  char *result;
+  TEXT result;
 
-  converter_set_document (converter, document);
-
-  html_conversion_initialization (converter, "_convert");
+  html_conversion_initialization (converter, "_convert", document);
 
   html_setup_convert (converter);
 

@@ -1,9 +1,12 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
+
+use Encode;
 
 $result_tree_text{'special_spaces_in_nodes'} = '*document_root C14
  *before_node_section C2
@@ -410,7 +413,7 @@ list:
 $result_headings_list{'special_spaces_in_nodes'} = '';
 
 
-$result_converted{'info'}->{'special_spaces_in_nodes'} = 'This is , produced from special_spaces_in_nodes.texi.
+$result_converted{'info'}->{'special_spaces_in_nodes'} = Encode::encode('utf-8', 'This is , produced from special_spaces_in_nodes.texi.
 
 
 File: ,  Node: Top ,  Next: EN QUAD| | EM QUAD| | EN SPACE| |
@@ -468,15 +471,15 @@ File: ,  Node: NARROW NO-BREAK SPACE| | MEDIUM MATHEMATICAL SPACE| | IDEOGRA
 
 Tag Table:
 Node: Top 55
-Node: EN QUAD| | EM QUAD| | EN SPACE| |177
-Node: CHARACTER TABULATION| | FORM FEED| | LINE TABULATION| |714
-Node: CARRIAGE RETURN| |855
-Node: NEXT LINE (NEL)|| NO-BREAK SPACE| | OGHAM SPACE MARK| |1061
-Node: MONGOLIAN VOWEL SEPARATOR|᠎| EM SPACE| |1252
-Node: THREE-PER-EM SPACE| | FOUR-PER-EM SPACE| | SIX-PER-EM SPACE| |1487
-Node: FIGURE SPACE| | PUNCTUATION SPACE| | THIN SPACE| |1716
-Node: HAIR SPACE| | LINE SEPARATOR| | PARAGRAPH SEPARATOR| |1959
-Node: NARROW NO-BREAK SPACE| | MEDIUM MATHEMATICAL SPACE| | IDEOGRAPHIC SPACE|　|2214
+Node: EN QUAD| | EM QUAD| | EN SPACE| |191
+Node: CHARACTER TABULATION| | FORM FEED| | LINE TABULATION| |768
+Node: CARRIAGE RETURN| |915
+Node: NEXT LINE (NEL)|| NO-BREAK SPACE| | OGHAM SPACE MARK| |1131
+Node: MONGOLIAN VOWEL SEPARATOR|᠎| EM SPACE| |1336
+Node: THREE-PER-EM SPACE| | FOUR-PER-EM SPACE| | SIX-PER-EM SPACE| |1591
+Node: FIGURE SPACE| | PUNCTUATION SPACE| | THIN SPACE| |1842
+Node: HAIR SPACE| | LINE SEPARATOR| | PARAGRAPH SEPARATOR| |2109
+Node: NARROW NO-BREAK SPACE| | MEDIUM MATHEMATICAL SPACE| | IDEOGRAPHIC SPACE|　|2388
 
 End Tag Table
 
@@ -484,7 +487,7 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 $result_converted_errors{'info'}->{'special_spaces_in_nodes'} = '* W special_spaces_in_nodes.texi|document without Top node
  warning: document without Top node

@@ -1,19 +1,23 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'nested_footnotes_separate'} = '*document_root C2
  *before_node_section C1
-  *@footnotestyle C1 l1
-  |EXTRA
-  |misc_args:A{separate}
-   *line_arg C3
-    {spaces_before_argument: }
-    {separate}
-    {spaces_after_argument:\\n}
+  *preamble_before_content C1
+   *@footnotestyle C1 l1
+   |EXTRA
+   |misc_args:A{separate}
+    *line_arg C3
+     {spaces_before_argument: }
+     {separate}
+     {spaces_after_argument:\\n}
  *@node C3 l2 {Top}
  |EXTRA
  |identifier:{Top}
@@ -76,7 +80,7 @@ $result_sectioning_root{'nested_footnotes_separate'} = '';
 $result_headings_list{'nested_footnotes_separate'} = '';
 
 
-$result_converted{'info'}->{'nested_footnotes_separate'} = 'This is , produced from .
+$result_converted{'info'}->{'nested_footnotes_separate'} = Encode::encode('utf-8', 'This is , produced from .
 
 
 File: ,  Node: Top,  Up: (dir)
@@ -105,6 +109,6 @@ End Tag Table
 Local Variables:
 coding: utf-8
 End:
-';
+');
 
 1;

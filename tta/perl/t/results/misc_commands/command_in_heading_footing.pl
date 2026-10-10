@@ -1,21 +1,25 @@
 use vars qw(%result_texis %result_texts %result_tree_text %result_errors
    %result_indices %result_floats %result_nodes_list %result_sections_list
    %result_sectioning_root %result_headings_list
-   %result_converted %result_converted_errors %result_indices_sort_strings);
+   %result_converted %result_converted_errors %result_converted_sort_strings
+   %result_indices_sort_strings);
 
 use utf8;
 
+use Encode;
+
 $result_tree_text{'command_in_heading_footing'} = '*document_root C1
- *before_node_section C5
-  *@everyheading C1 l1
-   *line_arg C6
-    {spaces_before_argument: }
-    {something }
-    *@thispage
-    { }
-    *@thischapternum
-    {spaces_after_argument:\\n}
-  {empty_line:\\n}
+ *before_node_section C4
+  *preamble_before_content C2
+   *@everyheading C1 l1
+    *line_arg C6
+     {spaces_before_argument: }
+     {something }
+     *@thispage
+     { }
+     *@thischapternum
+     {spaces_after_argument:\\n}
+   {empty_line:\\n}
   *paragraph C5
    {In text }
    *@thispage
@@ -84,6 +88,13 @@ $result_converted{'latex'}->{'command_in_heading_footing'} = '\\documentclass{bo
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+% This is used to provide a default no-operation \'keyval\' definition
+% of the "alt" key in the "Gin" ("Graphics Inclusion") family used
+% by graphicx.  This prevents an "alt" attribute generating an error in
+% older versions of graphicx.
+\\makeatletter
+\\providecommand\\KV@Gin@alt{}
+\\makeatother
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
@@ -159,6 +170,7 @@ $result_converted{'latex'}->{'command_in_heading_footing'} = '\\documentclass{bo
 }%
 \\pagestyle{custom}%
 
+\\begin{document}
 In text \\thepage{} \\thechapter{} text.
 
 In code \\texttt{Section \\thesection{} \\sectiontitle{}}.

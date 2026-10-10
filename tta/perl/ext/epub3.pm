@@ -24,8 +24,7 @@
 #
 # Discuss unique identifier on the mailing list
 #
-# Implement publication date and last change date customization
-# (see main TODO file).
+# Add Texinfo manual change date (see main TODO file)?
 #
 # Currently the titlepage is used if available, while the Top node
 # is not shown.  There is a possibility to use an image as cover in
@@ -126,8 +125,9 @@ texinfo_set_from_init_file('HTML_ROOT_ELEMENT_ATTRIBUTES',
                            'xmlns="http://www.w3.org/1999/xhtml"');
 texinfo_set_from_init_file('NO_CUSTOM_HTML_ATTRIBUTE', 1);
 texinfo_set_from_init_file('USE_XML_SYNTAX', 1);
-texinfo_set_from_init_file('DOCTYPE', '<?xml version="1.0" encoding="UTF-8"?>'."\n"
-                                      .'<!DOCTYPE html>');
+texinfo_set_from_init_file('DOCTYPE',
+                           '<?xml version="1.0" encoding="UTF-8"?>'."\n"
+                            . '<!DOCTYPE html>');
 texinfo_set_from_init_file('USE_NUMERIC_ENTITY', 1);
 texinfo_set_from_init_file('OUTPUT_ENCODING_NAME', 'utf-8');
 
@@ -228,7 +228,7 @@ sub _epub_convert_tree_to_text($$)
                                   $converter->{'convert_text_options'});
   my $result = &{$converter->formatting_function('format_protect_text')}(
          $converter, Texinfo::Convert::Text::convert_to_text($tree,
-                                           $converter->{'convert_text_options'}));
+                                    $converter->{'convert_text_options'}));
   Texinfo::Convert::Text::reset_options_encoding(
                                  $converter->{'convert_text_options'});
   return $result;
@@ -242,7 +242,7 @@ sub epub_noop($$)
 # file scope variables. Beware to reset all that are not constants
 # at the beginning of epub_setup for multi input Texinfo manual cases.
 my $epub_destination_directory;
-my $epub_document_destination_directory;
+my $epub_doc_dest_dir;
 my $encoded_epub_destination_directory;
 
 my $epub_document_dir_name = 'EPUB';
@@ -291,10 +291,10 @@ sub epub_convert_image_command($$$$)
     my ($volume, $directories, $image_basefile_name)
       = File::Spec->splitpath($image_basefile);
     my $protected_image_basefile_name
-      = Texinfo::Convert::NodeNameNormalization::transliterate_protect_file_name(
+  = Texinfo::Convert::NodeNameNormalization::transliterate_protect_file_name(
                                                          $image_basefile_name);
     my $protected_image_extension
-      = Texinfo::Convert::NodeNameNormalization::transliterate_protect_file_name(
+  = Texinfo::Convert::NodeNameNormalization::transliterate_protect_file_name(
                                                          $image_extension);
     my $basefilename_length = $self->get_conf('BASEFILENAME_LENGTH');
     my $cropped_image_basefile_name;
@@ -310,7 +310,8 @@ sub epub_convert_image_command($$$$)
     } else {
       $cropped_image_basefile_name = $protected_image_basefile_name;
     }
-    my $destination_basefile_name = $epub_file_nr.'-'.$cropped_image_basefile_name
+    my $destination_basefile_name
+       = $epub_file_nr.'-'.$cropped_image_basefile_name
                                     . $protected_image_extension;
     $epub_file_nr += 1;
     if (defined($image_file)) {
@@ -450,17 +451,19 @@ my $nav_filename;
 my $epub_outfile;
 
 my $epub_info_js_dir_name;
+my @epub_languages;
 
-sub epub_setup($)
-{
+
+sub epub_setup($) {
   my $self = shift;
 
   $epub_outfile = undef;
   $epub_destination_directory = undef;
-  $epub_document_destination_directory = undef;
+  $epub_doc_dest_dir = undef;
   $encoded_epub_destination_directory = undef;
   @epub_output_units_filenames = ();
   @epub_special_elements_filenames = ();
+  @epub_languages = ();
   %epub_images = ();
   $nav_filename = $default_nav_filename;
   $epub_file_nr = 1;
@@ -529,13 +532,13 @@ sub epub_setup($)
   } else {
     $epub_destination_directory = $document_name . '_epub_package';
   }
-  $epub_document_destination_directory
+  $epub_doc_dest_dir
              = join('/', ($epub_destination_directory,
                           $epub_document_dir_name, $epub_xhtml_dir));
   # set for XHTML conversion
   if ($split) {
     $self->{'saved_SUBDIR'} = $subdir;
-    $self->force_conf('SUBDIR', $epub_document_destination_directory);
+    $self->force_conf('SUBDIR', $epub_doc_dest_dir);
   } else {
     my $xhtml_output_file = $document_name;
     $xhtml_output_file .= '.'.$self->get_conf('EXTENSION')
@@ -546,7 +549,7 @@ sub epub_setup($)
       $nav_filename = 'Gtexinfo_' . $default_nav_filename;
     }
     $self->force_conf('OUTFILE',
-     join('/', ($epub_document_destination_directory, $xhtml_output_file)));
+     join('/', ($epub_doc_dest_dir, $xhtml_output_file)));
   }
 
   my $epub_destination_dir_encoding;
@@ -558,9 +561,9 @@ sub epub_setup($)
   return $status if ($status);
 
   my $err_make_path;
-  my ($encoded_epub_document_destination_directory, $epub_doc_dest_dir_encoding)
-    = $self->encoded_output_file_name($epub_document_destination_directory);
-  File::Path::make_path($encoded_epub_document_destination_directory,
+  my ($encoded_epub_doc_dest_dir, $epub_doc_dest_dir_encoding)
+    = $self->encoded_output_file_name($epub_doc_dest_dir);
+  File::Path::make_path($encoded_epub_doc_dest_dir,
                         {'mode' => 0755, 'error' => $err_make_path});
   if ($err_make_path and scalar(@$err_make_path)) {
     for my $diag (@$err_make_path) {
@@ -568,12 +571,12 @@ sub epub_setup($)
       if ($file eq '') {
         $self->converter_document_error(
            sprintf(__("error creating directory: %s: %s"),
-                  $epub_document_destination_directory, $message));
+                  $epub_doc_dest_dir, $message));
       }
       else {
         $self->converter_document_error(
           sprintf(__("error creating directory: %s: creating %s: %s"),
-                 $epub_document_destination_directory, $file, $message));
+                 $epub_doc_dest_dir, $file, $message));
       }
     }
     return 150;
@@ -583,9 +586,127 @@ sub epub_setup($)
 
 texinfo_register_handler('setup', \&epub_setup);
 
+my $translations_cache
+  = $Texinfo::Translations::converters_translation_cache;
+
+sub epub_init($$) {
+  my $self = shift;
+  my $document = shift;
+
+  my $global_commands_information = $document->global_commands_information();
+
+  my $lang_translations;
+  my %languages_set;
+
+  # We gather all the languages as proposed by the standard for multilingual
+  # publications.  Note that the first one is likely to be the only one taken
+  # into account:
+  # "Although additional dc:language elements MAY be specified for multilingual
+  # EPUB publications, reading systems will treat the first dc:language element
+  # in document order as the primary language."
+  # Also, the standard says that:
+  # "Publication resources do not inherit their language from dc:language
+  # element(s). The language of each resource has to be set using the intrinsic
+  # methods of the format."
+  # Which means that the xhtml lang attributes have precedence when the
+  # xhtml files are rendered.
+  my $set_documentlanguage = $self->get_conf('documentlanguage');
+  my $set_documentscript = $self->get_conf('documentscript');
+
+  if (defined($set_documentlanguage)) {
+    $lang_translations
+      = Texinfo::Translations::set_translations_documentlanguage(
+                      $translations_cache, $set_documentlanguage,
+                                              $lang_translations);
+  }
+  if (defined($set_documentscript)) {
+    $lang_translations
+     = Texinfo::Translations::set_translations_documentscript(
+                       $translations_cache, $set_documentscript,
+                                             $lang_translations);
+  }
+
+  if (defined($global_commands_information)) {
+    if (exists($global_commands_information->{'language_commands'})) {
+      my $lang_commands = $global_commands_information->{'language_commands'};
+      foreach my $element (@$lang_commands) {
+        if ($element->{'cmdname'} eq 'documentlanguagevariant') {
+          my $language_variants
+           = Texinfo::Common::documentlanguagevariant_variants($element);
+          # register if unsetting or resetting
+          if (!scalar(@$language_variants)
+              or (defined($lang_translations)
+                     and exists($lang_translations->[0]->{'variants'}))) {
+            my $bcp47_locale = $lang_translations->[0]->{'bcp47_locale'};
+            if (!exists($languages_set{$bcp47_locale})) {
+              push @epub_languages, $bcp47_locale;
+              $languages_set{$bcp47_locale} = 1;
+            }
+          }
+          $lang_translations
+            = Texinfo::Translations::set_translations_documentlanguagevariant(
+                                    $translations_cache,
+                                    $language_variants, $lang_translations);
+        } elsif (exists($element->{'extra'})
+                 and exists($element->{'extra'}->{'text_arg'})) {
+          my $value = $element->{'extra'}->{'text_arg'};
+          if ($element->{'cmdname'} eq 'documentlanguage') {
+            # register previously set language
+            if (defined($lang_translations)) {
+              my $bcp47_locale = $lang_translations->[0]->{'bcp47_locale'};
+              if (!exists($languages_set{$bcp47_locale})) {
+                push @epub_languages, $bcp47_locale;
+                $languages_set{$bcp47_locale} = 1;
+              }
+            }
+            $lang_translations
+              = Texinfo::Translations::set_translations_documentlanguage(
+                                           $translations_cache,
+                                           $value, $lang_translations);
+          } elsif ($element->{'cmdname'} eq 'documentscript') {
+            # register if unsetting or resetting
+            if ($value eq ''
+                or (defined($lang_translations)
+                     and exists($lang_translations->[0]->{'script'}))) {
+              my $bcp47_locale = $lang_translations->[0]->{'bcp47_locale'};
+              if (!exists($languages_set{$bcp47_locale})) {
+                push @epub_languages, $bcp47_locale;
+                $languages_set{$bcp47_locale} = 1;
+              }
+            }
+            $lang_translations
+              = Texinfo::Translations::set_translations_documentscript(
+                                                $translations_cache,
+                                                $value, $lang_translations);
+          }
+        }
+      }
+    }
+  }
+
+  # register previously set language
+  if (defined($lang_translations)) {
+    my $bcp47_locale = $lang_translations->[0]->{'bcp47_locale'};
+    if (!exists($languages_set{$bcp47_locale})) {
+      push @epub_languages, $bcp47_locale;
+      $languages_set{$bcp47_locale} = 1;
+    }
+  }
+
+  # the standard mandates at least one language specifier
+  if (scalar(@epub_languages) == 0) {
+    @epub_languages = ('en');
+  }
+
+  return 0;
+}
+
+texinfo_register_handler('init', \&epub_init);
+
+# TODO format subtitle
+
 # need to be after tree units and images conversion
-sub epub_finish($$)
-{
+sub epub_finish($$) {
   my $self = shift;
   my $document = shift;
 
@@ -699,7 +820,7 @@ EOT
 
   if ($sections_list and scalar(@$sections_list) > 0) {
     $nav_file_path_name
-     = join('/', ($epub_document_destination_directory, $nav_filename));
+     = join('/', ($epub_doc_dest_dir, $nav_filename));
     my ($encoded_nav_file_path_name, $nav_path_encoding)
       = $self->encoded_output_file_name($nav_file_path_name);
     my ($nav_fh, $error_message_nav)
@@ -761,10 +882,12 @@ EOT
         }
       } elsif ($level > $section_level) {
         # on the same line as the a element for the first </li>
-        print $nav_fh "</li>\n". " " x ($level -1) . "</ol>\n";
+        print $nav_fh "</li>\n"
+               . " " x ($level -1) . "</ol>\n";
         $level--;
         while ($level > $section_level) {
-          print $nav_fh " " x $level . "</li>\n"." " x ($level -1) . "</ol>\n";
+          print $nav_fh " " x $level . "</li>\n"
+                        ." " x ($level -1) . "</ol>\n";
           $level--;
         }
         print $nav_fh " " x $level ."</li>\n";
@@ -775,7 +898,8 @@ EOT
       my $text = _epub_convert_tree_to_text($self, $line_arg);
       $text = Texinfo::Convert::Utils::add_heading_number($section,
                            $text, $self->get_conf('NUMBER_SECTIONS'),
-                           $self->{'current_lang_translations'});
+                           $self->{'current_lang_translations'},
+                           $self->get_conf('DEBUG'));
       # the empty string as second argument makes sure that the
       # source file is different from the target file.
       my $origin_href = $self->command_href($section, '');
@@ -783,11 +907,13 @@ EOT
     }
     if ($level > $root_level) {
       # on the same line as the a element for the first </li>
-      print $nav_fh "</li>\n". " " x ($level -1) . "</ol>\n";
+      print $nav_fh "</li>\n"
+               . " " x ($level -1) . "</ol>\n";
       $level--;
     }
     while ($level > $root_level) {
-      print $nav_fh " " x $level . "</li>\n"." " x ($level -1) . "</ol>\n";
+      print $nav_fh " " x $level . "</li>\n"
+                   ." " x ($level -1) . "</ol>\n";
       $level--;
     }
 
@@ -809,13 +935,16 @@ EOT
   my $unique_uid = 'texi-uid';
   # TODO to discuss on bug-texinfo
   my $identifier = 'texinfo:'.$document_name;
-  # the dcterms:modified is mandatory, and it is also mandatory that it is a date:
+  # the dcterms:modified is mandatory, and it is also mandatory that it is
+  # a date:
   #  each Rendition MUST include exactly one [DCTERMS] modified property containing its last modification date. The value of this property MUST be an [XMLSCHEMA-2] dateTime conformant date of the form:
 
   # CCYY-MM-DDThh:mm:ssZ
   #
   # The last modification date MUST be expressed in Coordinated Universal Time (UTC) and MUST be terminated by the "Z" (Zulu) time zone indicator.
-  # FIXME add a way for the user to set $dcterms_modified_str
+  # There is no way to override last modified dcterms:modified
+  # metadata, as Texinfo is not intended to provide ways to customize
+  # all the feature of all the output formats.
   my $dcterms_modified_str;
   if (not $self->get_conf('TEST')) {
     # dcterms:modified is a last modified date of the whole publication.
@@ -829,9 +958,6 @@ EOT
 
   # to discuss
   # <dc:rights>
-
-  # Cf TODO, publication date
-  # <dc:date>
 
   my $opf_file_path_name = join('/', ($epub_destination_directory,
                                      $epub_document_dir_name, $opf_filename));
@@ -862,7 +988,6 @@ EOT
   my $global_commands_information = $document->global_commands_information();
 
   my @authors = ();
-  my @languages = ();
 
   if (defined($global_commands_information)) {
     foreach my $information_block ('documentinfo', 'titlepage') {
@@ -886,27 +1011,33 @@ EOT
         last;
       }
     }
-    if ($global_commands_information->{'documentlanguage'}) {
-      foreach my $element (
-                 @{$global_commands_information->{'documentlanguage'}}) {
-        if (defined($element->{'extra'}->{'text_arg'})) {
-          # TODO the EPUB specification describes specific language
-          # tags.  Not sure there is not a need for some mapping here.
-          push @languages, $element->{'extra'}->{'text_arg'};
-        }
-      }
-    }
   }
-
-  # the standard mandates at least one language specifier
-  if (scalar(@languages) == 0) {
-    @languages = ('en');
-  }
-  foreach my $language (@languages) {
+  foreach my $language (@epub_languages) {
     print $opf_fh "      <dc:language>$language</dc:language>\n";
   }
   foreach my $author (@authors) {
     print $opf_fh "      <dc:creator>$author</dc:creator>\n";
+  }
+
+  if (defined($global_commands_information)
+      and exists($global_commands_information->{'documentinfo'})) {
+    my $documentinfo = $global_commands_information->{'documentinfo'};
+    if (exists($documentinfo->{'contents'})) {
+      my $metadata_in_documentinfo = '';
+      foreach my $element (@{$documentinfo->{'contents'}}) {
+        if ((exists($element->{'type'})
+             and $element->{'type'} eq 'arguments_line'
+            or (exists($element->{'cmdname'})
+                and exists(
+        $Texinfo::Commands::metadata_commands{$element->{'cmdname'}})))) {
+          next;
+        }
+        $metadata_in_documentinfo .= $self->convert_tree($element);
+      }
+      if ($metadata_in_documentinfo =~ /\S/) {
+        print $opf_fh $metadata_in_documentinfo;
+      }
+    }
   }
   print $opf_fh <<EOT;
    </metadata>
@@ -915,7 +1046,8 @@ EOT
 
   if (defined($nav_file_path_name)) {
     print $opf_fh "      <item id=\"$nav_id\" properties=\"nav\" "
-      . "media-type=\"application/xhtml+xml\" href=\"${epub_xhtml_dir}/${nav_filename}\"/>\n";
+      . "media-type=\"application/xhtml+xml\" "
+      . "href=\"${epub_xhtml_dir}/${nav_filename}\"/>\n";
   }
   my $spine_uid_str = 'unit';
   my @output_filename_ids = ();
@@ -927,17 +1059,19 @@ EOT
       $properties_str = ' properties="scripted"'
     }
     print $opf_fh "      <item id=\"${spine_uid_str}${id_count}\" "
-     . "media-type=\"application/xhtml+xml\" href=\"${epub_xhtml_dir}/${output_filename}\"${properties_str}/>\n";
+     . "media-type=\"application/xhtml+xml\" "
+     . "href=\"${epub_xhtml_dir}/${output_filename}\"${properties_str}/>\n";
   }
   my $js_weblabels_id;
   if (defined($self->get_conf('JS_WEBLABELS_FILE'))) {
     my $js_weblabels_file_name = $self->get_conf('JS_WEBLABELS_FILE');
-    my $js_licenses_file_path = join('/', ($epub_document_destination_directory,
+    my $js_licenses_file_path = join('/', ($epub_doc_dest_dir,
                                            $js_weblabels_file_name));
     if (-e $js_licenses_file_path) {
       $js_weblabels_id = 'jsweblabels';
       print $opf_fh "      <item id=\"${js_weblabels_id}\" "
-     . "media-type=\"application/xhtml+xml\" href=\"${epub_xhtml_dir}/${js_weblabels_file_name}\"/>\n";
+       . "media-type=\"application/xhtml+xml\" "
+       . "href=\"${epub_xhtml_dir}/${js_weblabels_file_name}\"/>\n";
     }
   }
   my $image_count = 0;
@@ -953,7 +1087,8 @@ EOT
       $image_mimetype = $extension . '/image';
     }
     print $opf_fh "      <item id=\"image${image_count}\" "
-      . "media-type=\"${image_mimetype}\" href=\"${epub_images_dir_name}/${image_file}\"/>\n";
+                  . "media-type=\"${image_mimetype}\" "
+                  . "href=\"${epub_images_dir_name}/${image_file}\"/>\n";
   }
   if (defined($epub_info_js_dir_name)) {
     my $info_js_destination_dir
@@ -973,7 +1108,8 @@ EOT
           $js_count++;
           my $js_mimetype = $epub_js_extensions_mimetypes{$suffix};
           print $opf_fh "      <item id=\"infojs${js_count}\" "
-  . "media-type=\"${js_mimetype}\" href=\"${epub_info_js_dir_name}/${filename}\"/>\n";
+                  . "media-type=\"${js_mimetype}\" "
+                  . "href=\"${epub_info_js_dir_name}/${filename}\"/>\n";
         }
       }
       closedir(JSPATH);
@@ -998,7 +1134,8 @@ EOT
   # Calibre shows the js_labels file upon clicking if not in the <spine>, and
   # steps in the js_labels file if in the spine.
   if (defined($js_weblabels_id)) {
-    print $opf_fh "      <itemref idref=\"${js_weblabels_id}\" linear=\"no\"/>\n";
+    print $opf_fh "      <itemref idref=\"${js_weblabels_id}\" "
+                                ."linear=\"no\"/>\n";
   }
 
   print $opf_fh <<EOT;
@@ -1049,7 +1186,8 @@ EOT
     my ($encoded_epub_document_dir_path, $epub_document_dir_path_encoding)
       = $self->encoded_output_file_name($epub_document_dir_path);
     my $epub_document_dir_name_ret_code
-      = $zip->addTree($encoded_epub_document_dir_path, $epub_document_dir_name);
+      = $zip->addTree($encoded_epub_document_dir_path,
+                      $epub_document_dir_name);
     if ($epub_document_dir_name_ret_code != Archive::Zip->AZ_OK) {
       $self->converter_document_error(
         sprintf(__("epub3.pm: error adding %s to archive"),
@@ -1059,7 +1197,8 @@ EOT
 
     my ($encoded_epub_outfile, $epub_outfile_encoding)
       = $self->encoded_output_file_name($epub_outfile);
-    unless ($zip->writeToFileNamed($encoded_epub_outfile) == Archive::Zip->AZ_OK) {
+    unless ($zip->writeToFileNamed($encoded_epub_outfile)
+                                              == Archive::Zip->AZ_OK) {
       $self->converter_document_error(
            sprintf(__("epub3.pm: error writing archive %s"),
                    $epub_outfile));

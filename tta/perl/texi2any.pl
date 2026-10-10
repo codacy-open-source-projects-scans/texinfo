@@ -246,6 +246,9 @@ if (!$@) {
   }
 }
 
+# According to the https://perldoc.perl.org/I18N::Langinfo documentation,
+# starting with Perl 5.28 released in 2018, the module works on all
+# platforms, therefore this specific code is probably run for older Perl only.
 if (!defined($locale_encoding) and $^O eq 'MSWin32') {
   eval 'require Win32::API';
   if (!$@) {
@@ -271,7 +274,7 @@ if (!defined($locale_encoding) and $^O eq 'MSWin32') {
   }
 }
 
-# initial setup of messages internalisation framework
+# initial setup of messages internationalisation framework
 # work-around in case libintl-perl do not do it itself
 # see http://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html#The-LANGUAGE-variable
 
@@ -450,7 +453,7 @@ sub add_config_paths($$$$;$$) {
       $overriding_dirs, $deprecated_dirs) = @_;
 
   # read the env directories first to avoid setting the overriding_dirs
-  # as deprecated if they are explicitely specified in the environnement
+  # as deprecated if they are explicitly specified in the environnement
   # variable.
   my @xdg_result_dirs;
   my %used_xdg_base_dirs;
@@ -827,14 +830,13 @@ my %formats_table = (
  'info' => {
              'nodes_tree' => 1,
              'floats' => 1,
-             'setup_index_entries_sort_strings' => 1,
+             'auto_section_node' => 1,
              'module' => 'Texinfo::Convert::Info'
            },
   'plaintext' => {
              'nodes_tree' => 1,
              'floats' => 1,
              'split' => 1,
-             'setup_index_entries_sort_strings' => 1,
              'module' => 'Texinfo::Convert::Plaintext'
            },
   'html' => {
@@ -845,7 +847,7 @@ my %formats_table = (
              'move_index_entries_after_items' => 1,
              'relate_index_entries_to_table_items' => 1,
              'no_warn_non_empty_parts' => 1,
-             'setup_index_entries_sort_strings' => 1,
+             'auto_section_node' => 1,
              'module' => 'Texinfo::Convert::HTML'
            },
   'latex' => {
@@ -869,7 +871,6 @@ my %formats_table = (
                   # is 'ixinsxml', as Texinfo tree conversion is done
                   # from within Texinfo::Example::IXINSXML
              'nodes_tree' => 1,
-             'setup_index_entries_sort_strings' => 1,
              'module' => 'Texinfo::Example::IXINSXML',
              'floats' => 1,
            },
@@ -1080,13 +1081,10 @@ the behavior is identical, and does not depend on the installed name.")."\n"
 .__(
 "      --[no-]number-footnotes  number footnotes sequentially; default is on")."\n"
 .__(
-"  -o, --output=DEST           output to DEST.
-                                With split output, create DEST as a directory
-                                and put the output files there.
-                                With non-split output, if DEST is already
-                                a directory or ends with a /,
-                                put the output file there.
-                                Otherwise, DEST names the output file.")."\n"
+"  -o, --output=DEST           use DEST as name of output file.
+                                With split HTML or split plaintext output,
+                                create DEST as a directory and put the output
+                                files there.")."\n"
 .__(
 "      --disable-encoding      do not output accented and special characters
                                 in Info and plain text output based on document
@@ -1235,10 +1233,6 @@ There is NO WARRANTY, to the extent permitted by law."), "2026")."\n";
                    },
  'output|out|o=s' => sub {
     my $var = 'OUTFILE';
-    if ($_[1] ne '-' and ($_[1] =~ m:/$: or -d $_[1])) {
-      set_from_cmdline($var, undef);
-      $var = 'SUBDIR';
-    }
     set_from_cmdline($var, _decode_input($_[1]));
     push @texi2dvi_args, '-o', $_[1];
   },
@@ -1326,7 +1320,10 @@ There is NO WARRANTY, to the extent permitted by law."), "2026")."\n";
  'paragraph-indent|p=s' => sub {
     my $value = _decode_input($_[1]);
     if ($value =~ /^([0-9]+)$/ or $value eq 'none' or $value eq 'asis') {
-      set_from_cmdline('paragraphindent', $value);
+      my $integer_value =   ($value eq 'none') ? 0
+                          : ($value eq 'asis') ? -2
+                          : ($value + 0);
+      set_from_cmdline('paragraphindent', $integer_value);
     } else {
       die _encode_message(sprintf(
    __("%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'."),
@@ -1468,16 +1465,6 @@ sub _exit($$) {
      or $error_count > get_conf('ERROR_LIMIT')));
 }
 
-sub handle_errors($$$) {
-  my ($errors, $error_count, $opened_files) = @_;
-
-  $error_count += Texinfo::Report::count_errors($errors);
-  _output_error_messages($errors);
-
-  _exit($error_count, $opened_files);
-  return $error_count;
-}
-
 sub _output_error_messages($) {
   my $errors = shift;
 
@@ -1504,6 +1491,16 @@ sub _output_error_messages($) {
       warn $s;
     }
   }
+}
+
+sub handle_errors($$$) {
+  my ($errors, $error_count, $opened_files) = @_;
+
+  $error_count += Texinfo::Report::count_errors($errors);
+  _output_error_messages($errors);
+
+  _exit($error_count, $opened_files);
+  return $error_count;
 }
 
 # If the file overwriting becomes an error, should increase $ERROR_COUNT.
@@ -1628,6 +1625,29 @@ if (get_conf('SHOW_BUILTIN_CSS_RULES')) {
   exit(0);
 }
 
+# error out if there is no input file.
+# Note that the input file names are binary strings and are not decoded
+my @input_files = @ARGV;
+# use STDIN if not a tty
+@input_files = ('-') if (!scalar(@input_files) and !-t STDIN
+                         and !$call_texi2dvi);
+
+my $input_files_nr = scalar(@input_files);
+
+die _encode_message(
+    sprintf(__("%s: missing file argument.")."\n", $real_command_name)
+   .sprintf(__("Try `%s --help' for more information.")."\n", $real_command_name))
+     unless ($input_files_nr >= 1);
+
+if (defined($ENV{TEXINFO_XS_EXTERNAL_CONVERSION})
+    and $ENV{TEXINFO_XS_EXTERNAL_CONVERSION}) {
+  set_from_cmdline('XS_EXTERNAL_CONVERSION', 1);
+}
+if (defined($ENV{TEXINFO_XS_EXTERNAL_FORMATTING})
+    and $ENV{TEXINFO_XS_EXTERNAL_FORMATTING}) {
+  set_from_cmdline('XS_EXTERNAL_FORMATTING', 1);
+}
+
 
 if (exists($formats_table{$converted_format}->{'module'})) {
   # Speed up initialization by only loading the module we need.
@@ -1703,30 +1723,6 @@ foreach my $parser_settable_option (@parser_settable_options) {
 }
 
 # Main processing, process all the files given on the command line
-# Note that the input file names are binary strings and are not decoded
-my @input_files = @ARGV;
-# use STDIN if not a tty
-@input_files = ('-') if (!scalar(@input_files) and !-t STDIN
-                         and !$call_texi2dvi);
-
-my $input_files_nr = scalar(@input_files);
-
-die _encode_message(
-    sprintf(__("%s: missing file argument.")."\n", $real_command_name)
-   .sprintf(__("Try `%s --help' for more information.")."\n", $real_command_name))
-     unless ($input_files_nr >= 1);
-
-# XS parser and not explicitly unset
-my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
-
-if (defined($ENV{TEXINFO_XS_EXTERNAL_CONVERSION})
-    and $ENV{TEXINFO_XS_EXTERNAL_CONVERSION}) {
-  set_from_cmdline('XS_EXTERNAL_CONVERSION', 1);
-}
-if (defined($ENV{TEXINFO_XS_EXTERNAL_FORMATTING})
-    and $ENV{TEXINFO_XS_EXTERNAL_FORMATTING}) {
-  set_from_cmdline('XS_EXTERNAL_FORMATTING', 1);
-}
 
 my $remove_references = 0;
 my $test_level = get_conf('TEST');
@@ -1735,6 +1731,8 @@ if (defined($test_level)) {
 
   # in a test, /dev/null is used as out file.  Replace by the platform
   # null device if it is not /dev/null.
+  # Note that some shells, such as the MSYS2 shell may already have
+  # substituted to a platform specific null device on Windows.
   my $outfile = get_conf('OUTFILE');
   if (defined($outfile) and $outfile eq '/dev/null'
       and scalar(keys(%Texinfo::Common::null_device_file))
@@ -1801,7 +1799,7 @@ while (@input_files) {
           @prepended_include_directories;
 
   my $parser = Texinfo::Parser::parser($parser_file_options);
-  my $document = $parser->parse_texi_file($input_file_name);
+  my $document = $parser->parse_file($input_file_name);
 
   # setup a configuration Perl object which defines get_conf and set_conf,
   # use the main program customization information with per-document
@@ -1836,10 +1834,10 @@ while (@input_files) {
   $document->register_document_options($document_options);
 
 
-  # Get the tree object.  Note that if XS structuring in on, the argument
+  # Get the tree object.  Note that if XS is used, the argument
   # prevents the tree being built as a Perl structure at this stage; only
   # a "handle" is returned.
-  my $tree = $document->tree($XS_structuring);
+  my $tree = $document->tree(1);
 
   if (defined($tree)
       and (get_conf('DUMP_TREE')
@@ -1916,10 +1914,6 @@ while (@input_files) {
   if (defined(get_conf('MACRO_EXPAND')) and $file_index == 0) {
     require Texinfo::Convert::Texinfo;
     Texinfo::Convert::Texinfo->import();
-    # if convert_to_texinfo is not XS code get Perl tree.
-    if (not Texinfo::XSLoader::XS_convert_enabled()) {
-      $tree = $document->tree();
-    }
     my $texinfo_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
     #print STDERR "$texinfo_text\n";
     my $encoded_macro_expand_file_name = get_conf('MACRO_EXPAND');
@@ -1975,13 +1969,6 @@ while (@input_files) {
     goto NEXT;
   }
 
-  if (!$XS_structuring) {
-    # rebuild every information associated to the document, such that
-    # no flags of modified structure in C are set and XS code called
-    # to get document structures directly returns the Perl data.
-    $tree = Texinfo::Document::build_tree($tree);
-  }
-
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
     Texinfo::Transformations::fill_gaps_in_sectioning_in_document($document);
   }
@@ -1998,16 +1985,21 @@ while (@input_files) {
                                                                  $document);
   }
 
-  if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
-    Texinfo::Transformations::insert_nodes_for_sectioning_commands($document);
+  if (get_conf('AUTO_SECTION_NODE')
+      or (!defined(get_conf('AUTO_SECTION_NODE')
+          and $formats_table{$converted_format}->{'auto_section_node'}))
+      or $tree_transformations{'insert_nodes_for_sectioning_commands'}) {
+    Texinfo::ManipulateTree::insert_nodes_for_sectioning_commands($document);
   }
-
-  Texinfo::Structuring::associate_internal_references($document);
 
   # information obtained through Texinfo::Structuring
   # and useful in converters.
   # every format needs the sectioning structure
   Texinfo::Structuring::sectioning_structure($document);
+
+  Texinfo::Structuring::sectioning_targets($document);
+
+  Texinfo::Structuring::associate_internal_references($document);
 
   if (!exists($formats_table{$converted_format}->{'no_warn_non_empty_parts'})) {
     Texinfo::Structuring::warn_non_empty_parts($document);
@@ -2044,11 +2036,6 @@ while (@input_files) {
   }
   if (exists($formats_table{$converted_format}->{'floats'})) {
     Texinfo::Structuring::number_floats($document);
-  }
-
-  # do it now to get error messages here
-  if (exists($formats_table{$converted_format}->{'setup_index_entries_sort_strings'})) {
-    Texinfo::Document::setup_indices_sort_strings($document, undef);
   }
 
   #Texinfo::Document::rebuild_document($document);
@@ -2102,44 +2089,51 @@ while (@input_files) {
   if ($output_format eq 'structure') {
     goto NEXT;
   }
+
   # a shallow copy is not sufficient for arrays and hashes to make
   # sure that the $cmdline_options are not modified if $file_cmdline_options
   # are modified
   my $file_cmdline_options = Storable::dclone($cmdline_options);
-
   if ($file_index != 0) {
     delete $file_cmdline_options->{'OUTFILE'};
     delete $file_cmdline_options->{'PREFIX'};
     delete $file_cmdline_options->{'SUBDIR'} if (get_conf('SPLIT'));
   }
-  # the code in Texinfo::Config makes sure that the keys appear only
-  # once in these three hashes.
-  my $converter_options = { %$main_program_default_options,
-                            %$init_files_options,
-                            %$file_cmdline_options,
-                          };
 
-  # NOTE nothing set through $main_configuration in customization registered in
-  # document is passed directly, which is clean, the Converters already
-  # have that information in $converter_options, can determine it themselves
-  # or use their defaults.
-  # It could be possible to pass some information if it allows
-  # for instance to have some consistent information for Structuring
-  # and Converters.
-  $converter_options->{'deprecated_config_directories'}
-     = \%deprecated_directories;
-  unshift @{$converter_options->{'INCLUDE_DIRECTORIES'}},
-          @prepended_include_directories;
+  my $converter;
+  if (exists($formats_table{$converted_format}->{'converter'})) {
+    # the code in Texinfo::Config makes sure that the keys appear only
+    # once in these three hashes.
+    my $converter_options = { %$main_program_default_options,
+                              %$init_files_options,
+                              %$file_cmdline_options,
+                            };
 
-  my @prepended_texinfo_language_directories = ($curdir);
-  push @prepended_texinfo_language_directories, $input_directory
-      if ($canon_input_dir ne $curdir);
+    # NOTE nothing set through $main_configuration in customization registered in
+    # document is passed directly, which is clean, the Converters already
+    # have that information in $converter_options, can determine it themselves
+    # or use their defaults.
+    # It could be possible to pass some information if it allows
+    # for instance to have some consistent information for Structuring
+    # and Converters.
+    $converter_options->{'deprecated_config_directories'}
+       = \%deprecated_directories;
+    unshift @{$converter_options->{'INCLUDE_DIRECTORIES'}},
+            @prepended_include_directories;
 
-  unshift @{$converter_options->{'TEXINFO_LANGUAGE_DIRECTORIES'}},
-           @prepended_texinfo_language_directories;
+    my @prepended_texinfo_language_directories = ($curdir);
+    push @prepended_texinfo_language_directories, $input_directory
+        if ($canon_input_dir ne $curdir);
 
-  my $converter = &{$formats_table{$converted_format}
-        ->{'converter'}}($converter_options);
+    unshift @{$converter_options->{'TEXINFO_LANGUAGE_DIRECTORIES'}},
+             @prepended_texinfo_language_directories;
+
+    # reference to module->converter() constructor
+    my $converter_constructor
+      = $formats_table{$converted_format}->{'converter'};
+    $converter = &{$converter_constructor}($converter_options);
+  }
+
   $converter->output($document);
 
   my $converter_errors = $converter->get_converter_errors();
@@ -2162,7 +2156,7 @@ while (@input_files) {
       # with a file handle yet, as a file handle can't be directly associated
       # with a stream in C code, but the stream can be returned through
       # an XS interface, here
-      # Texinfo::Convert::ConvertConverterXS::get_unclosed_stream.
+      # Texinfo::Convert::ConvertConverterXS::XS_get_unclosed_stream.
       if (!defined($fh)) {
         $fh = $converter->XS_get_unclosed_stream($unclosed_file);
         if (!defined($fh)) {
