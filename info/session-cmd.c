@@ -2220,7 +2220,7 @@ DECLARE_INFO_COMMAND (info_last_node, _("Select the last node in this file"))
       if (count == 0 || (count == 1 && !info_explicit_arg))
         count = -1;
       for (i = 0; count && fb->tags[i]; i++)
-        if (!(fb->tags[i]->flags & T_IsAnchor)) /* don't count anchor tags */
+        if (fb->tags[i]->flags & T_IsNode) /* count only node tags */
           {
             count--;
             last_node_tag_idx = i;
@@ -2253,7 +2253,7 @@ DECLARE_INFO_COMMAND (info_first_node, _("Select the first node in this file"))
       int last_node_tag_idx = -1;
 
       for (i = 0; count && fb->tags[i]; i++)
-        if (!(fb->tags[i]->flags & T_IsAnchor)) /* don't count anchor tags */
+        if (fb->tags[i]->flags & T_IsNode) /* count only node tags */
           {
             count--;
             last_node_tag_idx = i;
@@ -2560,6 +2560,8 @@ DECLARE_INFO_COMMAND (info_goto_node, _("Read a node name and select it"))
           {
             for (i = 0; fb->tags[i]; i++)
               {
+                if (!fb->tags[i]->nodename)
+                  continue;
                 entry = xmalloc (sizeof (REFERENCE));
                 entry->filename = entry->nodename = NULL;
                 if (this_is_the_current_fb)
@@ -3117,7 +3119,8 @@ info_search_internal (char *string, WINDOW *window,
       char *initial_nodename = window->node->nodename;
 
       for (i = 0; file_buffer->tags[i]; i++)
-        if (strcmp (initial_nodename, file_buffer->tags[i]->nodename) == 0)
+        if (file_buffer->tags[i]->nodename
+            && strcmp (initial_nodename, file_buffer->tags[i]->nodename) == 0)
           {
             starting_tag = i;
             subfile_name = file_buffer->tags[i]->filename;
@@ -3171,7 +3174,7 @@ info_search_internal (char *string, WINDOW *window,
         break;
       first_time = 0;
 
-      /* Find the next tag that isn't an anchor.  */
+      /* Find the next tag that is a node.  */
       for (i = current_tag + dir; ; i += dir)
         {
           if (i < 0)
@@ -3186,7 +3189,7 @@ info_search_internal (char *string, WINDOW *window,
             }
 
           tag = file_buffer->tags[i];
-          if (!(tag->flags & T_IsAnchor))
+          if (tag->flags & T_IsNode)
             break;
         }
 
@@ -3377,7 +3380,7 @@ tag_of_reference (REFERENCE *r, WINDOW *window, FILE_BUFFER **fb, TAG ***t)
     return 0;
 
   for (i = 0; *(*t = &(*fb)->tags[i]); i++)
-    if (!strcmp (nodename, (**t)->nodename))
+    if ((**t)->nodename && !strcmp (nodename, (**t)->nodename))
       goto found_tag;
   return 0;
  found_tag: ;
@@ -3386,6 +3389,25 @@ tag_of_reference (REFERENCE *r, WINDOW *window, FILE_BUFFER **fb, TAG ***t)
 
 /* Value for NODE.active_menu */
 #define BEFORE_MENU -99
+
+static TAG **
+tag_for_node (NODE *node)
+{
+  REFERENCE r = { 0 };
+  r.filename = node->fullpath;
+  r.nodename = node->nodename;
+
+  if (!r.filename || !r.nodename)
+    return NULL;
+
+  FILE_BUFFER *file_buffer;
+  TAG **tag;
+
+  if (tag_of_reference (&r, NULL, &file_buffer, &tag))
+    return tag;
+  return NULL;
+}
+
 
 static void tree_search_check_node (WINDOW *window);
 static void tree_search_check_node_backwards (WINDOW *window);
@@ -3411,6 +3433,8 @@ tree_search_check_node (WINDOW *window)
   goto check_node;
 
  check_node:
+  debug (4, ("tree search: check node (%s)%s",
+             window->node->fullpath, window->node->nodename));
   result = info_search_in_node_internal (window, window->node,
                                   string,
                                   window->point + 1,
@@ -3451,14 +3475,17 @@ tree_search_check_node (WINDOW *window)
             if (!tag_of_reference (r, window, &file_buffer, &tag))
               continue;
 
-            if ((*tag)->flags & T_SeenBySearch)
+            if ((*tag)->flags & (T_SeenBySearch | T_TreeSearchRoute))
               continue;
-            (*tag)->flags |= T_SeenBySearch;
+            (*tag)->flags |= (T_SeenBySearch | T_TreeSearchRoute);
 
             window->node->active_menu = ref_index + 1;
             node = info_node_of_tag (file_buffer, tag);
             if (!node)
               continue;
+
+            debug (4, ("tree search: go down to (%s)%s",
+                       node->fullpath, node->nodename));
             info_set_node_of_window_fast (window, node);
             window->node->active_menu = BEFORE_MENU;
             goto check_node;
@@ -3471,7 +3498,16 @@ tree_search_check_node (WINDOW *window)
   if (window->hist_index >= 2
       && window->hist[window->hist_index - 2]->node->active_menu != 0)
     {
+      debug (4, ("tree search: go up from (%s)%s",
+                 window->node->fullpath, window->node->nodename));
+      TAG **tag = tag_for_node (window->node);
+      if (tag)
+        (*tag)->flags &= ~T_TreeSearchRoute;
       forget_node_fast (window);
+
+      debug (4, ("tree search: go up to (%s)%s",
+                 window->node->fullpath, window->node->nodename));
+
       goto check_menus;
     }
 
@@ -3480,6 +3516,7 @@ tree_search_check_node (WINDOW *window)
     {
       message_in_echo_area (_("Going back to last match from %s"),
                             window->node->nodename);
+      debug (4, ("tree search: bounce off end"));
 
       /* This is a trick.
          Set active_menu to one more than the number of references,
@@ -3487,27 +3524,36 @@ tree_search_check_node (WINDOW *window)
          When we call tree_search_check_node_backwards, this will go
          backwards through the tree structure to the last match.
          Change active_menu back to a valid value afterwards .*/
-      {
-        int n = 0;
+      int n = 0;
 
-        while (window->node->references[n])
-          n++;
-        window->node->active_menu = n + 1;
+      while (window->node->references[n])
+        n++;
+      window->node->active_menu = n + 1;
 
-        info_parse_and_select ("Top", window);
-        /* Check if this worked. */
-        if (strcmp (window->node->nodename, "Top"))
-          {
-            /* Loading "Top" node failed. */
-            window->node->active_menu = 0;
-            goto funexit;
-          }
-        window->node->active_menu = BEFORE_MENU;
-      }
+      info_parse_and_select ("Top", window);
+      /* Check if this worked. */
+      if (strcmp (window->node->nodename, "Top"))
+        {
+          /* Loading "Top" node failed. */
+          window->node->active_menu = 0;
+          goto funexit;
+        }
+      window->node->active_menu = BEFORE_MENU;
+
       window->point = window->node->body_start;
       tree_search_check_node_backwards (window);
+      debug (4, ("tree search: at last match in (%s)%s",
+                 window->node->fullpath, window->node->nodename));
     }
-  info_error (previous_match ?  _("No more matches") : _("Search failed"));
+  if (previous_match)
+    {
+      info_error (_("No more matches"));
+    }
+  else
+    {
+      info_error (_("Search failed"));
+      window->node->active_menu = 0;
+    }
 
  funexit:
   free (string);
@@ -3529,6 +3575,8 @@ tree_search_check_node_backwards (WINDOW *window)
   goto check_node;
 
  check_node:
+  debug (4, ("tree search (reverse): check node (%s)%s",
+             window->node->fullpath, window->node->nodename));
   result = info_search_in_node_internal (window, window->node,
                                   string,
                                   window->point - 1,
@@ -3549,8 +3597,12 @@ tree_search_check_node_backwards (WINDOW *window)
      reference in the node to have been checked, plus one.  BEFORE_MENU is a
      special code to say that none of them have been checked. */
  check_menus:
-  if (!(window->node->flags & N_IsIndex)) /* Don't go down menus in index  */
-    {                               /* nodes, because this leads to loops. */
+  /* Don't go down menus in index nodes, because this leads to loops. */
+  if (!(window->node->flags & N_IsIndex))
+    {
+      debug (4, ("tree search (reverse): check through menus of (%s)%s",
+                  window->node->fullpath, window->node->nodename));
+
       REFERENCE *r;
       int ref_index;
       if (window->node->active_menu == BEFORE_MENU)
@@ -3575,20 +3627,32 @@ tree_search_check_node_backwards (WINDOW *window)
               if (!((*tag)->flags & T_SeenBySearch))
                 continue;
 
+              if (((*tag)->flags & T_TreeSearchRoute))
+                {
+                  debug (4, ("tree search (reverse): skip (%s)%s (on route) (tag %p)",
+                             (*tag)->filename, (*tag)->nodename, tag));
+                  continue;
+                }
+
               node = info_node_of_tag (file_buffer, tag);
               if (!node)
                 continue;
+
+              debug (4, ("tree search (reverse): go down to (%s)%s",
+                         node->fullpath, node->nodename));
+
+              (*tag)->flags |= T_TreeSearchRoute;
               window->node->active_menu = ref_index + 1;
               info_set_node_of_window_fast (window, node);
               window->point = window->node->nodelen;
-              {
-                /* Start at the last menu entry in the subordinate node. */
-                int i;
-                i = 0;
-                while(window->node->references[i])
-                  i++;
-                window->node->active_menu = i + 1;
-              }
+
+              /* Start at the last menu entry in the subordinate node. */
+              int i;
+              i = 0;
+              while (window->node->references[i])
+                i++;
+              window->node->active_menu = i + 1;
+
               goto check_menus;
             }
         }
@@ -3608,19 +3672,32 @@ tree_search_check_node_backwards (WINDOW *window)
       forget_node_fast (window);
       r = window->node->references[window->node->active_menu - 1];
 
-      /* Clear the flag to say we've been to the node we just came back
-         from.  This reverse the order from the forwards search, where
-         we set this flag just before going down. */
+      debug (4, ("tree search (reverse): go up to (%s)%s",
+                 window->node->fullpath, window->node->nodename));
+
+      /* Clear the T_SeenBySearch flag to say we've been to the node we just
+         came back from.  This reverse the order from the forwards search,
+         where we set this flag just before going down. */
       if (r && tag_of_reference (r, window, &file_buffer, &tag))
         {
           (*tag)->flags &= ~T_SeenBySearch;
+          (*tag)->flags &= ~T_TreeSearchRoute;
         }
 
       goto check_menus;
     }
+  debug (4, ("tree search (reverse): failed"));
 
   /* Otherwise, no result. */
-  info_error (previous_match ?  _("No more matches") : _("Search failed"));
+  if (previous_match)
+    {
+      info_error (_("No more matches"));
+    }
+  else
+    {
+      info_error (_("Search failed"));
+      window->node->active_menu = 0;
+    }
 
  funexit:
   free (string);
@@ -3641,10 +3718,74 @@ wipe_seen_flags (void)
         continue; /* Probably a sub-file of a split file. */
       for (; *t; t++)
         {
-          (*t)->flags &= ~T_SeenBySearch;
+          (*t)->flags &= ~(T_SeenBySearch | T_TreeSearchRoute);
         }
     }
 }
+
+/* Set T_TreeSearchRoute on current node and tree search history. */
+static void
+mark_tree_search_path (WINDOW *window)
+{
+  TAG **tag;
+
+  tag = tag_for_node (window->node);
+  if (!tag)
+    return;
+  (*tag)->flags |= T_TreeSearchRoute;
+
+  size_t i;
+  for (i = window->hist_index - 1; i > 0; i--)
+    {
+      NODE *hist_node = window->hist[i-1]->node;
+      if (hist_node->active_menu == 0)
+        break;
+      tag = tag_for_node (hist_node);
+
+      (*tag)->flags |= T_TreeSearchRoute;
+    }
+}
+
+/* Clear T_TreeSearchRoute on current node and tree search history. */
+static void
+clear_tree_search_path (WINDOW *window)
+{
+  TAG **tag;
+
+  tag = tag_for_node (window->node);
+  if (!tag)
+    return;
+  (*tag)->flags |= T_TreeSearchRoute;
+
+  size_t i;
+  for (i = window->hist_index - 1; i > 0; i--)
+    {
+      NODE *hist_node = window->hist[i-1]->node;
+      if (hist_node->active_menu == 0)
+        break;
+      tag = tag_for_node (hist_node);
+
+      (*tag)->flags &= ~T_TreeSearchRoute;
+    }
+}
+
+
+static void
+do_tree_search_next (WINDOW *window)
+{
+  mark_tree_search_path (window);
+  tree_search_check_node (window);
+  clear_tree_search_path (window);
+}
+
+static void
+do_tree_search_prev (WINDOW *window)
+{
+  mark_tree_search_path (window);
+  tree_search_check_node_backwards (window);
+  clear_tree_search_path (window);
+}
+
 
 DECLARE_INFO_COMMAND (info_tree_search,
                       _("Search this node and subnodes for a string"))
@@ -3665,7 +3806,8 @@ DECLARE_INFO_COMMAND (info_tree_search,
   for (i = 0; i < window->hist_index; i++)
     window->hist[i]->node->active_menu = 0;
   window->search_string = line;
-  tree_search_check_node (window);
+
+  do_tree_search_next (window);
 }
 
 DECLARE_INFO_COMMAND (info_tree_search_next,
@@ -3677,7 +3819,7 @@ DECLARE_INFO_COMMAND (info_tree_search_next,
       return;
     }
 
-  tree_search_check_node (window);
+  do_tree_search_next (window);
 }
 
 DECLARE_INFO_COMMAND (info_tree_search_previous,
@@ -3689,7 +3831,7 @@ DECLARE_INFO_COMMAND (info_tree_search_previous,
       return;
     }
 
-  tree_search_check_node_backwards (window);
+  do_tree_search_prev (window);
 }
 #undef BEFORE_MENU
 
@@ -3721,7 +3863,7 @@ DECLARE_INFO_COMMAND (info_search_next,
 
   if (window->search_string && window->node->active_menu)
     {
-      tree_search_check_node (window);
+      do_tree_search_next (window);
       return;
     }
 
@@ -3772,7 +3914,7 @@ DECLARE_INFO_COMMAND (info_search_previous,
 
   if (window->search_string && window->node->active_menu)
     {
-      tree_search_check_node_backwards (window);
+      do_tree_search_prev (window);
       return;
     }
 

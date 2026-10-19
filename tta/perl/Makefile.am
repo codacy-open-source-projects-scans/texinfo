@@ -48,6 +48,10 @@ $(products_regenerate_file_lists): $(srcdir)/stamp.regenerate_file_lists
 EXTRA_DIST += stamp.regenerate_file_lists
 MAINTAINERCLEANFILES += $(products_regenerate_file_lists) stamp.regenerate_file_lists
 
+# Not strictly needed for make all, but it allows to have the files back after
+# make maintainer-clean followed by make (without a need to run make dist too).
+all-local: stamp.regenerate_file_lists
+
 if !PREFER_C_TEXI2ANY
 bin_SCRIPTS = texi2any
 else
@@ -231,6 +235,7 @@ test_files = \
  t/init/access_output_unit_in_handler.pm \
  t/init/access_tree_output_unit_in_handler.pm \
  t/init/add_directions_buttons.pm \
+ t/init/boolean_customization_invalid.pm \
  t/init/button_replacement_for_special_unit_direction.pm \
  t/init/command_translation_modified.init \
  t/init/css_in_node_redirection_page.pm \
@@ -243,12 +248,15 @@ test_files = \
  t/init/icons.init \
  t/init/ignore_and_comments_output.init \
  t/init/index_direction_from_index_name.pm \
+ t/init/integer_customization_string.pm \
+ t/init/integer_customization_undef.pm \
  t/init/l2h.init \
  t/init/lowercase_file_names_and_redirections.pm \
  t/init/mini_ker_t2h.init \
  t/init/misc_file_collision.init \
  t/init/no_navigation.pm \
  t/init/only_toc_out.init \
+ t/init/parser_customization_undef.pm \
  t/init/redefine_need.init \
  t/init/redefined_buttons.pm \
  t/init/redirection_file_collision_with_special.init \

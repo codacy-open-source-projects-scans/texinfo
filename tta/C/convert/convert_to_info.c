@@ -274,6 +274,7 @@ info_output (CONVERTER *self, DOCUMENT *document)
   char *preamble_documentlanguagevariant = 0;
   C_HASHMAP *seen_anchors;
   TEXT node_text;
+  int ambiguous_index_string_in_node_names;
 
   plaintext_conversion_initialization (self, document);
 
@@ -396,7 +397,9 @@ info_output (CONVERTER *self, DOCUMENT *document)
         }
     }
 
-  plaintext_cache_node_names (self, &self->document->nodes_list);
+  ambiguous_index_string_in_node_names
+     = info_cache_node_names (self, &self->document->nodes_list,
+                (! self->document->global_commands.printindex.number));
 
   info_header (self, input_basefile, output_filename, &header);
 
@@ -719,62 +722,121 @@ info_output (CONVERTER *self, DOCUMENT *document)
 
   seen_anchors = new_c_hashmap (self_plaintext->target_locations->number);
 
-  for (j = 0; j < self_plaintext->target_locations->number; j++)
+  if (ambiguous_index_string_in_node_names)
     {
-      const ELEMENT *element
-        = self_plaintext->target_locations->list[j].target_element;
-      STRING_WITH_WIDTH node_name_width;
-      const char *prefix;
+  /* add a tag (with an impossible index name at an impossible location)
+     for an Info file with at least one  node with "Index" in its name but no
+     @printindex.  An Info reader knowing about the Index: tag can infer
+     that the processor doing the Info file is recent enough and
+     only Index: tags should be used to determine printed indices locations,
+     such that nodes with "Index" in their name are not considered to
+     actually be nodes with printed indices.
+   */
 
-      if (!(element->flags & EF_is_target))
-        continue;
+      if (self->conf->_USE_NEW_INFO_TAGS.o.integer <= 0)
+        text_append_n (&tag_text, "Ref: \x08", 6);
 
-      plaintext_node_name (self, element, &node_name_width);
+      text_append_n (&tag_text, "Index: ", 7);
 
-      if (is_c_hashmap_registered (seen_anchors, node_name_width.string.text))
-        {
-          if (!self_plaintext->silent)
-            {
-              const ELEMENT *label_element = get_label_element (element);
-              char *texinfo_string
-                = convert_contents_to_texinfo (label_element);
-
-              message_list_command_error (&self->error_messages,
-                      (self->conf && self->conf->DEBUG.o.integer > 0),
-                       element, "@%s output more than once: %s",
-                        element_command_name (element), texinfo_string);
-              free (texinfo_string);
-            }
-          free (node_name_width.string.text);
-          continue;
-        }
-
-      c_hashmap_register (seen_anchors, node_name_width.string.text, 0);
-
-      if (element->e.c->cmd == CM_node)
-        prefix = "Node";
-      else
-        prefix = "Ref";
-
-      text_printf (&tag_text, "%s: ", prefix);
       if (self_plaintext->encoding_object)
         {
           TEXT converted_text
+           = encode_with_iconv (self_plaintext->encoding_object->iconv,
+                                "_", 1, 0, ieh_error, 0);
+          text_append_n (&tag_text, converted_text.text,
+                         converted_text.end);
+          free (converted_text.text);
+        }
+      else
+        text_append_n (&tag_text, "_", 1);
+      text_append_n (&tag_text, "\x{7F}0\n", 3);
+    }
+
+  for (j = 0; j < self_plaintext->target_locations->number; j++)
+    {
+      const TARGET_LOCATION *target_location
+        = &self_plaintext->target_locations->list[j];
+      if (target_location->type == PLT_anchor)
+        {
+          const ELEMENT *element = target_location->tl.target_element;
+          STRING_WITH_WIDTH node_name_width;
+          const char *prefix;
+
+          if (!(element->flags & EF_is_target))
+            continue;
+
+          plaintext_node_name (self, element, &node_name_width);
+
+          if (is_c_hashmap_registered (seen_anchors,
+                                       node_name_width.string.text))
+            {
+              if (!self_plaintext->silent)
+                {
+                  const ELEMENT *label_element = get_label_element (element);
+                  char *texinfo_string
+                    = convert_contents_to_texinfo (label_element);
+
+                  message_list_command_error (&self->error_messages,
+                      (self->conf && self->conf->DEBUG.o.integer > 0),
+                       element, "@%s output more than once: %s",
+                        element_command_name (element), texinfo_string);
+                  free (texinfo_string);
+                }
+              free (node_name_width.string.text);
+              continue;
+            }
+
+          c_hashmap_register (seen_anchors, node_name_width.string.text, 0);
+
+          if (element->e.c->cmd == CM_node)
+            prefix = "Node";
+          else
+            prefix = "Ref";
+
+          text_printf (&tag_text, "%s: ", prefix);
+          if (self_plaintext->encoding_object)
+            {
+              TEXT converted_text
                = encode_with_iconv (self_plaintext->encoding_object->iconv,
                                               node_name_width.string.text,
                                               node_name_width.string.end,
                                               0, ieh_error, 0);
-          text_append_n (&tag_text, converted_text.text, converted_text.end);
-          free (converted_text.text);
+              text_append_n (&tag_text, converted_text.text,
+                             converted_text.end);
+              free (converted_text.text);
+            }
+          else
+            text_append_n (&tag_text, node_name_width.string.text,
+                           node_name_width.string.end);
+          free (node_name_width.string.text);
         }
-      else
-        text_append_n (&tag_text, node_name_width.string.text,
-                       node_name_width.string.end);
+      else if (target_location->type == PLT_index)
+        {
+   /* standalone Info reader released before 2025 breaks if there is a tag
+      different from Ref and Node.  Therefore reuse Ref with a special
+      character for the Index location tag in the default case */
+          if (self->conf->_USE_NEW_INFO_TAGS.o.integer <= 0)
+            text_append_n (&tag_text, "Ref: \x08", 6);
 
-      text_printf (&tag_text, "\x7F%zu\n",
-                   self_plaintext->target_locations->list[j].bytes);
+          text_append_n (&tag_text, "Index: ", 7);
 
-      free (node_name_width.string.text);
+          if (self_plaintext->encoding_object)
+            {
+              /* conversion to drop const for the prototype */
+              TEXT converted_text
+               = encode_with_iconv (self_plaintext->encoding_object->iconv,
+                                    (char *)target_location->tl.index_argument,
+                                    strlen (target_location->tl.index_argument),
+                                    0, ieh_error, 0);
+              text_append_n (&tag_text, converted_text.text,
+                             converted_text.end);
+              free (converted_text.text);
+            }
+          else
+            text_append_n (&tag_text, target_location->tl.index_argument,
+                           strlen (target_location->tl.index_argument));
+        }
+      text_printf (&tag_text, "\x7F%zu\n", target_location->bytes);
     }
   text_append_n (&tag_text, "\x1F\nEnd Tag Table\n", 16);
 

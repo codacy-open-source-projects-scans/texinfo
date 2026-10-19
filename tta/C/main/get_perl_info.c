@@ -510,23 +510,13 @@ get_sv_option (OPTION *option, SV *value, int force,
   switch (option->type)
     {
       case GOT_integer:
+      case GOT_boolean:
         if (SvOK (value))
           {
             if (looks_like_number (value))
               option->o.integer = SvIV (value);
             else
-              {
-        /* warn?  No such check in Perl */
-        /* Consider that the option is set if the string is not empty, similar
-           to Perl.
-           Not exactly the same as comparison won't fail in C, while
-           it will fail in Perl and trigger a warning. */
-                const char *str_value = SvPVutf8_nolen (value);
-                if (!strcmp (str_value, ""))
-                  option->o.integer = 0;
-                else
-                  option->o.integer = 1;
-              }
+              fatal ("get_sv_option: unexpected non number value");
           }
         else
           option->o.integer = -1;

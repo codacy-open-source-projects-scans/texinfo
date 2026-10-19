@@ -1232,16 +1232,30 @@ stream_encode (CONVERTER *self, PENDING_TEXT_LIST *pending_texts, TEXT *result)
         {
           text_destroy (&pending_text->l.image_string);
         }
-      else if (self_plaintext->target_locations
-               && pending_text->type == PLT_anchor)
+      else if (self_plaintext->target_locations)
         {
-          TARGET_LOCATION target_location;
-          target_location.target_element = pending_text->l.anchor;
-          target_location.bytes = self_plaintext->bytes;
+          if (pending_text->type == PLT_anchor)
+            {
+              TARGET_LOCATION target_location;
+              target_location.type = pending_text->type;
+              target_location.tl.target_element = pending_text->l.anchor;
+              target_location.bytes = self_plaintext->bytes;
 
-          add_(target_location) (self_plaintext->target_locations,
-                                 target_location);
-          pending_text->l.anchor = 0;
+              add_(target_location) (self_plaintext->target_locations,
+                                     target_location);
+              pending_text->l.anchor = 0;
+            }
+          else if (pending_text->type == PLT_index)
+            {
+              TARGET_LOCATION target_location;
+              target_location.type = pending_text->type;
+              target_location.tl.index_argument = pending_text->l.argument;
+              target_location.bytes = self_plaintext->bytes;
+
+              add_(target_location) (self_plaintext->target_locations,
+                                     target_location);
+              pending_text->l.argument = 0;
+            }
         }
       pending_text->type = PLT_text;
     }
@@ -1628,15 +1642,24 @@ plaintext_node_name (CONVERTER *self, const ELEMENT *element,
   plaintext_convert_node_name (self, element, string_result);
 }
 
+/* Only used for Info, hence the name, kept in this file to use other
+   local functions and data */
 /* the advantage of using that function is that we know that nodes only
    are processed and the $label_element can be obtained more simply
    than when the node is setup by a call to node_name(). */
-void
-plaintext_cache_node_names (CONVERTER *self, NODE_RELATIONS_LIST *nodes_list)
+/* If CHECK_INDEX_STRING_IN_NODE_NAMES is set, check if the "Index"
+   string is present in at least one node name and return 1 if so.
+   The Info readers may use that string to discover nodes with printed
+   indices.
+ */
+int
+info_cache_node_names (CONVERTER *self, NODE_RELATIONS_LIST *nodes_list,
+                       int check_index_string_in_node_names)
 {
   size_t i;
   PLAINTEXT_CONVERTER_STATE *self_plaintext = self->plaintext_converter;
   ELEMENT *node_text = new_element (ET__code);
+  int index_string_in_node_found = 0;
 
   if (!node_names_formatter)
     {
@@ -1672,6 +1695,11 @@ plaintext_cache_node_names (CONVERTER *self, NODE_RELATIONS_LIST *nodes_list)
       node_name->width = para_counter ();
       node_name->string = result;
 
+      if (check_index_string_in_node_names
+          && !index_string_in_node_found
+          && strcasestr (result.text, "Index"))
+        index_string_in_node_found = 1;
+
       /* reset counters */
       para_end_line ();
 
@@ -1682,6 +1710,8 @@ plaintext_cache_node_names (CONVERTER *self, NODE_RELATIONS_LIST *nodes_list)
   pop_formatter (self, 1);
 
   destroy_element (node_text);
+
+  return index_string_in_node_found;
 }
 
 static void
@@ -2498,6 +2528,8 @@ plaintext_process_printindex (CONVERTER *self,
           break;
         }
     }
+  /* an index merged in another one is not present in sorted_indexes,
+     therefore it is ignored here. */
   /* no entries should not be possible, as only indices with entries are
      left in sorted index names array */
   if (!index_sorted || !index_sorted->entries_number)
@@ -2605,6 +2637,14 @@ plaintext_process_printindex (CONVERTER *self,
 
   if (in_info)
     {
+      COUNT_CONTEXT *count_context
+       = top_(count_context) (&self_plaintext->count_context);
+      PENDING_TEXT_LIST *pending = &count_context->pending_text;
+      PENDING_TEXT *pending_index = add_top_pending_text (pending,
+                                                          PLT_index);
+      pending_index->l.argument = index_name;
+      add_top_pending_text (pending, PLT_text);
+
       stream_output_n (self, "\x00\x08[index\x00\x08]\n", 12);
       add_lines_count (self, 1);
     }
@@ -6395,7 +6435,7 @@ convert_to_plaintext_internal (CONVERTER *self, const ELEMENT *element)
                       int description_indent_length;
                       uintptr_t seen_description_nr = 0;
                       if (
-            self->conf->AUTO_MENU_DESCRIPTION_ALIGN_COLUMN.o.integer >= 0)
+            self->conf->AUTO_MENU_DESCRIPTION_ALIGN_COLUMN.o.integer > 0)
                         description_align_column
                  = self->conf->AUTO_MENU_DESCRIPTION_ALIGN_COLUMN.o.integer;
                       else
@@ -6451,7 +6491,7 @@ convert_to_plaintext_internal (CONVERTER *self, const ELEMENT *element)
                                  (&self_plaintext->text_element_context);
                       TEXT_CONTEXT text_element_context = { text_count, 0 };
 
-                      if (self->conf->AUTO_MENU_MAX_WIDTH.o.integer >= 0)
+                      if (self->conf->AUTO_MENU_MAX_WIDTH.o.integer > 0)
                         text_element_context.max
                           = self->conf->AUTO_MENU_MAX_WIDTH.o.integer;
                       else
@@ -7417,11 +7457,9 @@ plaintext_output (CONVERTER *self, DOCUMENT *document)
     split_by_section (document, &output_units);
 
   nodes_list = &self->document->nodes_list;
- /* Do not call _cache_node_names as only the node names used in index
+ /* Do not cache node names as only the node names used in index
     formatting are needed, therefore we may generate names that are
     not used if we call the function.
-
-  plaintext_cache_node_names (self, nodes_list);
   */
 
   split_pages (&output_units, nodes_list, self->conf->SPLIT.o.string);

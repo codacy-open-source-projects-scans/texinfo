@@ -37,6 +37,9 @@ use 5.006;
 use strict;
 use warnings;
 
+# stop \d from matching non-ASCII numbers
+use if $] >= 5.014, re => '/a';
+
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
 
@@ -47,6 +50,9 @@ use Encode;
 
 # for __( and __p( and some functions
 use Texinfo::Common;
+
+# for %options_type_*
+use Texinfo::Options;
 
 use Texinfo::XSLoader;
 
@@ -110,6 +116,13 @@ sub import {
 # for error messages, passed from main calling context through initialization
 # function.
 my $real_command_name = '';
+
+my %options_type_boolean = %Texinfo::Options::options_type_boolean;
+my %options_type_buttons = %Texinfo::Options::options_type_buttons;
+my %options_type_bytes = %Texinfo::Options::options_type_bytes;
+my %options_type_char = %Texinfo::Options::options_type_char;
+my %options_type_icons = %Texinfo::Options::options_type_icons;
+my %options_type_integer = %Texinfo::Options::options_type_integer;
 
 
 #####################################################################
@@ -288,6 +301,40 @@ sub texinfo_register_init_loading_warning($) {
                                             'text' => $message};
 }
 
+sub _GNUT_check_value_type($$) {
+  my ($var, $value) = @_;
+
+  if (exists($options_type_integer{$var})) {
+    if (!defined($value)) {
+      _GNUT_document_warn(sprintf(__("value expected for %s (setting to 0)"),
+                          $var));
+      return (1, 0);
+    } elsif (not ($value =~ /^\d+$/
+             or $var eq 'paragraphindent' and $value eq '-2')) {
+      _GNUT_document_warn(
+        sprintf(__("\"%s\" invalid for %s (number expected)"),
+                              $value, $var));
+      return (0, $value);
+    }
+  } elsif (exists($options_type_boolean{$var})) {
+    if (defined($value)) {
+      if ($value ne '1' and $value ne '0') {
+        _GNUT_document_warn(
+          sprintf(__("\"%s\" invalid for %s (0 or 1 expected)"),
+                           $value, $var));
+        my $result_value;
+        if ($value) {
+          $result_value = 1;
+        } else {
+          $result_value = 0;
+        }
+        return (1, $result_value);
+      }
+    }
+  }
+  return (1, $value);
+}
+
 # Called from init files to set configuration options.
 sub texinfo_set_from_init_file($$) {
   my ($var, $value) = @_;
@@ -302,6 +349,34 @@ sub texinfo_set_from_init_file($$) {
                                 'texinfo_set_from_init_file', $var));
     return 0;
   }
+
+  if (defined($value)) {
+    if (exists($options_type_bytes{$var}) or exists($options_type_char{$var})
+        or exists($options_type_boolean{$var})
+        or exists($options_type_integer{$var})) {
+      if (ref($value) ne '') {
+        confess("scalar expected for $var");
+      }
+    } elsif (exists($options_type_buttons{$var})) {
+      if (ref($value) ne 'ARRAY') {
+        confess("array reference expected for $var");
+      }
+    } elsif (exists($options_type_icons{$var})) {
+      if (ref($value) ne 'HASH') {
+        confess("hash reference expected for $var");
+      }
+    } else {
+      _GNUT_document_warn(sprintf(__(
+           "%s: %s should not be set from an initialization file"),
+          'texinfo_set_from_init_file', $var));
+    }
+  }
+
+  delete $init_files_options->{$var};
+  my $status;
+  ($status, $value) = _GNUT_check_value_type($var, $value);
+  return 0 if (!$status);
+
   return 0 if (exists($cmdline_options->{$var}));
   delete $options_defaults->{$var};
   $init_files_options->{$var} = $value;
@@ -310,6 +385,7 @@ sub texinfo_set_from_init_file($$) {
 
 # set option from the command line, called from main program.
 # Highest precedence.
+# Only for strings and integers.
 sub GNUT_set_from_cmdline($$) {
   my ($var, $value) = @_;
 
@@ -317,13 +393,28 @@ sub GNUT_set_from_cmdline($$) {
     return 1;
   }
 
-  delete $init_files_options->{$var};
-  delete $options_defaults->{$var};
   if (!Texinfo::Common::valid_customization_option($var)) {
     _GNUT_document_warn(sprintf(__("unknown variable from command line: %s"),
                                $var));
     return 0;
   }
+
+  if (ref($value) ne '') {
+    confess("unexpected value set from command-line for $var: $value");
+  }
+
+  my $status;
+  ($status, $value) = _GNUT_check_value_type($var, $value);
+  return 0 if (!$status);
+
+  if (!exists($options_type_bytes{$var}) and !exists($options_type_char{$var})
+      and !exists($options_type_boolean{$var})
+      and !exists($options_type_integer{$var})) {
+    confess("variable of unexpected type set from command-line: $var");
+  }
+
+  delete $init_files_options->{$var};
+  delete $options_defaults->{$var};
   $cmdline_options->{$var} = $value;
   return 1;
 }
@@ -377,7 +468,7 @@ sub texinfo_remove_from_option_list($$) {
   return 1;
 }
 
-# This function can be used to get main program variables
+# These functions can be used to get main program variables
 # customization values.
 # For conversion customization variables, converter methods
 # should be used instead, the implementation usually used being
@@ -387,7 +478,10 @@ sub texinfo_remove_from_option_list($$) {
 # Texinfo::MainConfig package below, but it should not be accessed/used
 # in user defined code (and the Texinfo::MainConfig interface
 # is therefore undocumented).
-sub texinfo_get_conf($) {
+
+# get main program variable customization value and whether the
+# variable was actually set.  More similar to texinfo_get_conf in C.
+sub GNUT_get_customization($) {
   my $var = shift;
 
   confess("BUG: texinfo_get_conf: undef \$cmdline_options."
@@ -395,14 +489,22 @@ sub texinfo_get_conf($) {
     if (!$cmdline_options);
 
   if (exists($cmdline_options->{$var})) {
-    return $cmdline_options->{$var};
+    return ($cmdline_options->{$var}, 1);
   } elsif (exists($init_files_options->{$var})) {
-    return $init_files_options->{$var};
+    return ($init_files_options->{$var}, 1);
   } elsif (exists($options_defaults->{$var})) {
-    return $options_defaults->{$var};
+    return ($options_defaults->{$var}, 1);
   } else {
-    return undef;
+    return (undef, 0);
   }
+}
+
+# get main program variable customization value.
+sub texinfo_get_conf($) {
+  my $var = shift;
+
+  my ($conf, $set) = GNUT_get_customization($var);
+  return $conf;
 }
 
 

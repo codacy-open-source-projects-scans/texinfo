@@ -703,10 +703,9 @@ sub output($$) {
   }
 
   my $nodes_list = $document->nodes_list();
-  # Do not call _cache_node_names as only the node names used in index
+  # Do not cache node names as only the node names used in index
   # formatting are needed, therefore we may generate names that are
   # not used if we call the function.
-  #_cache_node_names($self, $nodes_list);
 
   Texinfo::OutputUnits::split_pages($output_units, $nodes_list,
                                     $self->get_conf('SPLIT'));
@@ -1183,12 +1182,18 @@ sub _stream_encode($$) {
       }
     }
     if (defined($pending_string->[1])
-        and $pending_string->[1]->{'conv_type'} eq 'anchor'
         and exists($self->{'target_locations'})) {
-      push @{$self->{'target_locations'}}, {
-             'target_element' => $pending_string->[1]->{'anchor'},
-             'bytes' => $self->{'bytes'}
-      };
+      if ($pending_string->[1]->{'conv_type'} eq 'anchor') {
+        push @{$self->{'target_locations'}}, {
+               'target_element' => $pending_string->[1]->{'anchor'},
+               'bytes' => $self->{'bytes'}
+        };
+      } elsif ($pending_string->[1]->{'conv_type'} eq 'index') {
+        push @{$self->{'target_locations'}}, {
+               'index_argument' => $pending_string->[1]->{'argument'},
+               'bytes' => $self->{'bytes'}
+        };
+      }
     }
   }
 
@@ -1397,13 +1402,23 @@ sub node_name($$) {
           $self->{'node_names_text'}->{$node}->{'width'});
 }
 
-# the advantage of using that function is that we know that nodes only
+# Only used for Info, kept in this file to use other functions
+# and have an organization similar to C.
+#
+# The advantage of using that function is that we know that nodes only
 # are processed and the $label_element can be obtained more simply
 # than when the node is setup by a call to node_name().
-sub _cache_node_names($$) {
-  my ($self, $nodes_list) = @_;
+#
+# If CHECK_INDEX_STRING_IN_NODE_NAMES is set, check if the "Index"
+# string is present in at least one node name and return 1 if so.
+# The Info readers may use that string to discover nodes with printed
+# indices.
+sub _cache_node_names($$;$) {
+  my ($self, $nodes_list, $check_index_string_in_node_names) = @_;
 
   my $node_names_hash = $self->{'node_names_text'};
+
+  my $index_string_in_node_found;
 
   if (!defined($node_names_formatter)) {
     $node_names_formatter = new_formatter($self, 'line', 0, undef,
@@ -1430,6 +1445,12 @@ sub _cache_node_names($$) {
 
     pop @{$self->{'count_context'}};
 
+    if ($check_index_string_in_node_names
+        and !$index_string_in_node_found
+        and $result =~ /Index/i) {
+      $index_string_in_node_found = 1;
+    }
+
     $node_names_hash->{$node}
       = {'text' => Texinfo::Common::normalize_top_node_name($result),
          'width' => $width };
@@ -1437,6 +1458,8 @@ sub _cache_node_names($$) {
     Texinfo::Convert::Paragraph::end_line($formatter->{'container'});
   }
   pop @{$self->{'formatters'}};
+
+  return $index_string_in_node_found;
 }
 
 
@@ -1820,6 +1843,8 @@ sub process_printindex($$;$) {
     $sorted_indexes = $self->get_converter_indices_sorted_by_index();
   }
 
+  # an index merged in another one is not present in sorted_indexes,
+  # therefore it is ignored here.
   if (!defined($sorted_indexes) or !exists($sorted_indexes->{$index_name})) {
     return;
   }
@@ -1905,6 +1930,10 @@ sub process_printindex($$;$) {
 
   _add_newline_if_needed($self);
   if ($in_info) {
+    my $printindex_info = {'conv_type' => 'index', 'argument' => $index_name};
+    my $count_context = $self->{'count_context'}->[-1];
+    push @{$count_context->{'pending_text'}}, ['', $printindex_info], [''];
+
     my $info_printindex_magic = "\x{00}\x{08}[index\x{00}\x{08}]\n";
     _stream_output($self, $info_printindex_magic);
     _add_lines_count($self, 1);
@@ -4220,7 +4249,8 @@ sub _convert($$) {
 
           if (defined($node_description)) {
             my $description_align_column;
-            if (defined($self->get_conf('AUTO_MENU_DESCRIPTION_ALIGN_COLUMN'))) {
+            if (defined($self->get_conf('AUTO_MENU_DESCRIPTION_ALIGN_COLUMN'))
+                and $self->get_conf('AUTO_MENU_DESCRIPTION_ALIGN_COLUMN') > 0) {
               $description_align_column
                  = $self->get_conf('AUTO_MENU_DESCRIPTION_ALIGN_COLUMN');
             } else {
@@ -4256,7 +4286,8 @@ sub _convert($$) {
 
             my $text_element_context = { 'counter' => $text_count };
 
-            if (defined($self->get_conf('AUTO_MENU_MAX_WIDTH'))) {
+            if (defined($self->get_conf('AUTO_MENU_MAX_WIDTH'))
+                and $self->get_conf('AUTO_MENU_MAX_WIDTH') > 0) {
               $text_element_context->{'max'}
                  = $self->get_conf('AUTO_MENU_MAX_WIDTH');
             } else {

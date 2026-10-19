@@ -165,44 +165,88 @@ txi_config_document_warn (const char *format, ...)
     }
 }
 
-/* The caller should have already converted a char option string to UTF-8 */
+const char *
+GNUT_check_value_type (OPTION *option, const char *value, int *status)
+{
+  *status = 1;
+  if (option->type == GOT_integer)
+    {
+      if (!value)
+        {
+          txi_config_document_warn ("value expected for %s (setting to 0)",
+                                    option->name);
+          return "0";
+        }
+      else
+        {
+          char *endptr;
+          long long_value = strtol (value, &endptr, 10);
+          int int_value = (int) long_value;
+          if (endptr != value)
+            {
+              if (int_value >= 0
+                  || (int_value == -2
+                      && option->number
+                               == txi_base_options.paragraphindent.number))
+                {
+                  return value;
+                }
+            }
+          txi_config_document_warn (
+                      "\"%s\" invalid for %s (number expected)",
+                         value, option->name);
+          *status = 0;
+          return 0;
+        }
+    }
+  else if (option->type == GOT_boolean)
+    {
+      if (value)
+        {
+          if (!(!strcmp(value, "0") || !strcmp(value, "1")))
+            {
+              txi_config_document_warn (
+                      "\"%s\" invalid for %s (0 or 1 expected)",
+                         value, option->name);
+
+              if (!strcmp (value, ""))
+                 return "0";
+               else
+                 return "1";
+            }
+        }
+    }
+
+  return value;
+}
+
+/* The caller should have already converted a char option string to UTF-8
+   and have done checks on values.
+ */
 static void
 set_option_value (OPTIONS_LIST *options_list, size_t number,
                   const char *value)
 {
   OPTION *option = options_list->sorted_options[number -1];
 
-  if (option->type == GOT_integer)
+  if (option->type == GOT_boolean && !value)
+    option_set_conf (option, -1, 0);
+  else if (option->type == GOT_integer || option->type == GOT_boolean)
     {
       char *endptr;
       long long_value = strtol (value, &endptr, 10);
       int int_value = (int) long_value;
       if (endptr != value)
-        {
-          if (int_value >= 0
-              || (int_value == -2
-                  && option->number == txi_base_options.paragraphindent.number))
-            option_set_conf (option, int_value, 0);
-        }
+        option_set_conf (option, int_value, 0);
       else
-        {
-        /* warn?  No such check in Perl */
-        /* Consider that the option is set if the string is not empty, similar
-           to Perl.
-           Not exactly the same as comparison won't fail in C, while
-           it will fail in Perl and trigger a warning. */
-           if (!strcmp (value, ""))
-             option_set_conf (option, 0, 0);
-           else
-             option_set_conf (option, 1, 0);
-        }
+        fatal ("set_option_value: unexpected invalid integer");
     }
   else if (option->type == GOT_char
            || option->type == GOT_bytes)
     {
       char *option_value;
       if (!value)
-        option_value = strdup ("");
+        option_value = 0;
       else
         option_value = strdup (value);
       option_set_conf (option, 0, option_value);
@@ -223,18 +267,23 @@ GNUT_set_customization_default (size_t number, const char *value)
   return 1;
 }
 
-void
+/* Only for strings and integers. */
+/* only part of the corresponding Perl code, remaining is done in the
+   main program */
+int
 GNUT_set_from_cmdline (OPTIONS_LIST *options_list, size_t number,
                        const char *value)
 {
-  if (!strcmp (value, "undef"))
-    {
-      OPTION *option = options_list->sorted_options[number -1];
-      clear_option (option);
-      options_list_add_option_number (options_list, option->number);
-    }
-  else
-    set_option_value (options_list, number, value);
+  const char *corrected_value;
+  OPTION *option = options_list->sorted_options[number -1];
+  int status;
+
+  corrected_value = GNUT_check_value_type (option, value, &status);
+  if (! status)
+    return status;
+
+  set_option_value (options_list, number, corrected_value);
+  return 1;
 }
 
 OPTION *
@@ -257,25 +306,10 @@ texinfo_find_command_line_option_name (const char *option_name)
   return option;
 }
 
-/* In Perl the values may be mapped, here we just ignore */
-static int
-warn_obsolete_options (const char *option_name)
-{
-  if (!strcmp (option_name, "L2H"))
-    {
-      txi_config_document_warn ("obsolete option: %s", option_name);
-      return 1;
-    }
-  return 0;
-}
-
 OPTION *
 texinfo_find_init_file_option_name (const char *option_name)
 {
   OPTION *option;
-
-  if (warn_obsolete_options (option_name))
-    return 0;
 
   option = find_option_string (init_files_options.sorted_options,
                                option_name);
@@ -293,13 +327,13 @@ texinfo_command_line_option_add_option_number (size_t number)
   options_list_add_option_number (&init_files_options, number);
 }
 
+/* FIXME name texinfo_set_from_init_file? */
 int
 GNUT_set_from_init_file (const char *option_name, const char *value)
 {
   OPTION *option;
-
-  if (warn_obsolete_options (option_name))
-    return 0;
+  const char *corrected_value;
+  int status;
 
   option = find_option_string (init_files_options.sorted_options,
                                option_name);
@@ -312,10 +346,23 @@ GNUT_set_from_init_file (const char *option_name, const char *value)
       return 0;
     }
 
+  corrected_value = GNUT_check_value_type (option, value, &status);
+  if (! status)
+    return 0;
+
   if (option_number_in_option_list (cmdline_options, option->number))
     return 0;
 
-  set_option_value (&init_files_options, option->number, value);
+  /* when called from texinfo_set_from_init_file XS and undef.
+     Mainly relevant for customization types not handled by
+     set_option_value below */
+  if (!corrected_value)
+    {
+      clear_option (option);
+      options_list_add_option_number (&init_files_options, option->number);
+    }
+
+  set_option_value (&init_files_options, option->number, corrected_value);
   return 1;
 }
 

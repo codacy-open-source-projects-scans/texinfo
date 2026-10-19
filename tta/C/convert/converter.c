@@ -134,7 +134,6 @@ static CONVERTER_FORMAT_DATA converter_format_data[] = {
    &plaintext_converter_defaults,
    &plaintext_converter_initialize, &plaintext_output, &plaintext_convert,
    &plaintext_convert_tree, 0, &plaintext_free_converter, 0, 0},
-  /* TODO having plaintext_format_setup here could lead to being called twice */
   {"info", "Texinfo::Convert::Info", &plaintext_format_setup, 0,
    &info_converter_defaults,
    &plaintext_converter_initialize, &info_output, &plaintext_convert,
@@ -278,6 +277,8 @@ converter_format_perl_class_name (enum converter_format format)
 /* Initialize converter data (independent of customization) */
 /* Corresponds to code run directly in the module namespace when doing
    use/require $module in Perl */
+/* Caller should make sure that it is only called once per format
+   sharing the same function */
 void
 setup_converter_format (enum converter_format converter_format)
 {
@@ -341,7 +342,7 @@ set_commands_options_value (COMMAND_OPTION_VALUE *commands_init_conf,
       if (if_set_in_list && !(option->flags & OF_set_in_list))
         continue;
 
-      if (option->type == GOT_integer)
+      if (option->type == GOT_integer || option->type == GOT_boolean)
         {
           commands_init_conf[option_nr_cmd->cmd].type = option->type;
           commands_init_conf[option_nr_cmd->cmd].v.value
@@ -1509,7 +1510,8 @@ static void
 copy_command_option_value_option (OPTION *option,
                                   const COMMAND_OPTION_VALUE *cmd_option_value)
 {
-  if (cmd_option_value->type == GOT_integer)
+  if (cmd_option_value->type == GOT_integer
+      || cmd_option_value->type == GOT_boolean)
     option_set_conf (option, cmd_option_value->v.value, 0);
   else
     option_set_conf (option, -1, cmd_option_value->v.string);
@@ -1527,10 +1529,6 @@ command_init (enum command_id cmd, COMMAND_OPTION_VALUE *commands_init_conf)
   if (commands_init_conf)
     {
       const COMMAND_OPTION_VALUE *cmd_init_conf = &commands_init_conf[cmd];
-       /*
-      if (cmd_init_conf->type == GOT_integer && cmd_init_conf->v.value >= 0
-          || cmd_init_conf->type == GOT_char && cmd_init_conf->v.string)
-        */
       if (cmd_init_conf->set)
         {
           result = (COMMAND_OPTION_VALUE *)
@@ -1546,7 +1544,8 @@ command_init (enum command_id cmd, COMMAND_OPTION_VALUE *commands_init_conf)
       result = (COMMAND_OPTION_VALUE *)
                           malloc (sizeof (COMMAND_OPTION_VALUE));
       result->type = default_option->type;
-      if (default_option->type == GOT_integer)
+      if (default_option->type == GOT_integer
+          || default_option->type == GOT_boolean)
         result->v.value = default_option->o.integer;
       else
         result->v.string = default_option->o.string;
@@ -1619,7 +1618,7 @@ set_global_document_commands (CONVERTER *converter,
 void
 id_to_filename (CONVERTER *self, char **id_ref)
 {
-  if (self->conf->BASEFILENAME_LENGTH.o.integer < 0)
+  if (self->conf->BASEFILENAME_LENGTH.o.integer <= 0)
     return;
   char *id = *id_ref;
   if (strlen (id) > (size_t) self->conf->BASEFILENAME_LENGTH.o.integer)

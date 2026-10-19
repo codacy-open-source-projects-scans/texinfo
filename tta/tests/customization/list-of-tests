@@ -23,3 +23,23 @@ double_contents_after_title_book_chapter ../../perl/t/input_files/double_content
 # test wrong return value from init file handler.
 simplest_stage_handler_bad_return ../formatting/simplest.texi --html -o. --init stage_handler_bad_return.pm
 simplest_stage_handler_undef_return ../formatting/simplest.texi --html -o. --init stage_handler_undef_return.pm
+
+# test setting an integer customization variable to a string, both
+# from command-line and init file
+simplest_integer_customization_string_command_line ../formatting/simplest.texi -c paragraphindent=none
+simplest_integer_customization_string_init_file ../formatting/simplest.texi --init integer_customization_string.pm
+
+# test setting a boolean variable to something else than 1 or 0,
+# both from command-line and init file
+simplest_boolean_customization_invalid_command_line ../formatting/simplest.texi --html -c NUMBER_SECTIONS="" -c USE_NUMERIC_ENTITY=3 -c TEXI2HTML="a b c"
+simplest_boolean_customization_invalid_init_file ../formatting/simplest.texi --html --init boolean_customization_invalid.pm
+
+# test setting an integer variable to undef, both from
+# command-line and init file
+simplest_integer_customization_undef_command_line ../formatting/simplest.texi --html --no-split -c CHAPTER_HEADER_LEVEL=undef
+simplest_integer_customization_undef_init_file ../formatting/simplest.texi --html --no-split --init integer_customization_undef.pm
+
+# test setting a variable used by parser to undef, both
+# from command-line and init file
+cpp_lines_parser_customization_undef_command_line ../../perl/t/input_files/cpp_lines.texi -c MESSAGE_ENCODING=UTF-8 -c CPP_LINE_DIRECTIVES=undef
+cpp_lines_parser_customization_undef_init_file ../../perl/t/input_files/cpp_lines.texi -c MESSAGE_ENCODING=UTF-8 --init parser_customization_undef.pm

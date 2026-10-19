@@ -154,14 +154,16 @@ typedef struct FORMAT_SPECIFICATION {
 
 static FORMAT_SPECIFICATION formats_table[] = {
   {"info", STTF_nodes_tree | STTF_floats
-           | STTF_auto_section_node,
+           | STTF_auto_section_node
+           | STTF_no_warn_duplicate_section_target,
    NULL, "Texinfo::Convert::Info", NULL},
   {"html", STTF_relate_index_entries_to_table_items
            | STTF_move_index_entries_after_items
            | STTF_no_warn_non_empty_parts
            | STTF_nodes_tree | STTF_floats | STTF_split
            | STTF_internal_links
-           | STTF_auto_section_node,
+           | STTF_auto_section_node
+           | STTF_no_warn_duplicate_section_target,
    NULL, "Texinfo::Convert::HTML", NULL},
   {"plaintext", STTF_nodes_tree | STTF_floats | STTF_split,
    NULL, "Texinfo::Convert::Plaintext", NULL},
@@ -422,28 +424,38 @@ get_cmdline_customization_option (OPTIONS_LIST *options_list,
             }
           else
             {
+              char *option_value = p;
+              int status;
+
               if (!strcasecmp (p, "undef"))
-                {
-                  clear_option (option);
-                  options_list_add_option_number (options_list, option->number);
-                }
-              else
-                {
-                  char *option_value = p;
-                  if (option->type == GOT_char)
-                    option_value = GNUT_decode_input (p);
+                option_value = 0;
+              else if (option->type == GOT_char)
+                option_value = GNUT_decode_input (p);
 
-                  GNUT_set_from_cmdline (options_list, option->number,
-                                         option_value);
+              status = GNUT_set_from_cmdline (options_list, option->number,
+                                              option_value);
 
-                  if (option->type == GOT_char)
-                    free (option_value);
+              if (status)
+                {
+                  if (option->type != GOT_char && option->type != GOT_bytes
+                      && option->type != GOT_boolean
+                      && option->type != GOT_integer)
+                    {
+                      char *message;
+                      xasprintf (&message,
+                       "variable of unexpected type set from command-line: %s",
+                                 option_name);
+                      fatal (message);
+                      free (message);
+                    }
                 }
+
+              if (option->type == GOT_char)
+                free (option_value);
             }
         }
       else
         {
-          /* in Perl obsolete options may get another error message */
           txi_config_document_warn ("unknown variable from command line: %s",
                          option_name);
         }
@@ -715,9 +727,6 @@ warn_deprecated_dirs (DEPRECATED_DIRS_LIST *deprecated_dirs_used)
 
   Return 0 in case of success.
  */
-/* TODO warn/exit if loaded twice?  The problem with being loaded
-   twice is that the init files code may have modified previous
-   interpreter data */
 static void
 load_interpreter (INTERPRETER_LOADING_INFO *loading_info)
 {
@@ -725,6 +734,9 @@ load_interpreter (INTERPRETER_LOADING_INFO *loading_info)
   char *load_modules_path;
   int status;
 
+  /* make sure that the interpreter is not loaded twice.  If loaded
+     twice, init files code could have modified the previous interpreter
+     data that has been replaced */
   if (loading_info->embedded_interpreter != txi_interpreter_want_embedded)
     return;
 
@@ -1221,6 +1233,7 @@ main (int argc, char *argv[], char *env[])
   const OPTION *split_option;
   const OPTION *show_builtin_css_rules_option;
   const OPTION *auto_section_node_option;
+  const OPTION *warn_duplicate_section_target_option;
   int no_warn = 0;
   int test_mode_set = 0;
   int debug = 0;
@@ -2038,7 +2051,7 @@ main (int argc, char *argv[], char *env[])
                             cmdline_options.options->SPLIT.number, "");
           GNUT_set_from_cmdline (&cmdline_options,
                             cmdline_options.options->SPLIT_SIZE.number,
-                            "undef");
+                            "0");
           break;
         case SPLIT_OPT:
           {
@@ -2844,6 +2857,10 @@ main (int argc, char *argv[], char *env[])
   auto_section_node_option
     = GNUT_get_conf (program_options.options->AUTO_SECTION_NODE.number);
 
+  warn_duplicate_section_target_option
+    = GNUT_get_conf (program_options.options
+                               ->WARN_DUPLICATE_SECTION_TARGET.number);
+
   initialize_options_list (&parser_options);
   /* Copy relevant customization variables into the parser options. */
   for (i = 0; i < TXI_OPTIONS_NR; i++)
@@ -2946,6 +2963,7 @@ main (int argc, char *argv[], char *env[])
       size_t j;
       OPTIONS_LIST *file_cmdline_options;
       int auto_section_node = -1;
+      int warn_duplicate_section_target = 0;
 
       input_file_arg = input_files.list[file_index];
 
@@ -3240,11 +3258,20 @@ main (int argc, char *argv[], char *env[])
           || transformation_flags & STTF_insert_nodes_for_sectioning_commands)
         auto_section_node = 1;
 
+      if ((warn_duplicate_section_target_option
+           && warn_duplicate_section_target_option->o.integer > 0)
+          || ((!warn_duplicate_section_target_option
+               || warn_duplicate_section_target_option->o.integer < 0)
+              && !(converted_format_specification->flags
+                   & STTF_no_warn_duplicate_section_target)))
+        warn_duplicate_section_target = 1;
+
       /* do_menu corresponds to FORMAT_MENU undef or set to menu */
       complete_transform_document (document,
                                    converted_format_specification->flags
                                     | transformation_flags,
-                                   do_menu, auto_section_node, 0);
+                                   do_menu, auto_section_node,
+                                   warn_duplicate_section_target, 0);
 
       merge_error_messages_lists (&document->parser_error_messages,
                                   &document->error_messages);

@@ -163,6 +163,9 @@ sub highlight_setup($$) {
         last;
       }
     }
+    # read the remaining lines, otherwise there is an error when closing
+    # the pipe.
+    while (defined($line = <HIGHLIGHT_LANG_LIST>)) {};
     #use Data::Dumper;
     #print STDERR Data::Dumper->Dump([$highlighted_languages_list]);
     #exit 1;
@@ -195,8 +198,11 @@ sub highlight_setup($$) {
       }
     }
   }
-  # FIXME check error status
-  close(HIGHLIGHT_LANG_LIST);
+  if (!close(HIGHLIGHT_LANG_LIST)) {
+    $self->converter_document_warn(sprintf(__(
+                             "%s: closing communication failed (%s): %s: %s"),
+                                           $highlight_type, $?, $cmd, $!));
+  }
 
   if (scalar(keys(%$highlighted_languages_list)) == 0) {
     # important if $cmd returns no output to have a message.  If there
@@ -498,7 +504,7 @@ sub highlight_process($$) {
   if (! -d $highlight_out_dir) {
     if (!mkdir $highlight_out_dir) {
       $self->converter_document_warn(
-         sprintf(__("highlight_syntax.pm: could not make directory %s: %s"),
+         sprintf(__('highlight_syntax.pm: could not make directory %s: %s'),
                                       $highlight_out_dir, $!));
     }
   }
@@ -523,7 +529,7 @@ sub highlight_process($$) {
       = $self->encoded_output_file_name($input_language_path_name);
     unless (open(HIGHLIGHT_LANG_IN, ">$encoded_input_language_path_name")) {
       $self->converter_document_warn(
-             sprintf(__("highlight_syntax.pm: could not open %s: %s"),
+             sprintf(__('highlight_syntax.pm: could not open %s: %s'),
                                       $input_language_path_name, $!));
       return 1;
     }
@@ -555,7 +561,7 @@ sub highlight_process($$) {
     }
     if (! close(HIGHLIGHT_LANG_IN)) {
       $self->converter_document_warn(
-             sprintf(__("highlight_syntax.pm: error on closing %s: %s"),
+             sprintf(__('highlight_syntax.pm: error on closing %s: %s'),
                                       $input_language_path_name, $!));
       return 1;
     }
@@ -584,7 +590,7 @@ sub highlight_process($$) {
     }
     if (system($encoded_cmd)) {
       $self->converter_document_error(
-          sprintf(__("highlight_syntax.pm: command did not succeed: %s"),
+          sprintf(__('highlight_syntax.pm: command did not succeed: %s'),
                                   $cmd));
       return 1;
     }
@@ -595,7 +601,7 @@ sub highlight_process($$) {
       = $self->encoded_output_file_name($html_result_path_name);
     unless (open(HIGHLIGHT_LANG_OUT, $encoded_html_result_path_name)) {
       $self->converter_document_warn(
-         sprintf(__("highlight_syntax.pm: could not open %s: %s"),
+         sprintf(__('highlight_syntax.pm: could not open %s: %s'),
                                   $html_result_path_name, $!));
       return 1;
     }
@@ -630,14 +636,14 @@ sub highlight_process($$) {
     }
     if ($separators_count != $language_fragments_nr +1) {
       $self->converter_document_warn(sprintf(__(
-       "highlight_syntax.pm: %s: %d separators; expected %d, the number of fragments +1"),
+       'highlight_syntax.pm: %s: %d separators; expected %d, the number of fragments +1'),
                       $language, $separators_count, $language_fragments_nr+1));
     }
     if (defined($text) and $text ne '') {
       my $element = $languages{$language}->{'commands'}->[$got_count-1];
       my $cmdname = $element->{'cmdname'};
       $self->converter_document_warn(sprintf(__(
-                 "highlight_syntax.pm: %s: end of \@%s item %d not found"),
+                 'highlight_syntax.pm: %s: end of @%s item %d not found'),
                                   $language, $cmdname, $got_count));
     }
     # note that this check is not the most detailed that could be done, a check
@@ -646,12 +652,12 @@ sub highlight_process($$) {
     # for a language, not a command, so it should not be needed either.
     if ($got_count != $languages{$language}->{'counter'}) {
       $self->converter_document_warn(sprintf(__(
-         "highlight_syntax.pm: %s: retrieved %d items in HTML; expected %d"),
+         'highlight_syntax.pm: %s: retrieved %d items in HTML; expected %d'),
                             $language, $got_count, $language_fragments_nr));
     }
     if (!close(HIGHLIGHT_LANG_OUT)) {
       $self->converter_document_warn(
-             sprintf(__("highlight_syntax.pm: error on closing %s: %s"),
+             sprintf(__('highlight_syntax.pm: error on closing %s: %s'),
                                       $html_result_path_name, $!));
     }
   }
@@ -693,6 +699,9 @@ sub highlight_open_inline_container_type($$$) {
   return '';
 }
 
+my %small_block_associated_command
+ = %Texinfo::Common::small_block_associated_command;
+
 sub highlight_preformatted_command($$$$$) {
   my ($self, $cmdname, $command, $args, $content) = @_;
 
@@ -708,7 +717,7 @@ sub highlight_preformatted_command($$$$$) {
 
       if (not defined($language)) {
         $self->converter_document_warn(sprintf(__(
-       "highlight_syntax.pm: output has HTML item for \@%s but no language %s"),
+       'highlight_syntax.pm: output has HTML item for @%s but no language %s'),
                                     $cmdname, $command));
       } else {
         $highlighted_cmds{$cmdname}->{'output_languages_counters'}
@@ -723,37 +732,68 @@ sub highlight_preformatted_command($$$$$) {
         # of @example as it is discarded.  So need to do the preformatted
         # type formatting, from _convert_preformatted_type() and
         # _preformatted_class().
-        # Since we are formatting @example itself, it is not in the preformatted
-        # context anymore, so we readd.
-        my $preformatted_classes_stack = $self->preformatted_classes_stack();
-        my @pre_classes = @{$preformatted_classes_stack};
-        # NOTE $pre_class_format is setup below to correspond to
-        # $pre_class_commands{$cmdname}, which cannot be used directly,
-        # as it is private.
-        my $pre_class_format = $cmdname;
-        my $main_cmdname = $cmdname;
-        if (exists($Texinfo::Common::small_block_associated_command{$cmdname})) {
-          $pre_class_format
-            = $Texinfo::Common::small_block_associated_command{$cmdname};
-          $main_cmdname
-            = $Texinfo::Common::small_block_associated_command{$cmdname};
-        }
-        push @pre_classes, $pre_class_format;
+
+        my $result_content
+          = $highlighted_cmds{$cmdname}->{'results'}->{$command};
+
+        ####### begin sync with _convert_preformatted_type
+        # NOTE specific formatting for specific contexts is not done here.
+
+        # do it here, it should have been correctly registered with example
+        # and not preformatted through highlight_open_inline_container_type.
+        $result_content
+            = $self->get_associated_formatted_inline_content($command)
+                              . $result_content;
+
+        # a newline immediately after a <pre> is ignored.
+        $result_content =~ s/^\n/\n\n/;
+
+        # following code replaces the next line
+        # $pre_class = _preformatted_class($self) if (!defined($pre_class));
+        ####### begin sync with _preformatted_class
         my $pre_class;
+        my $preformatted_classes_stack = $self->preformatted_classes_stack();
+        # Since we are formatting @example itself, it is not on the preformatted
+        # class stack anymore, so we readd.
+        my @pre_classes = @{$preformatted_classes_stack};
+        # Code similar to code setting %pre_class_commands; using
+        # $pre_class_commands{$cmdname} as in the HTML converter to
+        # put on the preformatted classes stack cannot be used directly,
+        # as it is private.
+        if (exists($small_block_associated_command{$cmdname})) {
+          push @pre_classes, $small_block_associated_command{$cmdname};
+        } else {
+          push @pre_classes, $cmdname;
+        }
+
         foreach my $class (@pre_classes) {
-          # FIXME maybe add   or $pre_class eq 'menu'  to override
-          # 'menu' with 'menu-comment'?
-          $pre_class = $class unless ($pre_class
+          $pre_class = $class unless (defined($pre_class)
        and exists($Texinfo::Commands::preformatted_code_commands{$pre_class})
        and !(exists($Texinfo::Commands::preformatted_code_commands{$class})
              or $class eq 'menu'));
         }
         $pre_class = $pre_class.'-preformatted';
+        ####### end sync with _preformatted_class
+        my $preformatted_result_content = $self->html_attribute_class('pre',
+                                   [$pre_class]).">".$result_content."</pre>";
 
-        # Add classes as done in the default conversion function.
-        # TODO is it correct?  What should be done with @example arguments?
+        ####### end sync with _convert_preformatted_type
+
+        ###### begin sync with _convert_preformatted_command
         my @classes;
+
+        # this is mainly for classes as there are purprosely no classes
+        # for small*
+        my $main_cmdname;
+        if (exists($small_block_associated_command{$cmdname})) {
+          $main_cmdname = $small_block_associated_command{$cmdname};
+          push @classes, $cmdname;
+        } else {
+          $main_cmdname = $cmdname;
+        }
+
         if ($cmdname eq 'example') {
+          # arguments_line type element
           my $arguments_line = $command->{'contents'}->[0];
           if (exists($arguments_line->{'contents'})) {
             for my $example_arg (@{$arguments_line->{'contents'}}) {
@@ -771,22 +811,11 @@ sub highlight_preformatted_command($$$$$) {
           push @classes, $main_cmdname;
           $main_cmdname = 'example';
         }
-        unshift @classes, $main_cmdname;
 
-        my $result_content
-          = $highlighted_cmds{$cmdname}->{'results'}->{$command};
-        # do it here, what was done in preformatted is discarded.
-        # It should have been correctly registered
-        # through highlight_open_inline_container_type.
-        $result_content
-            = $self->get_associated_formatted_inline_content($command)
-                              . $result_content;
-        # a newline immediately after a <pre> is ignored.
-        $result_content =~ s/^\n/\n\n/;
-        my $preformatted_result_content = $self->html_attribute_class('pre',
-                                   [$pre_class]).">".$result_content."</pre>";
+        unshift @classes, $main_cmdname;
         return $self->html_attribute_class('div', \@classes).">\n"
                .$preformatted_result_content.'</div>'."\n";
+        ####### end sync with _convert_preformatted_command
       }
     # no error nor verbose message if there was no retrieved information
     # for that language
@@ -804,7 +833,7 @@ sub highlight_preformatted_command($$$$$) {
       # If they are not equal there should have been a message already.
       if ($cmd_language_input_count == $cmd_language_retrieved_count) {
         $self->converter_document_warn(sprintf(__(
-                "highlight_syntax.pm: output has no HTML item for \@%s %s %s"),
+                'highlight_syntax.pm: output has no HTML item for @%s %s %s'),
                                     $cmdname, $language, $command));
       } elsif ($self->get_conf('VERBOSE') or $self->get_conf('DEBUG')) {
         warn "highlight_syntax.pm: output has no HTML item for \@$cmdname $language $command\n";

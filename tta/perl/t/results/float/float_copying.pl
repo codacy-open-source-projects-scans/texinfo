@@ -512,6 +512,8 @@ Ref: public domain anchor486
 Ref: Top-Footnote-1555
 Ref: caption copying footnote anchor590
 Node: Copying and floats628
+Ref: Index: cp1107
+Ref: Index: fn1275
 Ref: Copying and floats-Footnote-11479
 Ref: Copying and floats-Footnote-21552
 
@@ -779,6 +781,8 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
 \\usepackage{textcomp}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
 % This is used to provide a default no-operation \'keyval\' definition
 % of the "alt" key in the "Gin" ("Graphics Inclusion") family used
 % by graphicx.  This prevents an "alt" attribute generating an error in
@@ -789,8 +793,6 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 \\usepackage{graphicx}
 \\usepackage{etoolbox}
 \\usepackage{titleps}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
 \\usepackage{imakeidx}
 \\usepackage{float}
 % use hidelinks to remove boxes around links to be similar to Texinfo TeX

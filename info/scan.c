@@ -879,7 +879,7 @@ copy_input_to_output (long n)
 
                 anchor_to_adjust++;
                 if (!*anchor_to_adjust
-                    || !((*anchor_to_adjust)->flags & T_IsAnchor))
+                    || (*anchor_to_adjust)->flags & T_IsNode)
                   {
                     anchor_to_adjust = 0;
                     break;
@@ -1545,12 +1545,12 @@ scan_node_contents (NODE *node, FILE_BUFFER *fb, TAG **tag_ptr)
     {
       char *file_contents;
 
-      /* Set anchor_to_adjust to first anchor in node, if any. */
+      /* Set anchor_to_adjust to first anchor or index tag in node, if any. */
       anchor_to_adjust = tag_ptr + 1;
       if (!*anchor_to_adjust)
         anchor_to_adjust = 0;
       else if (*anchor_to_adjust
-               && !((*anchor_to_adjust)->flags & T_IsAnchor))
+               && (*anchor_to_adjust)->flags & T_IsNode)
         anchor_to_adjust = 0;
 
       if (!node->subfile)
@@ -1597,6 +1597,13 @@ scan_node_contents (NODE *node, FILE_BUFFER *fb, TAG **tag_ptr)
           /* Menu entry or cross reference. */
           /* Create REFERENCE entity. */
           entry = info_new_reference (0, 0);
+
+          if (in_menu && looking_at_string (match, INFO_MENU_LABEL))
+            {
+              /* Skip repeated menu marker in node. */
+              copy_input_to_output (strlen (INFO_MENU_LABEL));
+              goto not_a_reference;
+            }
 
           if (safe_string_index (inptr, -1, input_start, input_length) == '('
              && safe_string_index (inptr, 1, input_start, input_length) == 'n')
@@ -1705,9 +1712,10 @@ scan_node_contents (NODE *node, FILE_BUFFER *fb, TAG **tag_ptr)
     }
   else if (fb && tag_ptr)
     {
-      /* Set nodestart_adjusted for all of the anchors in this node. */
+      /* Set nodestart_adjusted for all of the anchors and index tags
+         in this node. */
       tag_ptr++;
-      while (*tag_ptr && ((*tag_ptr)->flags & T_IsAnchor))
+      while (*tag_ptr && (!((*tag_ptr)->flags & T_IsNode)))
         {
           (*tag_ptr)->nodestart_adjusted = (*tag_ptr)->nodestart
                                              - output_bytes_difference;

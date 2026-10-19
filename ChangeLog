@@ -1,3 +1,681 @@
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (test_files),
+	tta/perl/t/init/parser_customization_undef.pm,
+	tta/tests/Makefile.onetst, tta/tests/customization/list-of-tests
+	(cpp_lines_parser_customization_undef_command_line)
+	(cpp_lines_parser_customization_undef_init_file): add tests setting a
+	boolean variable used by parser to undef.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/parser_api.c (parser), tta/perl/Texinfo/ParserXS.pm
+	(parser): handle undef boolean customization variables by setting the
+	parser setter function to 0.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Config.pm (GNUT_get_customization)
+	(texinfo_get_conf): add GNUT_get_customization that get customization
+	variable and information about being set.  Redefine texinfo_get_conf
+	as a function of GNUT_get_customization.
+
+	* tta/perl/texi2any.pl: call GNUT_get_customization to set parser
+	option only if the option was set, but set if undef.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Config.pm (_GNUT_check_value_type): remove useless
+	unused argument.
+
+2026-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Loop prevention in tree search
+
+	* info/nodes.h (T_TreeSearchRoute): New define.
+
+	* info/session-cmd.c
+	(tag_for_node): New.
+	(tree_search_check_node, tree_search_check_node_backwards):
+	Check T_TreeSearchRoute flag on tag table before going down
+	a menu entry, in order to protect against cyclical menu structures.
+	Add debugging statements at level 4.
+	(mark_tree_search_path, clear_tree_search_path): New functions, to
+	setup and clear T_TreeSearchRoute flags.
+	(do_tree_search_next, do_tree_search_prev): Wrappers for
+	tree_search_check_node and tree_search_check_node_backwards.
+	(info_tree_search, info_tree_search_next, info_tree_search_previous)
+	(info_search_next, info_search_previous):
+	Use these wrappers for user commands.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/txi_config.c (GNUT_check_value_type),
+	tta/perl/Texinfo/Config.pm (_GNUT_check_value_type): replace
+	"integer number" by "number".  From Gavin.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/test_utils.pl (set_converter_option_defaults, test):
+	set DEBUG key value only if the corresponding value is defined.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	checks on variables and Perl types for all customization variables
+
+	* tta/maintain/regenerate_perl_options_info.pl: set %options_type_*
+	for all the types in Texinfo::Options.
+
+	* tta/C/main/txi_config.c (GNUT_set_from_cmdline): return a status.
+
+	* tta/perl/Texinfo/Config.pm (texinfo_set_from_init_file)
+	(GNUT_set_from_cmdline),
+	tta/perl/XSTexinfo/parser_document/ConfigXS.xs
+	(texinfo_set_from_init_file), tta/C/texi2any.c
+	(get_cmdline_customization_option): check that the Perl type of a
+	variable matches with the customization variable type, confess or
+	croak if not.  Check that string and integer/boolean variables only
+	are set from command-line.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/txi_config.c (texinfo_find_init_file_option_name)
+	(GNUT_set_from_init_file): remove warn_obsolete_options and
+	warn_obsolete_options call, as it has never been done consistently.
+	Also an unknown customization variable already triggers a warning.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS: document stricter checking of boolean and integer
+	customization variables.
+
+	* doc/texi2any_api.texi b/doc/texi2any_api.texi
+	(Setting Main Program String Variables): say that integer
+	customization variable cannot be undef.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (test_files),
+	tta/perl/t/init/integer_customization_undef.pm,
+	tta/tests/Makefile.onetst, tta/tests/customization/list-of-tests
+	(simplest_integer_customization_undef_command_line)
+	(simplest_integer_customization_undef_init_file): add tests setting an
+	integer variable to undef, both from command-line and init file.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/txi_config.c (set_option_value): set to -1 if value is
+	NULL and type is GOT_boolean.
+
+	* tta/C/texi2any.c (get_cmdline_customization_option),
+	tta/C/main/txi_config.c (GNUT_set_from_cmdline): handle "undef" in
+	get_cmdline_customization_option only, not in GNUT_set_from_cmdline.
+	Do not call clear_option in get_cmdline_customization_option, instead
+	set value to NULL, let the equivalent be done in set_option_value
+	through GNUT_set_from_cmdline.
+
+	* tta/C/main/txi_config.c (GNUT_set_from_cmdline)
+	(GNUT_set_from_init_file): use an additional variable, corrected_value
+	for the return value of GNUT_check_value_type, to avoid restting the
+	value argument variable.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	warn if an integer option is set to undef
+
+	* tta/C/main/txi_config.c (GNUT_check_value_type),
+	tta/perl/Texinfo/Config.pm (_GNUT_check_value_type): warn if a
+	customization of type integer (but not boolean) is set to undef.
+
+	* tta/perl/init/book.pm: set WORDS_IN_PAGE to 0 instead of undef.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (_default_format_element_footer):
+	compare WORDS_IN_PAGE explicitly to 0.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	avoid setting and needing to set integer options to undef
+
+	* tta/perl/Texinfo/Convert/InfoNonXS.pm (output),
+	tta/perl/texi2any.pl, tta/C/texi2any.c (main): set SPLIT_SIZE to 0 if
+	not split, and use that value in condition.
+
+	* NEWS, doc/texinfo.texi (Info and Plaintext Customization Variables),
+	tta/C/convert/convert_to_plaintext.c (convert_to_plaintext_internal),
+	tta/perl/Texinfo/Convert/PlaintextNonXS.pm (_convert): if
+	AUTO_MENU_DESCRIPTION_ALIGN_COLUMN is set to 0, use the default value.
+	Same for AUTO_MENU_MAX_WIDTH.
+
+	* tta/C/convert/converter.c (id_to_filename),
+	tta/perl/Texinfo/Convert/Converter.pm (BASEFILENAME_LENGTH),
+	doc/texinfo.texi (File Names and Links Customization for HTML): do not
+	cut the file name if BASEFILENAME_LENGTH is 0.
+
+	* tta/data/options_data.txt: set a value to each of the integer
+	customization options.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/get_perl_info.c (get_sv_option), tta/C/main/txi_config.c
+	(set_option_value): remove checks on integer values and fallbacks,
+	these are now done upon reading the customization variables from the
+	command-line of from init files.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (test_files),
+	tta/perl/t/init/boolean_customization_invalid.pm,
+	tta/tests/Makefile.onetst, tta/tests/customization/list-of-tests
+	(simplest_boolean_customization_invalid_command_line)
+	(simplest_boolean_customization_invalid_init_file): add tests setting
+	a boolean variable to something else than 1 or 0, both from
+	command-line and init file.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	warn if boolean customization variable value is not 0 or 1
+
+	* tta/maintain/regenerate_perl_options_info.pl: output the list of
+	booeal options in Texinfo::Options.
+
+	* tta/C/main/txi_config.c (GNUT_check_value_type),
+	tta/perl/Texinfo/Config.pm (_GNUT_check_value_type): check that a
+	boolean customization is set to 0 or 1 and warn if not.  Return the
+	value, set to "0" or "1" if the variable is a boolean variable.
+
+	* tta/C/main/txi_config.c (GNUT_set_from_cmdline)
+	(GNUT_set_from_init_file), tta/perl/Texinfo/Config.pm
+	(texinfo_set_from_init_file, GNUT_set_from_cmdline): update call of
+	GNUT_check_value_type.
+
+2026-10-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/data/converters_defaults.txt (common_parser): set the parser
+	defaults to the same as options_data.txt.
+
+	* tta/perl/Texinfo/ParserNonXS.pm (parser): handle undef
+	EXPANDED_FORMATS.  This cannot happen with main program nor regular
+	tests, but better be robust.
+
+2026-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/scan.c (scan_node_contents): Do not interpret repeated
+	"* Menu:" marker as a menu entry, as seen in mtools.info.
+	
+	Attempted workaround to fix infinite loop in tree search.
+
+	Report from Aidan <aidanczhai@gmail.com>.
+
+2026-10-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/session-cmd.c
+	(tree_search_check_node, tree_search_check_node_backwards):
+	Remove extra code blocks used to avoid having a variable declaration
+	other than at the start of a block.
+
+2026-10-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (test_files),
+	tta/perl/t/init/integer_customization_string.pm,
+	tta/tests/Makefile.onetst b/tta/tests/Makefile.onetst,
+	tta/tests/customization/list-of-tests
+	(simplest_integer_customization_string_command_line)
+	(simplest_integer_customization_string_init_file): add tests of
+	paragraphindent customization variable set to a string through
+	the command line or an init file.
+	Based on a report by aidan.
+
+2026-10-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/txi_config.c (GNUT_check_value_type),
+	tta/perl/Texinfo/Config.pm (_GNUT_check_value_type): add, to give a
+	warning if a string is given for an integer customization option.
+
+	* tta/C/main/txi_config.c (GNUT_set_from_cmdline)
+	(GNUT_set_from_init_file), tta/perl/Texinfo/Config.pm
+	(texinfo_set_from_init_file, GNUT_set_from_cmdline),
+	tta/perl/XSTexinfo/parser_document/ConfigXS.xs
+	(texinfo_set_from_init_file): call GNUT_check_value_type when setting
+	customization variables.  Call GNUT_set_from_init_file from
+	texinfo_set_from_init_file XS interface to get that call too.
+
+	* tta/C/main/txi_config.c (GNUT_set_from_init_file): call clear_option
+	if a value is NULL, to handle types of customization variables not
+	handled by set_option_value.
+
+	* tta/C/main/txi_config.c (set_option_value): set a NULL value for an
+	integer or boolean variable to 0.  If a string value is
+	NULL, keep the option NULL instead of setting to an empty string.
+	Seems to be more in line with Perl, which keeps undef strings.
+
+	* tta/C/main/txi_config.c (GNUT_set_from_cmdline): if an option value
+	is undef, call set_option_value with the value set to 0, now that it
+	is handled for both integer and string variables.
+
+2026-10-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/maintain/regenerate_perl_options_info.pl: generate
+	%options_type_integer hash in Texinfo::Options.
+
+2026-10-16 Patrice Dumas  <pertusus@free.fr>
+
+	add boolean type for customization variables
+
+	* tta/C/main/option_types.h (enum global_option_type),
+	tta/maintain/regenerate_C_options_info.pl: add boolean option type.
+
+	* tta/data/options_data.txt: change options type to boolean for
+	options that are boolean options.
+
+	* tta/C/convert/converter.c (set_commands_options_value)
+	(copy_command_option_value_option, command_init),
+	tta/C/main/build_perl_info.c (build_sv_option),
+	tta/C/main/customization_options.c (clear_option, free_option)
+	(initialize_option, option_set_conf_internal, copy_option)
+	(set_informative_command_value), tta/C/main/get_perl_info.c
+	(get_sv_option), tta/C/main/txi_config.c (set_option_value): handle
+	GOT_boolean enum global_option_type, doing the same as for integer.
+
+2026-10-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/session-cmd.c
+	(tree_search_check_node, tree_search_check_node_backwards):
+	If search fails, clear active_menu field of current node.  This
+	prevents subsequent commands attempting to continue the search.
+	This would freeze the program if done from the dir node.
+	
+	Report from Aidan <aidanczhai@gmail.com>.
+
+2026-10-16 Patrice Dumas  <pertusus@free.fr>
+
+	read index tag in Info reader and handle tag not being a node name
+
+	* info/nodes.c (build_tag_table, get_nodes_of_tags_table)
+	(info_node_of_tag_ext), info/scan.c (copy_input_to_output)
+	(scan_node_contents), info/session-cmd.c (info_last_node)
+	(info_first_node, info_search_internal): add T_IsNode flag and set for
+	a node.  Replace checks of tag being an anchor by check of not being a
+	node (and vice sersa) when it is more logical.
+
+	* info/nodes.c (get_nodes_of_tags_table, free_info_tag)
+	(info_node_of_tag_ext), info/nodes.h (INFO_INDEX_LABEL, struct TAG)
+	(T_IsIndex): read an Index tag from the Tag table.  Set indexname,
+	added to struct TAG, for Index tag, not nodename.  Free indexname.
+	Handle Index tag in info_node_of_tag_ext like an anchor tag.
+
+	* info/indices.c (info_indices_of_file_buffer), info/info.c
+	(add_initial_nodes), info/nodes.c (info_get_node_tag_of_file_buffer),
+	info/session-cmd.c (info_goto_node, info_search_internal)
+	(tag_of_reference): check if a tag has a nodename to find a node or
+	anchor.
+
+2026-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Short Sample Texinfo File):
+	Remove @node lines duplicating @section lines.
+	(The Body of the Document): Remove duplicate @node lines for
+	@chapter and @section.  Word node carefully to avoid saying the
+	exact number of nodes in the example; only say there are three
+	nodes for Info output.
+
+2026-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (The Top Node): Edit slightly to avoid being
+	specific to the Info format.
+
+2026-10-15 Patrice Dumas  <pertusus@free.fr>
+
+	Special index tag in Info for "Index" in node names and no printindex
+
+	* tta/C/convert/convert_to_plaintext.c (info_cache_node_names),
+	tta/perl/Texinfo/Convert/PlaintextNonXS.pm (_cache_node_names): add an
+	argument asking to determine if there is at least one node name with
+	the "Index" string, and if so return 1.
+
+	* tta/C/convert/convert_to_info.c (info_output),
+	tta/perl/Texinfo/Convert/InfoNonXS.pm (output): if there is no
+	@printindex for an Info file and Index happens in a node name, as
+	determined by a call to info_cache_node_names, add an Index: tag with
+	name _ at byte 0 such that an Info reader knowing about the Index: tag
+	can infer that the processor doing the Info file is recent enough and
+	only Index: tags should be used to determine printed indices
+	locations, such that nodes with "Index" in their name are not
+	considered to actually be nodes with printed indices.
+
+	* tta/perl/t/info_tests.t (index_string_in_node_no_index),
+	tta/perl/t/test_files_generated_list.txt: add test with Index in node
+	name but no @printindex.
+
+2026-10-14 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_to_plaintext.c (info_cache_node_names): rename
+	plaintext_cache_node_names as info_cache_node_names.  Update callers,
+	change/add comments.
+
+	* tta/C/convert/convert_to_info.c (info_output): fix a compilation
+	warning.
+
+2026-10-14 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Global Customization Variables): precise that with
+	AUTO_SECTION_NODE the node name used for @top is always "Top".
+
+2026-10-14 Patrice Dumas  <pertusus@free.fr>
+
+	add printed indices location tags in Info
+
+	* tta/data/options_data.txt (_USE_NEW_INFO_TAGS): add.
+
+	* tta/C/convert/convert_to_plaintext.c (plaintext_process_printindex)
+	(stream_encode), tta/C/main/plaintext_converter_state.h
+	(enum conv_type, TARGET_LOCATION, PENDING_TEXT),
+	tta/perl/Texinfo/Convert/PlaintextNonXS.pm (_stream_encode)
+	(process_printindex): put an index special pending text type in
+	pending texts for @printindex, with index name as argument.  Gather
+	the bytes count of such pending text in stream_encode and put in
+	target_locations.  Extend associated struct and enum.
+
+	* tta/C/convert/convert_to_info.c (info_output),
+	tta/perl/Texinfo/Convert/InfoNonXS.pm (output): add new index
+	location tags from target_locations in the Info file tags.  In the
+	default case, prepend "Ref: ^H" as a standalone Info reader released
+	before 2025 breaks with any tag different from Ref and Node.  If
+	_USE_NEW_INFO_TAGS is set, use directly the Index: tag.
+
+2026-10-14 Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS: announce the redesign of the Info and plaintext converters
+	even though it is not user facing, it helps extending the converter
+	for new object placed in the output stream, in particular with bytes
+	count.
+
+2026-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Nodes): Remove extraneous sentence.
+
+2026-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Unstructured Nodes): Move from "Chapter
+	Structuring" chapter to "Nodes" chapter.  Suggestion from Patrice.
+
+2026-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Revise documentation of node/structuring commands
+
+	* doc/texinfo.texi (Tree Structuring): Remove example of
+	@node/@chapter completely.  This may have been next to the hierarchical
+	chart to explain node pointers but the example doesn't use them.
+	(Chapter Structuring): Put basic examples of @chapter or @node/@chapter
+	here.
+
+2026-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Revise documentation of node/structuring commands
+
+	* doc/texinfo.texi (Chapter Structuring): Mention alternative name
+	"sectioning commands".  Mention that sectioning commands can separate
+	a document into nodes.  Do not say that a @node command is "normally"
+	used with a sectioning command.
+	(Tree Structuring): Remove example with explicit node pointers as this
+	exact example is also given in the "Nodes" chapter in "Node Menu
+	Illustration".
+
+2026-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Tree Structuring): Update "previous chapter"
+	to "next chapter" after last change.
+
+2026-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Chapter Structuring, Nodes): Swap order of
+	chapters.  Suggestion from Patrice.
+
+2026-10-14 Patrice Dumas  <pertusus@free.fr>
+
+	* README-hacking: add (cd tta/perl/t ; git clean -n .) to show
+	empty directories that are not useful, are not shown by git status,
+	and will en up in tta/perl/t/test_dirs_generated_list.txt.  Based on a
+	report from Werner Lemberg.
+
+	* tta/perl/t/test_dirs_generated_list.txt: update.
+
+2026-10-13 Patrice Dumas  <pertusus@free.fr>
+
+	TODO: add a point on @heading and shadow targets for the future
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* texindex/texindex.awk (BEGIN): correct bounds of a loop.
+	
+	Report from Werner.
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: mention <span> for output of @expansion{} etc.
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Global Customization Variables)
+	<AUTO_SECTION_NODE>:
+	Go into more detail about the possible use of AUTO_SECTION_NODE=0.
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Nodes): Remove out-of-date discussion of
+	using sectioning commands without node commands.  Cross-reference
+	"Cross Reference Targets" node and documentation of AUTO_SECTION_NODE.
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Global Customization Variables)
+	<WARN_DUPLICATE_SECTION_TARGET>:
+	Add xref to "Cross Reference Targets".
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Cross Reference Targets): New node in
+	"Cross-references" chapter.  First attempt at documenting new
+	"shadow targets" feature.
+
+2026-10-13 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Document Metadata, @code{@@title @@subtitle
+	@@author}): move information on commands in @documentinfo and
+	@itilepage not specific of @titlepage to @documentinfo, as it is where
+	those commands appear first.
+
+	* doc/texinfo.texi (@code{@@titlefont @@center @@sp}): be more precise
+	that the method is the second method with @titlepage.
+
+2026-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	texindex: fix sort order
+
+	* texindex/texindex.awk (BEGIN): Set up case-insensitive order array
+	"Ordval_ignorecase" as intended to sort upper case and lower case
+	characters after other characters, as intended.  The previous code
+	was incorrect and led to "[" and "]" sorting after alphabetical
+	characters based on their position in the ASCII table.
+	
+	Report from Werner Lemberg.
+
+2026-10-13 Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, doc/texinfo.texi (WARN_DUPLICATE_SECTION_TARGET): add
+	WARN_DUPLICATE_SECTION_TARGET basic description.
+
+2026-10-13 Patrice Dumas  <pertusus@free.fr>
+
+	customization of duplicate section targets warning
+
+	* tta/data/options_data.txt (WARN_DUPLICATE_SECTION_TARGET): add
+	customization option.
+
+	* tta/C/structuring_transfo/transformations.c
+	(insert_nodes_for_sectioning_commands),
+	tta/perl/Texinfo/ManipulateTreeNonXS.pm
+	(insert_nodes_for_sectioning_commands),
+	tta/perl/XSTexinfo/parser_document/ManipulateTreeXS.xs
+	(insert_nodes_for_sectioning_commands): add warnings for duplicate
+	section targets and add an argument to trigger those warnings.
+
+	* tta/C/structuring_transfo/structuring.c (sectioning_targets),
+	tta/perl/Texinfo/StructuringNonXS.pm (sectioning_targets),
+	tta/perl/XSTexinfo/parser_document/StructuringXS.xs
+	(sectioning_targets): add an argument to control warnings.
+
+	* tta/C/structuring_transfo/transformations.h
+	(STTF_no_warn_duplicate_section_target),
+	tta/C/structuring_transfo/transformations.c
+	(complete_transform_document), tta/C/texi2any.c (formats_table, main),
+	tta/perl/texi2any.pl (%formats_table), tta/swig/texinfo.i: add to
+	complete_transform_document an argument to control warnings for
+	duplicate section targets, passed to
+	insert_nodes_for_sectioning_commands and sectioning_targets, and set
+	it based on the format and on WARN_DUPLICATE_SECTION_TARGET value
+	in the main program in C.  In Perl, use more directly
+	WARN_DUPLICATE_SECTION_TARGET value and %formats_table to pass
+	the argument to insert_nodes_for_sectioning_commands and
+	sectioning_targets.
+	The warnings are unset in the default case for HTML and Info, which
+	have automatic nodes for sectioning commands without nodes set.
+
+	* tta/perl/t/test_utils.pl (test): pass WARN_DUPLICATE_SECTION_TARGET
+	to insert_nodes_for_sectioning_commands and sectioning_targets.
+
+	* tta/perl/t/converters_tests.t, tta/perl/t/docbook_tests.t,
+	tta/perl/t/transformations.t: set WARN_DUPLICATE_SECTION_TARGET for
+	some tests.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/09indices.t (nested_and_duplicate_sortas): add test with
+	multiple @sortas and nested @sortas.  Based on Werner Lemberg report.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Node Line Requirements, Menu Parts):
+	Remove warning about multiple spaces in menu entries, handled
+	correctly by Info since 2022.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Menu Parts): Give more detail about problematic
+	constructs and cross-reference Info Format appendix.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Cross Reference Parts): Mention restriction
+	on characters in label name as well as node name.  Report from Eli.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/manipulate_indices.c (INDEX_COLLATOR): ifdef the whole
+	coll union, to avoid defining an empty union.  Found on Solaris.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_latex_header): move usepackage
+	for graphicx, etoolbox and titleps to packages covered by
+	END_USEPACKAGE.  It is less likely fo users to want to replace these
+	packages, making CLASS_BEGIN_USEPACKAGE easier to modify.
+
+	* doc/texinfo.texi (@LaTeX{} Customization Variables): update.
+	Incite to change CLASS_BEGIN_USEPACKAGE, but not END_USEPACKAGE.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/configure.ac, configure.ac: remove apparently unneeded
+	AC_PROG_INSTALL lines.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* po/POTFILES.in: update.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (all-local): add all-local with
+	stamp.regenerate_file_lists to have products_regenerate_file_lists
+	files back after make maintainer-clean followed by make (without a
+	need to run make dist too).
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/Makefile.am (texi2any_api_TEXINFOS): texi2any_api, not texinfo,
+	depends on html_default_commands_args.texi.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/highlight_syntax.pm (highlight_preformatted_command):
+	reorder code and mark more clearly with comments what parts of the
+	code are to be synchronized with HTML converter conversion functions.
+	Sync code with HTML converter conversion functions.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Setting the Output File Name): Add a
+	cross-reference to "Global Customization Variables" for more
+	details on OUTFILE and SUBDIR.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Invoking texi2any) <-D>: Refer to a "flag" rather
+	than "variable" to avoid possible confusion with customisation
+	variables.
+
+2026-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Invoking texi2any, Setting the Output File Name):
+	Move discussion of -o taking priority over @setfilename to
+	"Setting the Output File Name".
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/highlight_syntax.pm (highlight_setup): read the
+	remaining lines from the highlight program pipe to avoid an error
+	when closing the pipe.
+	Also show $? in command pipe closing error message.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/highlight_syntax.pm: use single quoted strings when
+	there is no interpolation.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/highlight_syntax.pm (highlight_setup): warn if closing
+	the communication with the command errored out.
+
+	* tta/perl/ext/latex2html.pm: remove an uninteresting FIXME.
+
+	* tta/perl/ext/tex4ht.pm: use single quoted strings when there is
+	no interpolation.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/latex2html.pm: change beginning of functions.  Rename
+	$document_root as $tree_root.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/tex4ht.pm: change beginning of functions.  Rename
+	$document_root as $tree_root.
+
+2026-10-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/ext/tex4ht.pm ($tex4ht_file_content_encoding): encode
+	generated tex/latex/texi file and decode resulting HTML file.  Use
+	iso-8859-1 as it is what gives the best results in the test suite
+	since accented letters are iso-8859-1 encoded, though it is not
+	perfect as image file with accent in their names are UTF-8 encoded.
+
+2026-10-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Common.pm (count_bytes): use
+	processging_output_encoding to determine the Perl encoding.
+
+	Changes in comments, remove unneeded TODOs.
+
 2026-10-10 Patrice Dumas  <pertusus@free.fr>
 
 	hide COLLATION_LANGUAGE and DOCUMENTLANGUAGE_COLLATION, remove from C
@@ -23,7 +701,7 @@
 	DOCUMENTLANGUAGE_COLLATION or COLLATION_LANGUAGE are set.
 
 	* NEWS, doc/texinfo.texi (Printing Indices & Menus)
-	(Setting the language, Global Customization Variables): update, 
+	(Setting the language, Global Customization Variables): update,
 	put documentation related to COLLATION_LANGUAGE and
 	DOCUMENTLANGUAGE_COLLATION in @ignore.
 
@@ -41,7 +719,7 @@
 2026-10-10 Patrice Dumas  <pertusus@free.fr>
 
 	* doc/texinfo.texi (@code{@@documentencoding}): add a footnote
-	explaining that texi2any may substitute encodings.  Used "based on"
+	explaining that texi2any may substitute encodings.  Use "based on"
 	instead of "set to" in the main text to match this possibility of
 	substitution.  The text remains vague on purpose to avoid committing
 	to anything, but the user should not be surprised if the output
@@ -73,7 +751,7 @@
 
 	* tta/C/convert/convert_to_plaintext.c
 	(plaintext_setup_output_encoding),
-	tta/C/main/plaintext_converter_state.h (PLAINTEXT_CONVERTER_STATE), 
+	tta/C/main/plaintext_converter_state.h (PLAINTEXT_CONVERTER_STATE),
 	tta/perl/Texinfo/Convert/PlaintextNonXS.pm (_setup_output_encoding):
 	set encoding_name converter field in setup_output_encoding based on
 	processing_output_encoding call on OUTPUT_ENCODING_NAME.  Do not do
@@ -220,7 +898,7 @@
 
 	* tta/C/convert/converter.c (is_null_device_name),
 	tta/perl/Texinfo/Common.pm (is_null_device_name): if the null device
-	name is nul (case insensitive), compare with case insensitivity. 
+	name is nul (case insensitive), compare with case insensitivity.
 
 2026-10-08 Patrice Dumas  <pertusus@free.fr>
 
@@ -392,7 +1070,7 @@
 2026-10-03 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/swig/perl/Makefile.am (all-local): copy .libs in .libs/auto
-	using an explicit copy taking care that we wnat to copy in a
+	using an explicit copy taking care that we want to copy in a
 	subdirectory instead of using LN_S, in case LN_S does a copy.
 
 2026-10-03 Patrice Dumas  <pertusus@free.fr>
@@ -500,7 +1178,7 @@
 	programs.  Keep insert_nodes_for_sectioning_commands as a tree
 	transformation for backward compatibility.
 
-	* tta/perl/t/info_tests.t, tta/perl/t/transformations.t: replace 
+	* tta/perl/t/info_tests.t, tta/perl/t/transformations.t: replace
 	insert_nodes_for_sectioning_commands tree transformation by
 	AUTO_SECTION_NODE.
 
@@ -529,7 +1207,7 @@
 
 	* tta/configure.ac: determine use_shared_txi_libraries right after
 	with_swig is set.  Do the SWIG related tests only if both with_swig
-	and use_shared_txi_libraries are set. 
+	and use_shared_txi_libraries are set.
 
 	* tta/configure.ac: update/improve comments.
 
@@ -629,7 +1307,7 @@
 	based on -o/--output command-line option.  Update --help.
 
 	* tta/C/convert/convert_to_plaintext.c (plaintext_output),
-	tta/C/convert/html_prepare_converter.c (html_setup_output), 
+	tta/C/convert/html_prepare_converter.c (html_setup_output),
 	tta/perl/Texinfo/Convert/HTMLNonXS.pm (_setup_output),
 	tta/perl/Texinfo/Convert/PlaintextNonXS.pm (output): in HTML and
 	plaintext converters, if SPLIT and OUTFILE is set, set SUBDIR based on
@@ -747,7 +1425,7 @@
 	features check function.  Do not reset outdir.
 	Add -o to list-of-tests tests when needed, mainly for split HTML and
 	plaintext.
-	This prepare for erroring with -o DIR when a file is expected.
+	This prepares for erroring with -o DIR when a file is expected.
 
 2026-09-25 Patrice Dumas  <pertusus@free.fr>
 
@@ -1178,7 +1856,7 @@
 	more fields.
 
 	* tta/perl/Texinfo/Convert/ParagraphNonXS.pm (new)
-	(@para_ordered_conf): show conf set from caller in debugging output, 
+	(@para_ordered_conf): show conf set from caller in debugging output,
 	as in C.
 
 2026-09-08 Patrice Dumas  <pertusus@free.fr>
@@ -1826,7 +2504,7 @@
 	in format context to know the current cell index.
 
 	* tta/C/convert/convert_to_plaintext.c (release_count_context)
-	(align_lines, align_environment, convert_to_plaintext_internal) :
+	(align_lines, align_environment, convert_to_plaintext_internal):
 	reset images and entry locations properly, free pending lines and
 	images lists.
 
@@ -2199,7 +2877,7 @@
 	* tta/C/convert/convert_to_plaintext.c (align_lines)
 	(align_environment, convert_to_plaintext_internal),
 	tta/perl/Texinfo/Convert/PlaintextNonXS.pm (_align_lines)
-	(_align_environment, _convert): add to parent count context pending 
+	(_align_environment, _convert): add to parent count context pending
 	texts directly in align_lines.  Do not return anything.  Use
 	stream_output when possible.  In C, in align_environment, this
 	requires saving the aligned environment count context first before
@@ -2563,7 +3241,7 @@
 	(fill_gaps_in_sectioning_in_document),
 	tta/perl/Texinfo/TransformationsNonXS.pm
 	(fill_gaps_in_sectioning_in_document): pass Texinfo code as argument
-	and parse to a Texinfo tree in fill_gaps_in_sectioning_in_document. 
+	and parse to a Texinfo tree in fill_gaps_in_sectioning_in_document.
 
 	* Pod-Simple-Texinfo/pod2texi.pl (_parsed_manual_tree): adapt to
 	fill_gaps_in_sectioning_in_document change.
@@ -2735,7 +3413,7 @@
 2026-08-18 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/C/convert/convert_to_plaintext.c (informative_global_commands):
-	addmissing terminating NULL.
+	add missing terminating NULL.
 
 	* tta/C/convert/convert_to_plaintext.c (pop_formatter): add an
 	argument to set if a formatter is reused, such that the memory is not
@@ -2902,7 +3580,7 @@
 	plaintext C @quotation, @author and @center
 
 	* tta/C/convert/convert_to_plaintext.c (push_top_formatter)
-	(pop_top_formatter, pop_document_context, plaintext_free_converter), 
+	(pop_top_formatter, pop_document_context, plaintext_free_converter),
 	tta/C/main/plaintext_converter_state.h (QUOTATION_AUTHORS_LIST)
 	(DOCUMENT_CONTEXT, PLAINTEXT_CONVERTER_STATE): add
 	DOCUMENT_CONTEXT_STACK and QUOTATION_AUTHORS_LIST within.
@@ -3363,7 +4041,7 @@
 	use text_before_first_node.
 
 	* tta/C/convert/convert_to_plaintext.c
-	(convert_to_plaintext_internal): add some conditions for now existing
+	(convert_to_plaintext_internal): add some conditions for not handled
 	elements, and use braces instead of ; when there is no code yet.
 
 2026-08-10 Patrice Dumas  <pertusus@free.fr>
@@ -3416,7 +4094,7 @@
 	* tta/C/main/command_stack.c: replace ELEMENT_STACK type by
 	CONST_ELEMENT_LIST type.  Use stack macros for const ELEMENT *
 	CONST_ELEMENT_LIST stack.  Remove ELEMENT_STACK by removing
-	def_list_type call on ELEMENT_STACK in document_types.h.  
+	def_list_type call on ELEMENT_STACK in document_types.h.
 
 2026-08-09 Patrice Dumas  <pertusus@free.fr>
 
@@ -3518,7 +4196,10 @@
 	Set Info-document* language related variable in Info based on preamble
 
 	* tta/C/convert/convert_to_info.c (info_output),
-	tta/perl/Texinfo/Convert/InfoNonXS.pm (output): 
+	tta/perl/Texinfo/Convert/InfoNonXS.pm (output): set local variables
+	based on @documentscript and @documentlanguagevariant, and set
+	the local variable based on @documentlanguage to the value at
+	the end of the preamble.
 
 	* tta/perl/Texinfo/Translations.pm (_set_lang_info_translation):
 	always set 'bcp47_locale' even if there is a translation cache.

@@ -197,7 +197,7 @@ sub output($$) {
   # no splitting when writing to the null device or to stdout
   if (Texinfo::Common::is_null_device_name($output_file)
       or $output_file eq '-') {
-    $self->force_conf('SPLIT_SIZE', undef);
+    $self->force_conf('SPLIT_SIZE', 0);
   }
 
   my ($fh, $encoded_outfile_name);
@@ -268,7 +268,10 @@ sub output($$) {
     }
   }
 
-  $self->_cache_node_names($document->nodes_list());
+  my $ambiguous_index_string_in_node_names
+    = $self->_cache_node_names($document->nodes_list(),
+                 (not (defined($global_commands)
+                       and exists($global_commands->{'printindex'}))));
 
   my $header = $self->_info_header($input_basefile, $output_filename);
   my $header_bytes = length($header);
@@ -382,7 +385,7 @@ sub output($$) {
     my $split_size = $self->get_conf('SPLIT_SIZE');
     foreach my $output_unit (@$output_units) {
       if ($first_node_seen
-          and defined($split_size)
+          and $split_size != 0
           and $self->{'bytes'} > $out_file_nr * $split_size
           and defined($fh)) {
         # Split the output into an additional output file.
@@ -512,37 +515,68 @@ sub output($$) {
   }
   # This may happen for anchors in @insertcopying
   my %seen_anchors;
+
+  if ($ambiguous_index_string_in_node_names) {
+    # add a tag (with an impossible index name at an impossible location)
+    # for an Info file with at least one  node with "Index" in its name but no
+    # @printindex.  An Info reader knowing about the Index: tag can infer
+    # that the processor doing the Info file is recent enough and
+    # only Index: tags should be used to determine printed indices locations,
+    # such that nodes with "Index" in their name are not considered to
+    # actually be nodes with printed indices.
+
+    if (!$self->get_conf('_USE_NEW_INFO_TAGS')) {
+      $tag_text .= "Ref: \x{08}";
+    }
+
+    $tag_text .= 'Index: '.
+      $self->_encode_string('_')."\x{7F}0\n";
+  }
+
   foreach my $location (@{$self->{'target_locations'}}) {
-    my $element = $location->{'target_element'};
+    if (exists($location->{'target_element'})) {
+      my $element = $location->{'target_element'};
 
-    next unless (exists($element->{'extra'})
-                 and $element->{'extra'}->{'is_target'});
-    my $prefix;
+      next unless (exists($element->{'extra'})
+                   and $element->{'extra'}->{'is_target'});
+      my $prefix;
 
-    my ($label_text, undef) = $self->node_name($element);
+      my ($label_text, undef) = $self->node_name($element);
 
-    if (exists($seen_anchors{$label_text})) {
-      my $label_element = Texinfo::Common::get_label_element($element);
+      if (exists($seen_anchors{$label_text})) {
+        my $label_element = Texinfo::Common::get_label_element($element);
 
-      $self->plaintext_line_error($self,
+        $self->plaintext_line_error($self,
                                   sprintf(__("\@%s output more than once: %s"),
-          $element->{'cmdname'},
-          Texinfo::Convert::Texinfo::convert_contents_to_texinfo(
+            $element->{'cmdname'},
+            Texinfo::Convert::Texinfo::convert_contents_to_texinfo(
                                                           $label_element)),
-        $element->{'source_info'});
-      next;
-    } else {
-      $seen_anchors{$label_text} = 1;
-    }
+          $element->{'source_info'});
+        next;
+      } else {
+        $seen_anchors{$label_text} = 1;
+      }
 
-    if ($element->{'cmdname'} eq 'node') {
-      $prefix = 'Node';
-    } else { # anchor, namedanchor, float and section without node
-      $prefix = 'Ref';
-    }
+      if ($element->{'cmdname'} eq 'node') {
+        $prefix = 'Node';
+      } else { # anchor, namedanchor, float and section without node
+        $prefix = 'Ref';
+      }
 
-    $tag_text .=  "$prefix: ".$self->_encode_string($label_text)
+      $tag_text .=  "$prefix: ".$self->_encode_string($label_text)
                                       ."\x{7F}$location->{'bytes'}\n";
+    } elsif (exists($location->{'index_argument'})) {
+      # standalone Info reader released before 2025 breaks if there is a tag
+      # different from Ref and Node.  Therefore reuse Ref with a special
+      # character for the Index location tag in the default case
+      if (!$self->get_conf('_USE_NEW_INFO_TAGS')) {
+        $tag_text .= "Ref: \x{08}";
+      }
+
+      $tag_text .= 'Index: '.
+        $self->_encode_string($location->{'index_argument'})
+                                      ."\x{7F}$location->{'bytes'}\n";
+    }
   }
   $tag_text .=  "\x{1F}\nEnd Tag Table\n";
 

@@ -339,7 +339,7 @@ sub set_converter_option_defaults($$;$) {
   # directory name, which is overriden in tests anyway.
   $converter_options->{'TEXINFO_OUTPUT_FORMAT'} = $format;
 
-  if (!defined($converter_options->{'DEBUG'})) {
+  if (!defined($converter_options->{'DEBUG'}) and defined($debug)) {
     $converter_options->{'DEBUG'} = $debug;
   }
   if (!defined($converter_options->{'CHECK_HTMLXREF'})) {
@@ -881,9 +881,9 @@ sub test($$) {
   foreach my $structuring_option ('AUTO_SECTION_NODE',
                                   'CHECK_NORMAL_MENU_STRUCTURE',
                                   'CHECK_MISSING_MENU_ENTRY',
-       # Not structuring options, but used for index sorting strings tests
+       # Not a structuring option, but used for index sorting strings tests
                                   'USE_UNICODE_COLLATION',
-                                  'COLLATION_LANGUAGE') {
+                                  'WARN_DUPLICATE_SECTION_TARGET') {
     if (defined($parser_options->{$structuring_option})) {
       $test_customization_options->{$structuring_option}
         = $parser_options->{$structuring_option};
@@ -893,8 +893,8 @@ sub test($$) {
 
   my $completed_parser_options =
           {'INCLUDE_DIRECTORIES' => [$srcdir.'/t/include/'],
-           'DEBUG' => $debug,
             %$parser_options};
+  $completed_parser_options->{'DEBUG'} = $debug if (defined($debug));
 
   my $parser = Texinfo::Parser::parser($completed_parser_options);
 
@@ -1013,13 +1013,16 @@ sub test($$) {
                                                                    $document);
   }
 
+  my $warn_duplicate_section_target
+    = $document->get_conf('WARN_DUPLICATE_SECTION_TARGET');
   if ($document->get_conf('AUTO_SECTION_NODE')) {
     Texinfo::ManipulateTree::insert_nodes_for_sectioning_commands(
-                                                             $document);
+                           $document, $warn_duplicate_section_target);
   }
 
   Texinfo::Structuring::sectioning_structure($document);
-  Texinfo::Structuring::sectioning_targets($document);
+  Texinfo::Structuring::sectioning_targets($document,
+                                           $warn_duplicate_section_target);
 
   Texinfo::Structuring::associate_internal_references($document);
 
